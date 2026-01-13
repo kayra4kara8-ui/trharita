@@ -69,139 +69,159 @@ st.markdown("""
 # =============================================================================
 # ŞEHİR İSİM HARİTALAMA (GeoJSON ve Excel uyumluluğu için)
 # =============================================================================
-CITY_NAME_MAPPING = {
-    # Excel'deki isimler -> GeoJSON'daki isimler
-    'ADANA': 'Adana',
-    'ADIYAMAN': 'Adiyaman',
-    'AFYONKARAHISAR': 'Afyonkarahisar',
-    'AFYONKARAHİSAR': 'Afyonkarahisar',
-    'AĞRI': 'Agri',
-    'AGRI': 'Agri',
-    'AKSARAY': 'Aksaray',
-    'AMASYA': 'Amasya',
-    'ANKARA': 'Ankara',
-    'ANTALYA': 'Antalya',
-    'ARTVİN': 'Artvin',
-    'ARTVIN': 'Artvin',
-    'AYDın': 'Aydin',
-    'AYDIN': 'Aydin',
-    'BALIKESİR': 'Balikesir',
-    'BALIKESIR': 'Balikesir',
-    'BARTIN': 'BartÄ±n',
-    'BATMAN': 'Batman',
-    'BAYBURT': 'Bayburt',
-    'BİLECİK': 'Bilecik',
-    'BILECIK': 'Bilecik',
-    'BİNGÖL': 'BingÃ¶l',
-    'BINGOL': 'BingÃ¶l',
-    'BİTLİS': 'Bitlis',
-    'BITLIS': 'Bitlis',
-    'BOLU': 'Bolu',
-    'BURDUR': 'Burdur',
-    'BURSA': 'Bursa',
-    'ÇANAKKALE': 'Ãanakkale',
-    'CANAKKALE': 'Ãanakkale',
-    'ÇANKIRI': 'Ãankiri',
-    'CANKIRI': 'Ãankiri',
-    'ÇORUM': 'Ãorum',
-    'CORUM': 'Ãorum',
-    'DENİZLİ': 'Denizli',
-    'DENIZLI': 'Denizli',
-    'DİYARBAKIR': 'Diyarbakir',
-    'DIYARBAKIR': 'Diyarbakir',
-    'DÜZCE': 'DÃ¼zce',
-    'DUZCE': 'DÃ¼zce',
-    'EDİRNE': 'Edirne',
-    'EDIRNE': 'Edirne',
-    'ELAZIĞ': 'Elazig',
-    'ELAZIG': 'Elazig',
-    'ERZİNCAN': 'Erzincan',
-    'ERZINCAN': 'Erzincan',
-    'ERZURUM': 'Erzurum',
-    'ESKİŞEHİR': 'Eskisehir',
-    'ESKISEHIR': 'Eskisehir',
-    'GAZİANTEP': 'Gaziantep',
-    'GAZIANTEP': 'Gaziantep',
-    'GİRESUN': 'Giresun',
-    'GIRESUN': 'Giresun',
-    'GÜMÜŞHANE': 'GÃ¼mÃ¼shane',
-    'GUMUSHANE': 'GÃ¼mÃ¼shane',
-    'HAKKARİ': 'Hakkari',
-    'HAKKARI': 'Hakkari',
-    'HATAY': 'Hatay',
-    'IĞDIR': 'IÄdir',
-    'IGDIR': 'IÄdir',
-    'ISPARTA': 'Isparta',
-    'İSTANBUL': 'Istanbul',
-    'ISTANBUL': 'Istanbul',
-    'İZMİR': 'Izmir',
-    'IZMIR': 'Izmir',
-    'KAHRAMANMARAŞ': 'K. Maras',
-    'KAHRAMANMARAS': 'K. Maras',
-    'KARABÜK': 'KarabÃ¼k',
-    'KARABUK': 'KarabÃ¼k',
-    'KARAMAN': 'Karaman',
-    'KARS': 'Kars',
-    'KASTAMONU': 'Kastamonu',
-    'KAYSERİ': 'Kayseri',
-    'KAYSERI': 'Kayseri',
-    'KIRIKKALE': 'Kinkkale',
-    'KIRKLARELİ': 'Kirklareli',
-    'KIRKLARELI': 'Kirklareli',
-    'KIRŞEHİR': 'Kirsehir',
-    'KIRSEHIR': 'Kirsehir',
-    'KİLİS': 'Kilis',
-    'KILIS': 'Kilis',
-    'KOCAELİ': 'Kocaeli',
-    'KOCAELI': 'Kocaeli',
-    'KONYA': 'Konya',
-    'KÜTAHYA': 'KÃ¼tahya',
-    'KUTAHYA': 'KÃ¼tahya',
-    'MALATYA': 'Malatya',
-    'MANİSA': 'Manisa',
-    'MANISA': 'Manisa',
-    'MARDİN': 'Mardin',
-    'MARDIN': 'Mardin',
-    'MERSİN': 'Mersin',
-    'MERSIN': 'Mersin',
-    'MUĞLA': 'Mugla',
-    'MUGLA': 'Mugla',
-    'MUŞ': 'Mus',
-    'MUS': 'Mus',
-    'NEVŞEHİR': 'Nevsehir',
-    'NEVSEHIR': 'Nevsehir',
-    'NİĞDE': 'Nigde',
-    'NIGDE': 'Nigde',
-    'ORDU': 'Ordu',
-    'OSMANİYE': 'Osmaniye',
-    'OSMANIYE': 'Osmaniye',
-    'RİZE': 'Rize',
-    'RIZE': 'Rize',
-    'SAKARYA': 'Sakarya',
-    'SAMSUN': 'Samsun',
-    'SİİRT': 'Siirt',
-    'SIIRT': 'Siirt',
-    'SİNOP': 'Sinop',
-    'SINOP': 'Sinop',
-    'SİVAS': 'Sivas',
-    'SIVAS': 'Sivas',
-    'ŞANLIURFA': 'Sanliurfa',
-    'SANLIURFA': 'Sanliurfa',
-    'ŞIRNAK': 'Sirnak',
-    'SIRNAK': 'Sirnak',
-    'TEKİRDAĞ': 'Tekirdag',
-    'TEKIRDAG': 'Tekirdag',
-    'TOKAT': 'Tokat',
-    'TRABZON': 'Trabzon',
-    'TUNCELİ': 'Tunceli',
-    'TUNCELI': 'Tunceli',
-    'UŞAK': 'Usak',
-    'USAK': 'Usak',
-    'VAN': 'Van',
-    'YALOVA': 'Yalova',
-    'YOZGAT': 'Yozgat',
-    'ZONGULDAK': 'Zinguldak',
+# =============================================================================
+# TÜRKİYE HARİTA BLOĞU (STABİL – APP(14) UYUMLU)
+# =============================================================================
+
+import geopandas as gpd
+import plotly.graph_objects as go
+import json
+from shapely.geometry import LineString, MultiLineString
+
+# -----------------------------------------------------------------------------
+# BÖLGE RENKLERİ
+# -----------------------------------------------------------------------------
+REGION_COLORS = {
+    "MARMARA": "#0EA5E9",
+    "EGE": "#FCD34D",
+    "BATI ANADOLU": "#14B8A6",
+    "İÇ ANADOLU": "#F59E0B",
+    "AKDENİZ": "#8B5CF6",
+    "KARADENİZ": "#059669",
+    "KUZEY ANADOLU": "#059669",
+    "DOĞU ANADOLU": "#7C3AED",
+    "GÜNEY DOĞU ANADOLU": "#E07A5F",
+    "DİĞER": "#64748B"
 }
+
+# -----------------------------------------------------------------------------
+# ŞEHİR NORMALİZASYONU (ENCODING KORUMALI)
+# -----------------------------------------------------------------------------
+def normalize_city(name):
+    if pd.isna(name):
+        return None
+
+    name = str(name).upper().strip()
+    tr_map = {
+        "İ": "I", "Ğ": "G", "Ü": "U",
+        "Ş": "S", "Ö": "O", "Ç": "C", "Â": "A"
+    }
+    for k, v in tr_map.items():
+        name = name.replace(k, v)
+    return name
+
+# -----------------------------------------------------------------------------
+# GEOJSON YÜKLE
+# -----------------------------------------------------------------------------
+@st.cache_resource
+def load_geojson():
+    gdf = gpd.read_file("turkey.geojson")
+    gdf["CITY_KEY"] = gdf["name"].apply(normalize_city)
+    return gdf
+
+# -----------------------------------------------------------------------------
+# VERİ + HARİTA BİRLEŞTİR
+# -----------------------------------------------------------------------------
+def prepare_map_data(df, geo):
+
+    df = df.copy()
+    geo = geo.copy()
+
+    df["CITY_KEY"] = df["Şehir"].apply(normalize_city)
+    df["Bölge"] = df["Bölge"].str.upper()
+    df["PF Kutu"] = pd.to_numeric(df["Kutu Adet"], errors="coerce").fillna(0)
+    df["Toplam Kutu"] = pd.to_numeric(df["Toplam Adet"], errors="coerce").fillna(0)
+
+    merged = geo.merge(df, on="CITY_KEY", how="left")
+
+    merged["PF Kutu"] = merged["PF Kutu"].fillna(0)
+    merged["Toplam Kutu"] = merged["Toplam Kutu"].fillna(0)
+    merged["Bölge"] = merged["Bölge"].fillna("DİĞER")
+
+    merged["Pazar Payı %"] = (
+        merged["PF Kutu"] / merged["Toplam Kutu"] * 100
+    ).replace([float("inf"), -float("inf")], 0).fillna(0)
+
+    return merged
+
+# -----------------------------------------------------------------------------
+# GEOMETRY SINIR ÇİZGİLERİ
+# -----------------------------------------------------------------------------
+def boundary_lines(geom):
+    lons, lats = [], []
+    if isinstance(geom, LineString):
+        x, y = geom.xy
+        lons += list(x) + [None]
+        lats += list(y) + [None]
+    elif isinstance(geom, MultiLineString):
+        for g in geom.geoms:
+            x, y = g.xy
+            lons += list(x) + [None]
+            lats += list(y) + [None]
+    return lons, lats
+
+# -----------------------------------------------------------------------------
+# HARİTA FIGURE
+# -----------------------------------------------------------------------------
+def create_turkey_map(gdf):
+
+    fig = go.Figure()
+
+    for region in gdf["Bölge"].unique():
+        r = gdf[gdf["Bölge"] == region]
+        color = REGION_COLORS.get(region, "#CCCCCC")
+
+        fig.add_choropleth(
+            geojson=json.loads(r.to_json()),
+            locations=r.index,
+            z=[1] * len(r),
+            colorscale=[[0, color], [1, color]],
+            showscale=False,
+            marker_line_color="white",
+            marker_line_width=1.2,
+            customdata=list(
+                zip(
+                    r["name"],
+                    r["PF Kutu"],
+                    r["Pazar Payı %"]
+                )
+            ),
+            hovertemplate=
+                "<b>%{customdata[0]}</b><br>"
+                "PF Kutu: %{customdata[1]:,.0f}<br>"
+                "Pazar Payı: %{customdata[2]:.1f}%"
+                "<extra></extra>",
+            name=region
+        )
+
+    # sınırlar
+    lons, lats = [], []
+    for g in gdf.geometry.boundary:
+        lo, la = boundary_lines(g)
+        lons += lo
+        lats += la
+
+    fig.add_scattergeo(
+        lon=lons,
+        lat=lats,
+        mode="lines",
+        line=dict(color="white", width=1),
+        hoverinfo="skip"
+    )
+
+    fig.update_layout(
+        geo=dict(
+            projection_type="mercator",
+            center=dict(lat=39, lon=35),
+            lonaxis=dict(range=[25, 45]),
+            lataxis=dict(range=[35, 43]),
+            visible=False
+        ),
+        height=750,
+        margin=dict(l=0, r=0, t=30, b=0)
+    )
+
+    return fig
 
 # =============================================================================
 # HELPER FUNCTIONS
@@ -228,10 +248,19 @@ def get_product_columns(product):
     else:  # PF IZOTONIK
         return {"pf": "PF IZOTONIK", "rakip": "DIGER IZOTONIK"}
 
-def normalize_city_name(city_name):
-    """Şehir ismini GeoJSON formatına çevir"""
-    city_upper = str(city_name).strip().upper()
-    return CITY_NAME_MAPPING.get(city_upper, city_name)
+def normalize_city(city):
+    if pd.isna(city):
+        return None
+    city = str(city).strip().upper()
+    tr_map = {
+        "İ": "I", "Ğ": "G", "Ü": "U",
+        "Ş": "S", "Ö": "O", "Ç": "C", "Â": "A"
+    }
+    for k, v in tr_map.items():
+        city = city.replace(k, v)
+    return city.title()
+df['CITY_NORMALIZED'] = df['CITY'].apply(normalize_city)
+
 
 # =============================================================================
 # DATA LOADING
@@ -259,12 +288,9 @@ def load_excel_data(file):
 
 @st.cache_data
 def load_geojson():
-    """Türkiye GeoJSON'ını yükle"""
-    try:
-        with open('/mnt/user-data/uploads/turkey.geojson', 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except:
-        return None
+    with open("turkey.geojson", "r", encoding="utf-8") as f:
+        return json.load(f)
+
 
 # =============================================================================
 # ANALYSIS FUNCTIONS
@@ -1508,3 +1534,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
