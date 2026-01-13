@@ -1778,7 +1778,7 @@ def main():
             ("🐶 Dog", col_bcg4, "#9CA3AF")
         ]
         
-        for category, col, color in bcg_categories:
+         for category, col, color in bcg_categories:
             with col:
                 count = bcg_counts.get(category, 0)
                 pf_sum = bcg_data[bcg_data['BCG_Kategori'] == category]['PF_Satis'].sum()
@@ -1831,3 +1831,4 @@ def main():
         
         with col_v2:
             st.markdown("####
+
