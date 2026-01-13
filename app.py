@@ -14,20 +14,25 @@ warnings.filterwarnings("ignore")
 st.set_page_config(page_title="Ticari Ürün Analizi", layout="wide")
 st.title("💊 Ticari Ürün Satış Analizi - Detaylı Türkiye Haritası")
 
-# Bölge renkleri - resimden
+# =============================================================================
+# BÖLGE RENKLERİ (COĞRAFİ & MODERN)
+# =============================================================================
 REGION_COLORS = {
-    "MARMARA": "#1E88E5",
-    "BATI ANADOLU": "#26C6DA", 
-    "EGE": "#26C6DA",
-    "İÇ ANADOLU": "#FFA726",
-    "GÜNEY DOĞU ANADOLU": "#EF5350",
-    "KUZEY ANADOLU": "#66BB6A",
-    "KARADENİZ": "#66BB6A",
-    "AKDENİZ": "#AB47BC",
-    "DOĞU ANADOLU": "#8D6E63",
-    "DİĞER": "#78909C"
+    "MARMARA": "#0EA5E9",              # Sky Blue - Deniz ve boğazlar
+    "BATI ANADOLU": "#14B8A6",         # Turkuaz-yeşil arası
+    "EGE": "#FCD34D",                  # BAL SARI (Batı Anadolu ile aynı)
+    "İÇ ANADOLU": "#F59E0B",           # Amber - Kuru bozkır
+    "GÜNEY DOĞU ANADOLU": "#E07A5F",   # Terracotta 
+    "KUZEY ANADOLU": "#059669",        # Emerald - Yemyeşil ormanlar
+    "KARADENİZ": "#059669",            # Emerald (Kuzey Anadolu ile aynı)
+    "AKDENİZ": "#8B5CF6",              # Violet - Akdeniz
+    "DOĞU ANADOLU": "#7C3AED",         # Purple - Yüksek dağlar
+    "DİĞER": "#64748B"                 # Slate Gray
 }
 
+# =============================================================================
+# ŞEHİR EŞLEŞTİRME (MASTER)
+# =============================================================================
 FIX_CITY_MAP = {
     "AGRI": "AĞRI",
     "BARTÄ±N": "BARTIN",
@@ -59,12 +64,24 @@ FIX_CITY_MAP = {
     "K. MARAS": "KAHRAMANMARAŞ"
 }
 
-
+# =============================================================================
+# NORMALIZATION
+# =============================================================================
 def normalize_city(name):
-    if pd.isna(name): return None
+    if pd.isna(name):
+        return None
+
     name = str(name).upper().strip()
-    for k, v in {"İ": "I", "Ğ": "G", "Ü": "U", "Ş": "S", "Ö": "O", "Ç": "C"}.items():
+
+    tr_map = {
+        "İ": "I", "Ğ": "G", "Ü": "U",
+        "Ş": "S", "Ö": "O",
+        "Ç": "C", "Â": "A"
+    }
+
+    for k, v in tr_map.items():
         name = name.replace(k, v)
+
     return name
 
 @st.cache_data
@@ -426,4 +443,5 @@ st.download_button(
     f"{selected_product}_{datetime.now().strftime('%Y%m%d')}.xlsx",
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
+
 
