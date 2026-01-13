@@ -259,12 +259,8 @@ def load_excel_data(file):
 
 @st.cache_data
 def load_geojson():
-    """Türkiye GeoJSON'ını yükle"""
-    try:
-        with open('/mnt/user-data/uploads/turkey.geojson', 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except:
-        return None
+    with open("turkey.geojson", "r", encoding="utf-8") as f:
+        return json.load(f)
 
 # =============================================================================
 # ANALYSIS FUNCTIONS
@@ -1508,3 +1504,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
