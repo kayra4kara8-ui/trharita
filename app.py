@@ -29,10 +29,36 @@ REGION_COLORS = {
 }
 
 FIX_CITY_MAP = {
-    "AGRI": "AĞRI", "BARTIN": "BARTIN", "BINGOL": "BİNGÖL",
-    "DUZCE": "DÜZCE", "ELAZIG": "ELAZIĞ", "ESKISEHIR": "ESKİŞEHİR",
-    "ISTANBUL": "İSTANBUL", "IZMIR": "İZMİR", "K. MARAS": "KAHRAMANMARAŞ"
+    "AGRI": "AĞRI",
+    "BARTÄ±N": "BARTIN",
+    "BINGÃ¶L": "BİNGÖL",
+    "DÃ¼ZCE": "DÜZCE",
+    "ELAZIG": "ELAZIĞ",
+    "ESKISEHIR": "ESKİŞEHİR",
+    "GÃ¼MÃ¼SHANE": "GÜMÜŞHANE",
+    "HAKKARI": "HAKKARİ",
+    "ISTANBUL": "İSTANBUL",
+    "IZMIR": "İZMİR",
+    "IÄ\x9fDIR": "IĞDIR",
+    "KARABÃ¼K": "KARABÜK",
+    "KINKKALE": "KIRIKKALE",
+    "KIRSEHIR": "KIRŞEHİR",
+    "KÃ¼TAHYA": "KÜTAHYA",
+    "MUGLA": "MUĞLA",
+    "MUS": "MUŞ",
+    "NEVSEHIR": "NEVŞEHİR",
+    "NIGDE": "NİĞDE",
+    "SANLIURFA": "ŞANLIURFA",
+    "SIRNAK": "ŞIRNAK",
+    "TEKIRDAG": "TEKİRDAĞ",
+    "USAK": "UŞAK",
+    "ZINGULDAK": "ZONGULDAK",
+    "Ã\x87ANAKKALE": "ÇANAKKALE",
+    "Ã\x87ANKIRI": "ÇANKIRI",
+    "Ã\x87ORUM": "ÇORUM",
+    "K. MARAS": "KAHRAMANMARAŞ"
 }
+
 
 def normalize_city(name):
     if pd.isna(name): return None
@@ -400,3 +426,4 @@ st.download_button(
     f"{selected_product}_{datetime.now().strftime('%Y%m%d')}.xlsx",
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
+
