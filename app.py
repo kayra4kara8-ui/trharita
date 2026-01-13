@@ -462,8 +462,19 @@ def calculate_bcg_matrix(df, product, date_filter=None):
 def create_turkey_map(city_data, geojson, title="Türkiye Satış Haritası"):
     """Türkiye haritası oluştur"""
     if geojson is None:
-        st.error("GeoJSON dosyası yüklenemedi")
+        st.error("❌ GeoJSON dosyası yüklenemedi. Lütfen turkey.geojson dosyasının projeye eklendiğinden emin olun.")
         return None
+    
+    # GeoJSON'daki şehir isimlerini kontrol et
+    geojson_cities = set()
+    for feature in geojson['features']:
+        geojson_cities.add(feature['properties']['name'])
+    
+    # Eşleşmeyen şehirleri tespit et
+    data_cities = set(city_data['City'].unique())
+    unmatched = data_cities - geojson_cities
+    if unmatched:
+        st.warning(f"⚠️ GeoJSON'da bulunamayan şehirler: {', '.join(list(unmatched)[:5])}")
     
     fig = px.choropleth(
         city_data,
@@ -1508,4 +1519,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
