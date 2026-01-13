@@ -1749,20 +1749,43 @@ def main():
     # ==========================================================================
     # TAB 8: RAPORLAR
     # ==========================================================================
-    with tab8:
-        st.header("📥 Rapor İndirme Merkezi")
-        
-        st.markdown("""
-        Bu bölümden tüm analizlerin Excel raporlarını indirebilirsiniz.
-        Raporlar şu sayfaları içerir:
-        - ✅ Territory Performans Analizi
-        - ✅ Zaman Serisi Veril📈 Son 12 Ay Trend")
-            monthly_ts = calculate_time_series(df_filtered, selected_product, selected_territory, 'M')
-            if len(monthly_ts) > 0:
-                fig_trend = create_time_series_chart(monthly_ts.tail(12), "Son 12 Aylık Trend")
-                st.plotly_chart(fig_trend, use_container_width=True)
-        
-        st.markdown("---")
+ with tab8:
+    st.header("📥 Rapor İndirme Merkezi")
+
+    st.markdown("""
+    Bu bölümden tüm analizlerin Excel raporlarını indirebilirsiniz.
+
+    **Rapor İçeriği:**
+    - ✅ Territory Performans Analizi
+    - ✅ Zaman Serisi Verileri
+    - ✅ BCG Matrix & Strateji
+    - ✅ Manager Performans Scorecard
+    - ✅ Aksiyon Planı
+    """)
+
+    st.markdown("---")
+
+    # 📈 Son 12 Ay Trend Grafiği
+    st.subheader("📈 Son 12 Aylık Satış Trendi")
+
+    monthly_ts = calculate_time_series(
+        df_filtered,
+        selected_product,
+        selected_territory,
+        frequency='M'
+    )
+
+    if len(monthly_ts) > 0:
+        fig_trend = create_time_series_chart(
+            monthly_ts.tail(12),
+            "Son 12 Aylık Trend"
+        )
+        st.plotly_chart(fig_trend, use_container_width=True)
+    else:
+        st.warning("⚠️ Trend grafiği için yeterli veri bulunamadı.")
+
+    st.markdown("---")
+
 
         # =========================================================
 # BCG PORTFÖY ÖZETİ
@@ -1846,6 +1869,7 @@ def main():
         
         with col_v2:
             st.markdown("####
+
 
 
 
