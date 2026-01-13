@@ -1763,47 +1763,48 @@ def main():
                 st.plotly_chart(fig_trend, use_container_width=True)
         
         st.markdown("---")
-        
-# BCG özet
-st.subheader("⭐ Portföy Dağılımı (BCG)")
 
-bcg_data = calculate_bcg_matrix(df_filtered, selected_product, start_date, end_date)
-bcg_counts = bcg_data['BCG_Kategori'].value_counts()
+        # =========================================================
+# BCG PORTFÖY ÖZETİ
+# =========================================================
 
-col_bcg1, col_bcg2, col_bcg3, col_bcg4 = st.columns(4)
+    st.subheader("⭐ Portföy Dağılımı (BCG)")
 
-bcg_categories = [
-    ("⭐ Star", col_bcg1, "#FFD700"),
-    ("🐄 Cash Cow", col_bcg2, "#10B981"),
-    ("❓ Question Mark", col_bcg3, "#3B82F6"),
-    ("🐶 Dog", col_bcg4, "#9CA3AF")
-]
+    bcg_data = calculate_bcg_matrix(
+    df_filtered,
+    selected_product,
+    start_date,
+    end_date
+)
 
-for category, col, color in bcg_categories:
+    bcg_counts = bcg_data["BCG_Kategori"].value_counts()
+
+    col_bcg1, col_bcg2, col_bcg3, col_bcg4 = st.columns(4)
+
+    bcg_categories = [
+        ("⭐ Star", col_bcg1),
+        ("🐄 Cash Cow", col_bcg2),
+        ("❓ Question Mark", col_bcg3),
+        ("🐶 Dog", col_bcg4),
+    ]
+
+    for category, col in bcg_categories:
     with col:
-        count = bcg_counts.get(category, 0)
+        count = int(bcg_counts.get(category, 0))
         pf_sum = bcg_data.loc[
-            bcg_data['BCG_Kategori'] == category, 'PF_Satis'
+            bcg_data["BCG_Kategori"] == category,
+            "PF_Satis"
         ].sum()
 
-        st.markdown(
-            f"""
-            <div style="
-                background: {color};
-                padding: 1rem;
-                border-radius: 8px;
-                text-align: center;
-                color: white;
-            ">
-                <h3>{category.split()[0]}</h3>
-                <h2>{count}</h2>
-                <p>{pf_sum:,.0f} PF</p>
-            </div>
-            """,
-            unsafe_allow_html=True
+        st.metric(
+            label=category,
+            value=f"{count} Territory",
+            delta=f"{pf_sum:,.0f} PF"
         )
 
+    
 
+    
     # ==========================================================================
     # TAB 2: TERRITORY ANALİZİ
     # ==========================================================================
@@ -1845,6 +1846,7 @@ for category, col, color in bcg_categories:
         
         with col_v2:
             st.markdown("####
+
 
 
 
