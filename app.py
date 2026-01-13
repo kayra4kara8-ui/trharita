@@ -1782,14 +1782,14 @@ def main():
             with col:
                 count = bcg_counts.get(category, 0)
                 pf_sum = bcg_data[bcg_data['BCG_Kategori'] == category]['PF_Satis'].sum()
-                st.markdown(f"""
-                <div style="background: {color}; padding: 1rem; border-radius: 8px; text-align: center; color: white;">
-                    <h3>{category.split()[0]}</h3>
-                    <h2>{count}</h2>
-                    <p>{pf_sum:,.0f} PF</p>
-                </div>
-                """, unsafe_allow_html=True)
-    
+              st.markdown(f"""
+            <div style="background: {color}; padding: 1rem; border-radius: 8px; text-align: center; color: white;">
+                <h3>{category.split()[0]}</h3>
+                <h2>{count}</h2>
+                <p>{pf_sum:,.0f} PF</p>
+            </div>
+            """, unsafe_allow_html=True)
+
     # ==========================================================================
     # TAB 2: TERRITORY ANALİZİ
     # ==========================================================================
@@ -1831,5 +1831,6 @@ def main():
         
         with col_v2:
             st.markdown("####
+
 
 
