@@ -66,7 +66,55 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# =============================================================================
+# BÖLGE RENKLERİ (COĞRAFİ & MODERN)
+# =============================================================================
+REGION_COLORS = {
+    "MARMARA": "#0EA5E9",              # Sky Blue - Deniz ve boğazlar
+    "BATI ANADOLU": "#14B8A6",         # Turkuaz-yeşil arası
+    "EGE": "#FCD34D",                  # BAL SARI (Batı Anadolu ile aynı)
+    "İÇ ANADOLU": "#F59E0B",           # Amber - Kuru bozkır
+    "GÜNEY DOĞU ANADOLU": "#E07A5F",   # Terracotta 
+    "KUZEY ANADOLU": "#059669",        # Emerald - Yemyeşil ormanlar
+    "KARADENİZ": "#059669",            # Emerald (Kuzey Anadolu ile aynı)
+    "AKDENİZ": "#8B5CF6",              # Violet - Akdeniz
+    "DOĞU ANADOLU": "#7C3AED",         # Purple - Yüksek dağlar
+    "DİĞER": "#64748B"                 # Slate Gray
+}
 
+# =============================================================================
+# ŞEHİR EŞLEŞTİRME (MASTER)
+# =============================================================================
+FIX_CITY_MAP = {
+    "AGRI": "AĞRI",
+    "BARTÄ±N": "BARTIN",
+    "BINGÃ¶L": "BİNGÖL",
+    "DÃ¼ZCE": "DÜZCE",
+    "ELAZIG": "ELAZIĞ",
+    "ESKISEHIR": "ESKİŞEHİR",
+    "GÃ¼MÃ¼SHANE": "GÜMÜŞHANE",
+    "HAKKARI": "HAKKARİ",
+    "ISTANBUL": "İSTANBUL",
+    "IZMIR": "İZMİR",
+    "IÄ\x9fDIR": "IĞDIR",
+    "KARABÃ¼K": "KARABÜK",
+    "KINKKALE": "KIRIKKALE",
+    "KIRSEHIR": "KIRŞEHİR",
+    "KÃ¼TAHYA": "KÜTAHYA",
+    "MUGLA": "MUĞLA",
+    "MUS": "MUŞ",
+    "NEVSEHIR": "NEVŞEHİR",
+    "NIGDE": "NİĞDE",
+    "SANLIURFA": "ŞANLIURFA",
+    "SIRNAK": "ŞIRNAK",
+    "TEKIRDAG": "TEKİRDAĞ",
+    "USAK": "UŞAK",
+    "ZINGULDAK": "ZONGULDAK",
+    "Ã\x87ANAKKALE": "ÇANAKKALE",
+    "Ã\x87ANKIRI": "ÇANKIRI",
+    "Ã\x87ORUM": "ÇORUM",
+    "K. MARAS": "KAHRAMANMARAŞ"
+}
 
 # =============================================================================
 # HELPER FUNCTIONS
@@ -96,14 +144,19 @@ def get_product_columns(product):
 def normalize_city(city):
     if pd.isna(city):
         return None
+
     city = str(city).strip().upper()
+
     tr_map = {
         "İ": "I", "Ğ": "G", "Ü": "U",
         "Ş": "S", "Ö": "O", "Ç": "C"
     }
     for k, v in tr_map.items():
         city = city.replace(k, v)
-    return city.title()
+
+    # FIX MAP UYGULA (SON ADIM)
+    return FIX_CITY_MAP.get(city, city.title())
+
 
 
 # =============================================================================
@@ -1382,4 +1435,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
