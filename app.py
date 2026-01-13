@@ -1750,21 +1750,21 @@ def main():
     # TAB 8: RAPORLAR
     # ==========================================================================
      with tab8:
-    st.header("📥 Rapor İndirme Merkezi")
+        st.header("📥 Rapor İndirme Merkezi")
 
-    st.markdown("""
-    Bu bölümden tüm analizlerin Excel raporlarını indirebilirsiniz.
+        st.markdown("""
+        Bu bölümden tüm analizlerin Excel raporlarını indirebilirsiniz.
 
-    **Rapor İçeriği:**
-    - ✅ Territory Performans Analizi
-    - ✅ Zaman Serisi Verileri
-    - ✅ BCG Matrix & Strateji
-    - ✅ Manager Performans Scorecard
-    - ✅ Aksiyon Planı
-    """)
+        **Rapor İçeriği:**
+        - ✅ Territory Performans Analizi
+        - ✅ Zaman Serisi Verileri
+            - ✅ BCG Matrix & Strateji
+        - ✅ Manager Performans Scorecard
+        - ✅ Aksiyon Planı
+        """)
 
-    st.markdown("---")
-
+        st.markdown("---")
+    
     # 📈 Son 12 Ay Trend Grafiği
     st.subheader("📈 Son 12 Aylık Satış Trendi")
 
@@ -1869,6 +1869,7 @@ def main():
         
         with col_v2:
             st.markdown("####
+
 
 
 
