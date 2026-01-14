@@ -3,9 +3,10 @@ pandas
 geopandas
 plotly
 openpyxl
-scikit-learns
-hapely
+scikit-learn
+shapely
 reportlab==4.0.7
 matplotlib==3.8.2
 scipynumpy
 seaborn==0.13.0
+
