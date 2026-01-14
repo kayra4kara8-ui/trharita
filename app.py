@@ -1918,7 +1918,7 @@ def generate_recommendations(df, top_n=5):
             'Tip': '⚡ Hızlı Kazanım',
             'Territory': row['TERRITORIES'],
             'Aksiyon': 'Son kilometre için güçlü itme',
-            'Beklenen_Sonuc': f"%{row['Pazar_Payi_%']:.0f} → %60+ pazar payı',
+            'Beklenen_Sonuc': f"%{row['Pazar_Payi_%']:.0f} → %60+ pazar payı",
             'Yatirim_Seviyesi': 'Orta',
             'Risk': 'Düşük',
             'ROI': 'Yüksek'
@@ -2282,4 +2282,5 @@ Thank you for using this advanced analytics platform!
 
 if __name__ == "__main__":
     main()
+
 
