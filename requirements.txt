@@ -1,7 +1,11 @@
 streamlit
 pandas
-numpy
+geopandas
 plotly
-scikit-learn
 openpyxl
-scipy
+scikit-learns
+hapely
+reportlab==4.0.7
+matplotlib==3.8.2
+scipynumpy
+seaborn==0.13.0
