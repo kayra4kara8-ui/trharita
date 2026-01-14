@@ -191,137 +191,87 @@ st.markdown("""
 # ŞEHİR İSİM HARİTALAMA (GeoJSON ve Excel uyumluluğu için)
 # =============================================================================
 CITY_NAME_MAPPING = {
-    # Excel'deki isimler -> GeoJSON'daki isimler
+  # Şehir normalizasyon - düzeltilmiş
+CITY_NORMALIZE_CLEAN = {
     'ADANA': 'Adana',
-    'ADIYAMAN': 'Adiyaman',
+    'ADIYAMAN': 'Adiyaman', 
     'AFYONKARAHISAR': 'Afyonkarahisar',
-    'AFYONKARAHİSAR': 'Afyonkarahisar',
-    'AĞRI': 'Agri',
+    'AFYON': 'Afyonkarahisar',
     'AGRI': 'Agri',
-    'AKSARAY': 'Aksaray',
-    'AMASYA': 'Amasya',
+    'AĞRI': 'Agri',
     'ANKARA': 'Ankara',
     'ANTALYA': 'Antalya',
-    'ARTVİN': 'Artvin',
-    'ARTVIN': 'Artvin',
-    'AYDın': 'Aydin',
     'AYDIN': 'Aydin',
-    'BALIKESİR': 'Balikesir',
     'BALIKESIR': 'Balikesir',
-    'BARTIN': 'BartÄ±n',
+    'BARTIN': 'Bartin',  # Encoding düzeltildi
     'BATMAN': 'Batman',
-    'BAYBURT': 'Bayburt',
-    'BİLECİK': 'Bilecik',
     'BILECIK': 'Bilecik',
-    'BİNGÖL': 'BingÃ¶l',
-    'BINGOL': 'BingÃ¶l',
-    'BİTLİS': 'Bitlis',
+    'BINGOL': 'Bingol',  # Encoding düzeltildi
     'BITLIS': 'Bitlis',
     'BOLU': 'Bolu',
     'BURDUR': 'Burdur',
     'BURSA': 'Bursa',
-    'ÇANAKKALE': 'Ãanakkale',
-    'CANAKKALE': 'Ãanakkale',
-    'ÇANKIRI': 'Ãankiri',
-    'CANKIRI': 'Ãankiri',
-    'ÇORUM': 'Ãorum',
-    'CORUM': 'Ãorum',
-    'DENİZLİ': 'Denizli',
+    'CANAKKALE': 'Canakkale',
+    'CANKIRI': 'Cankiri',
+    'CORUM': 'Corum',
     'DENIZLI': 'Denizli',
-    'DİYARBAKIR': 'Diyarbakir',
     'DIYARBAKIR': 'Diyarbakir',
-    'DÜZCE': 'DÃ¼zce',
-    'DUZCE': 'DÃ¼zce',
-    'EDİRNE': 'Edirne',
+    'DUZCE': 'Duzce',
     'EDIRNE': 'Edirne',
-    'ELAZIĞ': 'Elazig',
     'ELAZIG': 'Elazig',
-    'ERZİNCAN': 'Erzincan',
     'ERZINCAN': 'Erzincan',
     'ERZURUM': 'Erzurum',
-    'ESKİŞEHİR': 'Eskisehir',
     'ESKISEHIR': 'Eskisehir',
-    'GAZİANTEP': 'Gaziantep',
     'GAZIANTEP': 'Gaziantep',
-    'GİRESUN': 'Giresun',
     'GIRESUN': 'Giresun',
-    'GÜMÜŞHANE': 'GÃ¼mÃ¼shane',
-    'GUMUSHANE': 'GÃ¼mÃ¼shane',
-    'HAKKARİ': 'Hakkari',
+    'GUMUSHANE': 'Gumushane',
     'HAKKARI': 'Hakkari',
     'HATAY': 'Hatay',
-    'IĞDIR': 'IÄdir',
-    'IGDIR': 'IÄdir',
+    'IGDIR': 'Igdir',
     'ISPARTA': 'Isparta',
-    'İSTANBUL': 'Istanbul',
     'ISTANBUL': 'Istanbul',
-    'İZMİR': 'Izmir',
     'IZMIR': 'Izmir',
-    'KAHRAMANMARAŞ': 'K. Maras',
     'KAHRAMANMARAS': 'K. Maras',
-    'KARABÜK': 'KarabÃ¼k',
-    'KARABUK': 'KarabÃ¼k',
+    'K.MARAS': 'K. Maras',
+    'KARABUK': 'Karabuk',
     'KARAMAN': 'Karaman',
     'KARS': 'Kars',
     'KASTAMONU': 'Kastamonu',
-    'KAYSERİ': 'Kayseri',
     'KAYSERI': 'Kayseri',
     'KIRIKKALE': 'Kinkkale',
-    'KIRKLARELİ': 'Kirklareli',
     'KIRKLARELI': 'Kirklareli',
-    'KIRŞEHİR': 'Kirsehir',
     'KIRSEHIR': 'Kirsehir',
-    'KİLİS': 'Kilis',
     'KILIS': 'Kilis',
-    'KOCAELİ': 'Kocaeli',
     'KOCAELI': 'Kocaeli',
     'KONYA': 'Konya',
-    'KÜTAHYA': 'KÃ¼tahya',
-    'KUTAHYA': 'KÃ¼tahya',
+    'KUTAHYA': 'Kutahya',
     'MALATYA': 'Malatya',
-    'MANİSA': 'Manisa',
     'MANISA': 'Manisa',
-    'MARDİN': 'Mardin',
     'MARDIN': 'Mardin',
-    'MERSİN': 'Mersin',
     'MERSIN': 'Mersin',
-    'MUĞLA': 'Mugla',
     'MUGLA': 'Mugla',
-    'MUŞ': 'Mus',
     'MUS': 'Mus',
-    'NEVŞEHİR': 'Nevsehir',
     'NEVSEHIR': 'Nevsehir',
-    'NİĞDE': 'Nigde',
     'NIGDE': 'Nigde',
     'ORDU': 'Ordu',
-    'OSMANİYE': 'Osmaniye',
     'OSMANIYE': 'Osmaniye',
-    'RİZE': 'Rize',
     'RIZE': 'Rize',
     'SAKARYA': 'Sakarya',
     'SAMSUN': 'Samsun',
-    'SİİRT': 'Siirt',
     'SIIRT': 'Siirt',
-    'SİNOP': 'Sinop',
     'SINOP': 'Sinop',
-    'SİVAS': 'Sivas',
     'SIVAS': 'Sivas',
-    'ŞANLIURFA': 'Sanliurfa',
     'SANLIURFA': 'Sanliurfa',
-    'ŞIRNAK': 'Sirnak',
     'SIRNAK': 'Sirnak',
-    'TEKİRDAĞ': 'Tekirdag',
     'TEKIRDAG': 'Tekirdag',
     'TOKAT': 'Tokat',
     'TRABZON': 'Trabzon',
-    'TUNCELİ': 'Tunceli',
     'TUNCELI': 'Tunceli',
-    'UŞAK': 'Usak',
     'USAK': 'Usak',
     'VAN': 'Van',
     'YALOVA': 'Yalova',
     'YOZGAT': 'Yozgat',
-    'ZONGULDAK': 'Zinguldak',
+    'ZONGULDAK': 'Zonguldak'
 }
 
 # =============================================================================
@@ -349,11 +299,14 @@ def get_product_columns(product):
     else:  # PF IZOTONIK
         return {"pf": "PF IZOTONIK", "rakip": "DIGER IZOTONIK"}
 
-def normalize_city_name(city_name):
-    """Şehir ismini GeoJSON formatına çevir"""
+def normalize_city_name_fixed(city_name):
+    """Düzeltilmiş şehir normalizasyon"""
+    if pd.isna(city_name):
+        return None
     city_upper = str(city_name).strip().upper()
-    return CITY_NAME_MAPPING.get(city_upper, city_name)
-
+    # Türkçe karakter temizle
+    city_upper = city_upper.replace('İ', 'I').replace('Ş', 'S').replace('Ğ', 'G').replace('Ü', 'U').replace('Ö', 'O').replace('Ç', 'C')
+    return CITY_NORMALIZE_CLEAN.get(city_upper, city_name)
 # =============================================================================
 # DATA LOADING
 # =============================================================================
@@ -379,13 +332,24 @@ def load_excel_data(file):
     return df
 
 @st.cache_data
-def load_geojson():
-    """Türkiye GeoJSON'ını yükle"""
-    try:
-        with open('/mnt/user-data/uploads/turkey.geojson', 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except:
-        return None
+def load_geojson_safe():
+    """GeoJSON'ı güvenli yükle"""
+    possible_paths = [
+        '/mnt/user-data/uploads/turkey.geojson',
+        'turkey.geojson',
+        './turkey.geojson'
+    ]
+    
+    for path in possible_paths:
+        try:
+            with open(path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except:
+            continue
+    
+    st.warning("⚠️ turkey.geojson bulunamadı. Harita gösterilemiyor.")
+    return None
+
 
 # =============================================================================
 # ANALYSIS FUNCTIONS
@@ -580,13 +544,21 @@ def calculate_bcg_matrix(df, product, date_filter=None):
 # VISUALIZATION FUNCTIONS
 # =============================================================================
 
-def create_turkey_map(city_data, geojson, title="Türkiye Satış Haritası"):
-    """Türkiye haritası oluştur"""
+def create_turkey_map_fixed(city_data, geojson, title="Türkiye Satış Haritası"):
+    """Düzeltilmiş Türkiye haritası"""
     if geojson is None:
-        st.error("GeoJSON dosyası yüklenemedi")
+        st.error("❌ GeoJSON dosyası yüklenemedi")
         return None
+        # Debug: Eşleşmeyen şehirler
+    geojson_cities = [f['properties']['name'] for f in geojson['features']]
+    data_cities = city_data['City'].unique()
     
-    fig = px.choropleth(
+    missing = set(data_cities) - set(geojson_cities)
+    if missing:
+        st.warning(f"⚠️ GeoJSON'da bulunamayan şehirler: {missing}")
+    
+     # Choropleth
+    fig = px.choropleth_mapbox(
         city_data,
         geojson=geojson,
         locations='City',
@@ -600,22 +572,15 @@ def create_turkey_map(city_data, geojson, title="Türkiye Satış Haritası"):
         },
         color_continuous_scale="YlOrRd",
         labels={'PF_Satis': 'PF Satış'},
-        title=title
-    )
-    
-    fig.update_geos(
-        fitbounds="locations",
-        visible=False
+        title=title,
+        mapbox_style="carto-positron",
+        center={"lat": 39.0, "lon": 35.0},
+        zoom=5
     )
     
     fig.update_layout(
         height=600,
-        margin=dict(l=0, r=0, t=50, b=0),
-        geo=dict(
-            showframe=False,
-            showcoastlines=False,
-            projection_type='mercator'
-        )
+        margin=dict(l=0, r=0, t=50, b=0)
     )
     
     return fig
@@ -1629,5 +1594,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
