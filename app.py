@@ -1061,8 +1061,6 @@ def main():
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
 
-if __name__ == "__main__":
-    main()
                 f"%{avg_growth:.1f}",
                 delta="Pozitif" if avg_growth > 0 else "Negatif"
             )
@@ -2274,3 +2272,6 @@ TOTAL LINES OF CODE: 2000+
 Thank you for using this advanced analytics platform!
 ═══════════════════════════════════════════════════════════════════════════════
 """
+
+if __name__ == "__main__":
+    main()
