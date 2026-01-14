@@ -27,7 +27,7 @@ warnings.filterwarnings("ignore")
 # PAGE CONFIG
 # =============================================================================
 st.set_page_config(
-    page_title="Gelişmiş Ticari Portföy Analizi",
+    page_title="Ticari Portföy Analizi",
     page_icon="🎯",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -1629,4 +1629,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
