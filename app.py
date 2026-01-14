@@ -39,10 +39,15 @@ st.set_page_config(
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
-    * { font-family: 'Inter', sans-serif; }
+    
+    * {
+        font-family: 'Inter', sans-serif;
+    }
+    
     .stApp {
         background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
     }
+    
     .main-header {
         font-size: 3.5rem;
         font-weight: 900;
@@ -51,28 +56,134 @@ st.markdown("""
         background: linear-gradient(135deg, #ffd700 0%, #f59e0b 50%, #d97706 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
+        text-shadow: 0 0 40px rgba(255, 215, 0, 0.4);
+        letter-spacing: -1px;
     }
+    
+    .sub-header {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #f1f5f9;
+        margin: 1.5rem 0;
+        padding: 1rem;
+        background: rgba(59, 130, 246, 0.1);
+        border-left: 4px solid #3b82f6;
+        border-radius: 8px;
+    }
+    
     div[data-testid="stMetricValue"] {
-        font-size: 2.5rem;
+        font-size: 2.8rem;
         font-weight: 900;
         background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #8b5cf6 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
     }
+    
     div[data-testid="metric-container"] {
-        background: rgba(30, 41, 59, 0.8);
+        background: rgba(30, 41, 59, 0.9);
         padding: 2rem;
         border-radius: 16px;
         border: 1px solid rgba(59, 130, 246, 0.3);
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
     }
+    
+    div[data-testid="metric-container"]:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 40px rgba(59, 130, 246, 0.4);
+        border-color: rgba(59, 130, 246, 0.6);
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        color: #94a3b8;
+        font-weight: 600;
+        padding: 1rem 2rem;
+        background: rgba(30, 41, 59, 0.5);
+        border-radius: 8px 8px 0 0;
+        margin: 0 0.25rem;
+        transition: all 0.2s ease;
+    }
+    
+    .stTabs [data-baseweb="tab"]:hover {
+        background: rgba(59, 130, 246, 0.2);
+        color: #e0e7ff;
+    }
+    
     .stTabs [data-baseweb="tab"][aria-selected="true"] {
         background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
         color: white;
         box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
     }
-    h1, h2, h3 { color: #f1f5f9 !important; font-weight: 700; }
-    p, span, div { color: #cbd5e1; }
+    
+    h1, h2, h3 {
+        color: #f1f5f9 !important;
+        font-weight: 700;
+    }
+    
+    p, span, div, label {
+        color: #cbd5e1;
+    }
+    
+    .stDataFrame {
+        background: rgba(30, 41, 59, 0.5);
+        border-radius: 8px;
+    }
+    
+    div[data-testid="stExpander"] {
+        background: rgba(30, 41, 59, 0.6);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        border-radius: 8px;
+        margin: 0.5rem 0;
+    }
+    
+    .stButton>button {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+    
+    .stButton>button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
+    }
+    
+    .info-box {
+        background: rgba(59, 130, 246, 0.1);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+    
+    .success-box {
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+    
+    .warning-box {
+        background: rgba(245, 158, 11, 0.1);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+    
+    .error-box {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 1rem 0;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -1518,3 +1629,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
