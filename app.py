@@ -59,7 +59,7 @@ st.markdown("""
         padding: 1.5rem;
         border-radius: 10px;
         box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        color: white;
+        color: blue;
         text-align: center;
         transition: transform 0.3s ease;
     }
@@ -82,7 +82,7 @@ st.markdown("""
         font-size: 1.1rem;
         font-weight: 600;
         border-radius: 8px;
-        background-color: white;
+        background-color: blue;
         transition: all 0.3s ease;
     }
     
@@ -91,7 +91,7 @@ st.markdown("""
     }
     
     .territory-card {
-        background: white;
+        background: blue;
         padding: 1rem;
         border-radius: 8px;
         border-left: 4px solid #3B82F6;
@@ -101,7 +101,7 @@ st.markdown("""
     
     .priority-critical {
         background: linear-gradient(135deg, #DC2626 0%, #991B1B 100%);
-        color: white;
+        color: blue;
         padding: 1rem;
         border-radius: 8px;
         margin: 0.5rem 0;
@@ -109,7 +109,7 @@ st.markdown("""
     
     .priority-high {
         background: linear-gradient(135deg, #EA580C 0%, #C2410C 100%);
-        color: white;
+        color: blue;
         padding: 1rem;
         border-radius: 8px;
         margin: 0.5rem 0;
@@ -117,7 +117,7 @@ st.markdown("""
     
     .priority-medium {
         background: linear-gradient(135deg, #0891B2 0%, #0E7490 100%);
-        color: white;
+        color: blue;
         padding: 1rem;
         border-radius: 8px;
         margin: 0.5rem 0;
@@ -1059,3 +1059,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
