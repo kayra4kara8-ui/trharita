@@ -42,154 +42,240 @@ st.set_page_config(
 # =============================================================================
 # 2. dosyanızın başındaki CSS kısmını bununla değiştirin:
 
+# =============================================================================
+# MODERN PROFESSIONAL CSS - DARK BLUE THEME
+# =============================================================================
 st.markdown("""
 <style>
-    /* Ana başlık - Mavi gradient */
+    /* Import Google Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    
+    /* Global Styles */
+    * {
+        font-family: 'Inter', sans-serif;
+    }
+    
+    /* Main Background - Elegant Dark Blue Gradient */
+    .stApp {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+    }
+    
+    /* Main Header - Gold Gradient */
     .main-header {
-        font-size: 2.8rem;
-        font-weight: bold;
+        font-size: 3rem;
+        font-weight: 800;
         text-align: center;
-        padding: 1.5rem 0;
+        padding: 2rem 0;
         margin-bottom: 2rem;
-        background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        letter-spacing: -1px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
     }
     
-    /* Metric kartları - Mavi tonları */
-    .metric-card {
-        background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-        padding: 1.5rem;
-        border-radius: 10px;
-        box-shadow: 0 4px 6px rgba(59,130,246,0.2);
-        color: white;
+    .subtitle {
         text-align: center;
-        transition: transform 0.3s ease;
-    }
-    
-    .metric-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 6px 12px rgba(59,130,246,0.3);
-    }
-    
-    /* Tab arkaplanı - Açık mavi */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 2rem;
-        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-        padding: 1rem;
-        border-radius: 10px;
-    }
-    
-    /* Tab butonları - Mavi tonları */
-    .stTabs [data-baseweb="tab"] {
-        height: 3.5rem;
-        padding: 0 2rem;
+        color: #cbd5e1;
         font-size: 1.1rem;
+        margin-top: -1.5rem;
+        margin-bottom: 2rem;
+        font-weight: 500;
+    }
+    
+    /* Sidebar - Modern Dark */
+    section[data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+        border-right: 1px solid #334155;
+    }
+    
+    section[data-testid="stSidebar"] h1,
+    section[data-testid="stSidebar"] h2,
+    section[data-testid="stSidebar"] h3,
+    section[data-testid="stSidebar"] label {
+        color: #f1f5f9 !important;
+    }
+    
+    section[data-testid="stSidebar"] .stSelectbox > div,
+    section[data-testid="stSidebar"] .stRadio > div {
+        color: #e2e8f0;
+    }
+    
+    /* Tabs - Sleek Modern Design */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 0.5rem;
+        background: rgba(30, 41, 59, 0.6);
+        padding: 0.75rem;
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(148, 163, 184, 0.1);
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        height: 3rem;
+        padding: 0 1.5rem;
+        font-size: 1rem;
         font-weight: 600;
         border-radius: 8px;
-        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-        color: #1e40af;
-        transition: all 0.3s ease;
-        border: 2px solid transparent;
+        background: transparent;
+        color: #94a3b8;
+        border: 1px solid transparent;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     
     .stTabs [data-baseweb="tab"]:hover {
-        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-        border-color: #3b82f6;
-        transform: translateY(-2px);
+        background: rgba(59, 130, 246, 0.1);
+        color: #60a5fa;
+        border-color: rgba(59, 130, 246, 0.3);
     }
     
-    /* Aktif tab - Koyu mavi */
     .stTabs [data-baseweb="tab"][aria-selected="true"] {
         background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
         color: white;
         border-color: #1e40af;
-        box-shadow: 0 4px 6px rgba(59,130,246,0.3);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
     }
     
-    /* Ana sayfa arkaplanı - Çok açık mavi */
-    .stApp {
-        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    /* Metric Cards - Glass Morphism */
+    div[data-testid="stMetricValue"] {
+        font-size: 2rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
     }
     
-    /* Territory kartları - Mavi border */
-    .territory-card {
-        background: white;
-        padding: 1rem;
-        border-radius: 8px;
-        border-left: 4px solid #3b82f6;
-        margin: 0.5rem 0;
-        box-shadow: 0 2px 4px rgba(59,130,246,0.1);
+    div[data-testid="metric-container"] {
+        background: rgba(30, 41, 59, 0.6);
+        padding: 1.5rem;
+        border-radius: 12px;
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
     
-    /* Öncelik kartları - Mavi tonlarda */
-    .priority-critical {
-        background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
-        color: white;
-        padding: 1rem;
-        border-radius: 8px;
-        margin: 0.5rem 0;
+    div[data-testid="metric-container"]:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
+        border-color: rgba(59, 130, 246, 0.4);
     }
     
-    .priority-high {
-        background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-        color: white;
-        padding: 1rem;
-        border-radius: 8px;
-        margin: 0.5rem 0;
-    }
-    
-    .priority-medium {
-        background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
-        color: white;
-        padding: 1rem;
-        border-radius: 8px;
-        margin: 0.5rem 0;
-    }
-    
-    /* Sidebar - Mavi tonları */
-    section[data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%);
-    }
-    
-    section[data-testid="stSidebar"] .stSelectbox label,
-    section[data-testid="stSidebar"] .stRadio label,
-    section[data-testid="stSidebar"] h1, 
-    section[data-testid="stSidebar"] h2,
-    section[data-testid="stSidebar"] h3 {
-        color: #1e40af !important;
-    }
-    
-    /* Butonlar - Mavi */
+    /* Buttons - Modern Gradient */
     .stButton > button {
         background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
         color: white;
         border: none;
-        border-radius: 8px;
-        padding: 0.5rem 2rem;
+        border-radius: 10px;
+        padding: 0.75rem 2rem;
         font-weight: 600;
+        font-size: 1rem;
         transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
     }
     
     .stButton > button:hover {
-        background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-        box-shadow: 0 4px 8px rgba(59,130,246,0.3);
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
         transform: translateY(-2px);
     }
     
-    /* Metrik kutuları - Mavi tonları */
-    div[data-testid="stMetricValue"] {
-        color: #1e40af;
-        font-weight: bold;
+    /* Info/Warning/Success Boxes */
+    .stAlert {
+        background: rgba(30, 41, 59, 0.8);
+        border-radius: 10px;
+        border-left: 4px solid #3b82f6;
+        color: #e2e8f0;
+        backdrop-filter: blur(10px);
     }
     
-    /* Grafikler arkaplan */
-    .plotly {
-        background: white;
+    /* DataFrames */
+    .stDataFrame {
+        background: rgba(30, 41, 59, 0.6);
         border-radius: 10px;
-        padding: 1rem;
-        box-shadow: 0 2px 8px rgba(59,130,246,0.1);
+        overflow: hidden;
+    }
+    
+    /* Expander */
+    .streamlit-expanderHeader {
+        background: rgba(30, 41, 59, 0.6);
+        color: #f1f5f9;
+        border-radius: 8px;
+        font-weight: 600;
+    }
+    
+    /* Custom Cards */
+    .info-card {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.1) 100%);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        color: #e2e8f0;
+        backdrop-filter: blur(10px);
+    }
+    
+    .success-card {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        color: #e2e8f0;
+    }
+    
+    .warning-card {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(217, 119, 6, 0.1) 100%);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        color: #e2e8f0;
+    }
+    
+    .danger-card {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.1) 100%);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        color: #e2e8f0;
+    }
+    
+    /* Headings */
+    h1, h2, h3, h4, h5, h6 {
+        color: #f1f5f9 !important;
+        font-weight: 700;
+    }
+    
+    /* Text */
+    p, span, div {
+        color: #cbd5e1;
+    }
+    
+    /* Divider */
+    hr {
+        border-color: rgba(148, 163, 184, 0.2);
+        margin: 2rem 0;
+    }
+    
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: #1e293b;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: #3b82f6;
+        border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: #2563eb;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -1904,5 +1990,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
