@@ -437,19 +437,20 @@ def calculate_time_series(df, product, territory=None, frequency='M'):
     if territory and territory != "TÜMÜ":
         df_filtered = df_filtered[df_filtered['TERRITORIES'] == territory]
     
+    # HATA DÜZELTMESİ: group_col'u doğru oluştur
     if frequency == 'D':
-        group_col = df_filtered['DATE'].dt.strftime('%Y-%m-%d')
+        df_filtered['group_col'] = df_filtered['DATE'].dt.strftime('%Y-%m-%d')
     elif frequency == 'W':
-        group_col = df_filtered['DATE'].dt.strftime('%Y-W%U')
+        df_filtered['group_col'] = df_filtered['DATE'].dt.strftime('%Y-W%U')
     elif frequency == 'Q':
-        group_col = df_filtered['DATE'].dt.to_period('Q').astype(str)
+        df_filtered['group_col'] = df_filtered['DATE'].dt.to_period('Q').astype(str)
     else:  # Monthly
-        group_col = df_filtered['YIL_AY']
+        df_filtered['group_col'] = df_filtered['YIL_AY']
     
-    time_series = df_filtered.groupby(group_col).agg({
+    time_series = df_filtered.groupby('group_col').agg({
         cols['pf']: 'sum',
         cols['rakip']: 'sum'
-    }).reset_index().sort_values(group_col)
+    }).reset_index().sort_values('group_col')
     
     time_series.columns = ['Period', 'PF_Satis', 'Rakip_Satis']
     time_series['Toplam_Pazar'] = time_series['PF_Satis'] + time_series['Rakip_Satis']
@@ -1903,4 +1904,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
