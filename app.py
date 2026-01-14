@@ -1044,49 +1044,56 @@ def main():
             """, unsafe_allow_html=True)
     
     # TAB 7: RAPOR
-    with tabs[6]:
-        st.header("📥 Raporları İndir")
-        
-        terr_perf = calculate_territory_performance(df_filtered, selected_product)
-        
-        # Excel rapor
-        output = BytesIO()
-        with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            terr_perf.to_excel(writer, sheet_name='Territory', index=False)
-        
-        st.download_button(
-            "📥 Excel İndir",
-            output.getvalue(),
-            f"portfoy_analizi_{datetime.now().strftime('%Y%m%d')}.xlsx",
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+with tabs[6]:
+    st.header("📥 Raporları İndir")
+    
+    terr_perf = calculate_territory_performance(df_filtered, selected_product)
+    
+    # Excel rapor
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        terr_perf.to_excel(writer, sheet_name='Territory', index=False)
+    
+    st.download_button(
+        "📥 Excel İndir",
+        output.getvalue(),
+        f"portfoy_analizi_{datetime.now().strftime('%Y%m%d')}.xlsx",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+    # ---- METRICS ----
+    col_tsm1, col_tsm2, col_tsm3, col_tsm4 = st.columns(4)
+
+    with col_tsm1:
+        st.metric(
+            "📈 Ortalama Büyüme",
+            f"%{avg_growth:.1f}",
+            delta=f"{avg_growth:+.1f}%"
         )
 
-                f"%{avg_growth:.1f}",
-                delta="Pozitif" if avg_growth > 0 else "Negatif"
-            )
-            
-            with col_tsm2:
-                if 'Volatility' in time_series.columns:
-                    avg_vol = time_series['Volatility'].mean()
-                    st.metric("📊 Volatilite", f"{avg_vol:,.0f}")
-            
-            with col_tsm3:
-                if forecast_df is not None:
-                    total_forecast = forecast_df['Forecast'].sum()
-                    st.metric("🔮 Toplam Tahmin", f"{total_forecast:,.0f}")
-            
-            with col_tsm4:
-                if 'Trend_Strength' in time_series.columns:
-                    trend_str = time_series['Trend_Strength'].iloc[-1]
-                    st.metric("📉 Trend Gücü", f"{trend_str:,.0f}")
-            
-            # Forecast table
-            if forecast_df is not None:
-                st.markdown("#### 🔮 Tahmin Detayları")
-                st.dataframe(
-                    forecast_df.style.format({'Forecast': '{:,.0f}'}),
-                    use_container_width=True
-                )
+    with col_tsm2:
+        if 'Volatility' in time_series.columns:
+            avg_vol = time_series['Volatility'].mean()
+            st.metric("📊 Volatilite", f"{avg_vol:,.0f}")
+
+    with col_tsm3:
+        if forecast_df is not None:
+            total_forecast = forecast_df['Forecast'].sum()
+            st.metric("🔮 Toplam Tahmin", f"{total_forecast:,.0f}")
+
+    with col_tsm4:
+        if 'Trend_Strength' in time_series.columns:
+            trend_str = time_series['Trend_Strength'].iloc[-1]
+            st.metric("📉 Trend Gücü", f"{trend_str:,.0f}")
+
+    # Forecast table
+    if forecast_df is not None:
+        st.markdown("#### 🔮 Tahmin Detayları")
+        st.dataframe(
+            forecast_df.style.format({'Forecast': '{:,.0f}'}),
+            use_container_width=True
+        )
+
     
     # =========================================================================
     # TAB 4: GEOGRAPHIC ANALYSIS
@@ -2275,3 +2282,4 @@ Thank you for using this advanced analytics platform!
 
 if __name__ == "__main__":
     main()
+
