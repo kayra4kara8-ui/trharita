@@ -40,25 +40,29 @@ st.set_page_config(
 # =============================================================================
 # CUSTOM CSS - MODERN & PROFESSIONAL
 # =============================================================================
+# 2. dosyanızın başındaki CSS kısmını bununla değiştirin:
+
 st.markdown("""
 <style>
+    /* Ana başlık - Mavi gradient */
     .main-header {
         font-size: 2.8rem;
         font-weight: bold;
         text-align: center;
         padding: 1.5rem 0;
         margin-bottom: 2rem;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
     }
     
+    /* Metric kartları - Mavi tonları */
     .metric-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
         padding: 1.5rem;
         border-radius: 10px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 6px rgba(59,130,246,0.2);
         color: white;
         text-align: center;
         transition: transform 0.3s ease;
@@ -66,41 +70,62 @@ st.markdown("""
     
     .metric-card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        box-shadow: 0 6px 12px rgba(59,130,246,0.3);
     }
     
+    /* Tab arkaplanı - Açık mavi */
     .stTabs [data-baseweb="tab-list"] {
         gap: 2rem;
-        background-color: #f8f9fa;
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
         padding: 1rem;
         border-radius: 10px;
     }
     
+    /* Tab butonları - Mavi tonları */
     .stTabs [data-baseweb="tab"] {
         height: 3.5rem;
         padding: 0 2rem;
         font-size: 1.1rem;
         font-weight: 600;
         border-radius: 8px;
-        background-color: white;
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        color: #1e40af;
         transition: all 0.3s ease;
+        border: 2px solid transparent;
     }
     
     .stTabs [data-baseweb="tab"]:hover {
-        background-color: #e9ecef;
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        border-color: #3b82f6;
+        transform: translateY(-2px);
     }
     
+    /* Aktif tab - Koyu mavi */
+    .stTabs [data-baseweb="tab"][aria-selected="true"] {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        border-color: #1e40af;
+        box-shadow: 0 4px 6px rgba(59,130,246,0.3);
+    }
+    
+    /* Ana sayfa arkaplanı - Çok açık mavi */
+    .stApp {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    }
+    
+    /* Territory kartları - Mavi border */
     .territory-card {
         background: white;
         padding: 1rem;
         border-radius: 8px;
-        border-left: 4px solid #3B82F6;
+        border-left: 4px solid #3b82f6;
         margin: 0.5rem 0;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        box-shadow: 0 2px 4px rgba(59,130,246,0.1);
     }
     
+    /* Öncelik kartları - Mavi tonlarda */
     .priority-critical {
-        background: linear-gradient(135deg, #DC2626 0%, #991B1B 100%);
+        background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
         color: white;
         padding: 1rem;
         border-radius: 8px;
@@ -108,7 +133,7 @@ st.markdown("""
     }
     
     .priority-high {
-        background: linear-gradient(135deg, #EA580C 0%, #C2410C 100%);
+        background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
         color: white;
         padding: 1rem;
         border-radius: 8px;
@@ -116,11 +141,55 @@ st.markdown("""
     }
     
     .priority-medium {
-        background: linear-gradient(135deg, #0891B2 0%, #0E7490 100%);
+        background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
         color: white;
         padding: 1rem;
         border-radius: 8px;
         margin: 0.5rem 0;
+    }
+    
+    /* Sidebar - Mavi tonları */
+    section[data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%);
+    }
+    
+    section[data-testid="stSidebar"] .stSelectbox label,
+    section[data-testid="stSidebar"] .stRadio label,
+    section[data-testid="stSidebar"] h1, 
+    section[data-testid="stSidebar"] h2,
+    section[data-testid="stSidebar"] h3 {
+        color: #1e40af !important;
+    }
+    
+    /* Butonlar - Mavi */
+    .stButton > button {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.5rem 2rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .stButton > button:hover {
+        background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+        box-shadow: 0 4px 8px rgba(59,130,246,0.3);
+        transform: translateY(-2px);
+    }
+    
+    /* Metrik kutuları - Mavi tonları */
+    div[data-testid="stMetricValue"] {
+        color: #1e40af;
+        font-weight: bold;
+    }
+    
+    /* Grafikler arkaplan */
+    .plotly {
+        background: white;
+        border-radius: 10px;
+        padding: 1rem;
+        box-shadow: 0 2px 8px rgba(59,130,246,0.1);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -1834,3 +1903,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
