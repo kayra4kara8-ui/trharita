@@ -278,7 +278,7 @@ CITY_NORMALIZE_CLEAN = {
     'MALATYA': 'Malatya',
     'MANISA': 'Manisa',
     'MANİSA': 'Manisa',
-    'MARDIN': 'Mardin",
+    'MARDIN': 'Mardin',
     'MARDİN': 'Mardin',
     'MERSIN': 'Mersin',
     'MERSİN': 'Mersin',
@@ -2247,3 +2247,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
