@@ -190,7 +190,7 @@ st.markdown("""
 # =============================================================================
 # ŞEHİR İSİM HARİTALAMA (GeoJSON ve Excel uyumluluğu için)
 # =============================================================================
-CITY_NAME_MAPPING = {
+
   # Şehir normalizasyon - düzeltilmiş
 CITY_NORMALIZE_CLEAN = {
     'ADANA': 'Adana',
@@ -1594,6 +1594,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
