@@ -58,17 +58,17 @@ st.markdown("""
         font-weight: 900;
         text-align: center;
         padding: 2rem 0;
-        background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #2563eb 100%);
+        background: linear-gradient(135deg, #1D4ED8 0%, #2563EB 50%, #3B82F6 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        text-shadow: 0 0 40px rgba(59, 130, 246, 0.4);
+        text-shadow: 0 0 40px rgba(37, 99, 235, 0.3);
         letter-spacing: -1px;
     }
     
     div[data-testid="stMetricValue"] {
         font-size: 2.8rem;
         font-weight: 900;
-        background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #8b5cf6 100%);
+        background: linear-gradient(135deg, #1D4ED8 0%, #2563EB 50%, #3B82F6 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
     }
@@ -77,7 +77,7 @@ st.markdown("""
         background: rgba(30, 41, 59, 0.9);
         padding: 2rem;
         border-radius: 16px;
-        border: 1px solid rgba(59, 130, 246, 0.3);
+        border: 1px solid rgba(37, 99, 235, 0.3);
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         backdrop-filter: blur(10px);
         transition: all 0.3s ease;
@@ -85,8 +85,8 @@ st.markdown("""
     
     div[data-testid="metric-container"]:hover {
         transform: translateY(-5px);
-        box-shadow: 0 12px 40px rgba(59, 130, 246, 0.4);
-        border-color: rgba(59, 130, 246, 0.6);
+        box-shadow: 0 12px 40px rgba(37, 99, 235, 0.4);
+        border-color: rgba(37, 99, 235, 0.6);
     }
     
     .stTabs [data-baseweb="tab"] {
@@ -100,14 +100,14 @@ st.markdown("""
     }
     
     .stTabs [data-baseweb="tab"]:hover {
-        background: rgba(59, 130, 246, 0.2);
+        background: rgba(37, 99, 235, 0.2);
         color: #e0e7ff;
     }
     
     .stTabs [data-baseweb="tab"][aria-selected="true"] {
-        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        background: linear-gradient(135deg, #1D4ED8 0%, #2563EB 100%);
         color: white;
-        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
+        box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
     }
     
     h1, h2, h3 {
@@ -120,49 +120,74 @@ st.markdown("""
     }
     
     .stButton>button {
-        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        background: linear-gradient(135deg, #1D4ED8 0%, #2563EB 100%);
         color: white;
         border: none;
         padding: 0.75rem 2rem;
         border-radius: 8px;
         font-weight: 600;
         transition: all 0.3s ease;
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
     }
     
     .stButton>button:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
+        box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);
     }
 </style>
 """, unsafe_allow_html=True)
 
 # =============================================================================
-# CONSTANTS
+# PROFESYONEL RENK PALETİ (Corporate Professional Colors)
 # =============================================================================
-# MAVİ TONLARINDA BÖLGE RENKLERİ
+# Daha profesyonel, modern ve kurumsal mavi tonları
 REGION_COLORS = {
-    "MARMARA": "#0EA5E9",              # Parlak Mavi
-    "BATI ANADOLU": "#3B82F6",         # Canlı Mavi
-    "EGE": "#60A5FA",                  # Açık Mavi
-    "İÇ ANADOLU": "#1D4ED8",           # Koyu Mavi
-    "GÜNEY DOĞU ANADOLU": "#2563EB",   # Kraliyet Mavisi
-    "KUZEY ANADOLU": "#1E40AF",        # Derin Mavi
-    "KARADENİZ": "#1E40AF",            # Derin Mavi (Kuzey Anadolu ile aynı)
-    "AKDENİZ": "#0369A1",              # Okyanus Mavisi
-    "DOĞU ANADOLU": "#0C4A6E",         # Gece Mavisi
-    "DİĞER": "#64748B"                 # Gri-Mavi
+    "MARMARA": "#1D4ED8",              # Royal Blue
+    "BATI ANADOLU": "#2563EB",         # Corporate Blue
+    "EGE": "#3B82F6",                  # Professional Blue
+    "İÇ ANADOLU": "#1E40AF",           # Navy Blue
+    "GÜNEY DOĞU ANADOLU": "#1E3A8A",   # Deep Navy
+    "KUZEY ANADOLU": "#1D4ED8",        # Royal Blue
+    "KARADENİZ": "#1E40AF",            # Navy Blue
+    "AKDENİZ": "#0EA5E9",              # Sky Blue
+    "DOĞU ANADOLU": "#0C4A6E",         # Dark Blue
+    "DİĞER": "#64748B"                 # Slate Blue
 }
 
-# MAVİ TONLARINDA PERFORMANS RENKLERİ
+# PROFESYONEL PERFORMANS RENKLERİ
 PERFORMANCE_COLORS = {
-    "high": "#60A5FA",      # Açık Mavi - Yüksek Performans
-    "medium": "#3B82F6",    # Orta Mavi - Orta Performans
-    "low": "#1D4ED8",       # Koyu Mavi - Düşük Performans
-    "positive": "#3B82F6",  # Pozitif - Canlı Mavi
-    "negative": "#1E40AF",  # Negatif - Derin Mavi
-    "neutral": "#94A3B8"    # Nötr - Gri-Mavi
+    "high": "#2563EB",      # Corporate Blue - Yüksek
+    "medium": "#3B82F6",    # Professional Blue - Orta
+    "low": "#1E40AF",       # Navy Blue - Düşük
+    "positive": "#10B981",  # Emerald Green - Pozitif
+    "negative": "#EF4444",  # Red - Negatif
+    "neutral": "#64748B",   # Slate - Nötr
+    "star": "#F59E0B",      # Amber - Star
+    "cash_cow": "#10B981",  # Emerald - Cash Cow
+    "question": "#8B5CF6",  # Violet - Question
+    "dog": "#6B7280"        # Gray - Dog
 }
+
+# BCG MATRIX PROFESYONEL RENKLER
+BCG_COLORS = {
+    "⭐ Star": "#F59E0B",      # Amber
+    "🐄 Cash Cow": "#10B981",  # Emerald
+    "❓ Question Mark": "#8B5CF6",  # Violet
+    "🐶 Dog": "#6B7280"        # Gray
+}
+
+# YATIRIM STRATEJİSİ RENKLERİ
+STRATEGY_COLORS = {
+    "🚀 Agresif": "#EF4444",      # Red
+    "⚡ Hızlandırılmış": "#F59E0B",  # Amber
+    "🛡️ Koruma": "#10B981",        # Emerald
+    "💎 Potansiyel": "#8B5CF6",     # Violet
+    "👁️ İzleme": "#64748B"         # Slate
+}
+
+# =============================================================================
+# CONSTANTS
+# =============================================================================
 
 FIX_CITY_MAP = {
     "AGRI": "AĞRI",
@@ -1023,21 +1048,21 @@ def create_forecast_chart(historical_df, forecast_df):
     return fig
 
 def create_competitor_comparison_chart(comp_data):
-    """Rakip karşılaştırma - MAVİ TONLARI"""
+    """Rakip karşılaştırma - PROFESYONEL RENKLER"""
     fig = go.Figure()
     
     fig.add_trace(go.Bar(
         x=comp_data['YIL_AY'],
         y=comp_data['PF'],
         name='PF',
-        marker_color=PERFORMANCE_COLORS['high']  # Açık Mavi
+        marker_color=PERFORMANCE_COLORS['high']  # Corporate Blue
     ))
     
     fig.add_trace(go.Bar(
         x=comp_data['YIL_AY'],
         y=comp_data['Rakip'],
         name='Rakip',
-        marker_color=PERFORMANCE_COLORS['low']   # Koyu Mavi
+        marker_color=PERFORMANCE_COLORS['low']   # Navy Blue
     ))
     
     fig.update_layout(
@@ -1054,7 +1079,7 @@ def create_competitor_comparison_chart(comp_data):
     return fig
 
 def create_market_share_trend(comp_data):
-    """Pazar payı trend - MAVİ TONLARI"""
+    """Pazar payı trend - PROFESYONEL RENKLER"""
     fig = go.Figure()
     
     fig.add_trace(go.Scatter(
@@ -1089,7 +1114,7 @@ def create_market_share_trend(comp_data):
     return fig
 
 def create_growth_comparison(comp_data):
-    """Büyüme karşılaştırma - MAVİ TONLARI"""
+    """Büyüme karşılaştırma - PROFESYONEL RENKLER"""
     fig = go.Figure()
     
     fig.add_trace(go.Scatter(
@@ -1219,8 +1244,8 @@ def main():
     strateji_list = ["Tümü", "🚀 Agresif", "⚡ Hızlandırılmış", "🛡️ Koruma", "💎 Potansiyel", "👁️ İzleme"]
     selected_strateji = st.sidebar.selectbox("Yatırım Stratejisi", strateji_list)
     
-    # Renk legend'ı
-    st.sidebar.header("🎨 Bölge Renkleri")
+    # PROFESYONEL RENK LEGEND'I
+    st.sidebar.header("🎨 Profesyonel Renk Paleti")
     for region, color in REGION_COLORS.items():
         st.sidebar.markdown(f"<span style='color:{color}'>⬤</span> {region}", unsafe_allow_html=True)
     
@@ -1325,8 +1350,6 @@ def main():
         # Manager filtrelemesi
         if selected_map_manager != "TÜMÜ":
             city_data_manager = city_data.copy()
-            # Manager verisi olmadığı için, burada örnek olarak tüm veriyi gösteriyoruz
-            # Gerçek uygulamada city_data'ya manager bilgisi eklemelisiniz
             city_data = city_data_manager
         
         # Yatırım stratejisi hesapla
@@ -1500,9 +1523,10 @@ def main():
             city_display['Region_Color'] = city_display['Region'].map(REGION_COLORS)
             city_display.index = range(1, len(city_display) + 1)
             
-            # DataFrame'i mavi tonlarında renklendir
+            # DataFrame'i profesyonel renklerle renklendir
             def color_row(row):
-                color = row['Region_Color'] if 'Region_Color' in row else '#64748B'
+                strategy = row['Yatırım_Stratejisi'] if 'Yatırım_Stratejisi' in row else '👁️ İzleme'
+                color = STRATEGY_COLORS.get(strategy, "#64748B")
                 return [f'background-color: {color}20' for _ in row]
             
             display_cols = ['City', 'Region', 'PF_Satis', 'Toplam_Pazar', 'Pazar_Payi_%', 'Yatırım_Stratejisi', 
@@ -1553,20 +1577,12 @@ def main():
                 strateji_counts = investment_df['Yatırım_Stratejisi'].value_counts().reset_index()
                 strateji_counts.columns = ['Strateji', 'Şehir Sayısı']
                 
-                color_map_strateji = {
-                    "🚀 Agresif": "#EF4444",
-                    "⚡ Hızlandırılmış": "#F59E0B",
-                    "🛡️ Koruma": "#10B981",
-                    "💎 Potansiyel": "#8B5CF6",
-                    "👁️ İzleme": "#6B7280"
-                }
-                
                 fig_strateji = px.pie(
                     strateji_counts,
                     values='Şehir Sayısı',
                     names='Strateji',
                     color='Strateji',
-                    color_discrete_map=color_map_strateji
+                    color_discrete_map=STRATEGY_COLORS
                 )
                 fig_strateji.update_layout(
                     height=400,
@@ -1585,7 +1601,7 @@ def main():
                     y='Pazar_Payi_%',
                     size='PF_Satis',
                     color='Yatırım_Stratejisi',
-                    color_discrete_map=color_map_strateji,
+                    color_discrete_map=STRATEGY_COLORS,
                     hover_name='City',
                     hover_data={
                         'PF_Satis': ':,.0f',
@@ -1603,22 +1619,27 @@ def main():
                 )
                 st.plotly_chart(fig_scatter, use_container_width=True)
     
-    # TAB 3: TERRITORY ANALİZİ (Önceki kodun aynısı)
+    # TAB 3: TERRITORY ANALİZİ - GÜNCELLENMİŞ VERSİYON
     with tab3:
         st.header("🏢 Territory Bazlı Detaylı Analiz")
         
         terr_perf = calculate_territory_performance(df_filtered, selected_product, date_filter)
+        
+        # TOPLAM PAZAR YÜZDESİ HESAPLA
+        total_market_all = terr_perf['Toplam_Pazar'].sum()
+        terr_perf['Toplam_Pazar_%'] = safe_divide(terr_perf['Toplam_Pazar'], total_market_all) * 100
         
         col_f1, col_f2 = st.columns([1, 3])
         
         with col_f1:
             sort_by = st.selectbox(
                 "Sıralama",
-                ['PF_Satis', 'Pazar_Payi_%', 'Toplam_Pazar', 'Agirlik_%'],
+                ['PF_Satis', 'Pazar_Payi_%', 'Toplam_Pazar', 'Toplam_Pazar_%', 'Agirlik_%'],
                 format_func=lambda x: {
                     'PF_Satis': 'PF Satış',
                     'Pazar_Payi_%': 'Pazar Payı %',
                     'Toplam_Pazar': 'Toplam Pazar',
+                    'Toplam_Pazar_%': 'Toplam Pazar %',
                     'Agirlik_%': 'Ağırlık %'
                 }[x]
             )
@@ -1634,76 +1655,199 @@ def main():
             st.markdown("#### 📊 PF vs Rakip Satış")
             fig_bar = go.Figure()
             
-            # Bölge renklerine göre grupla
+            # PROFESYONEL BÖLGE RENKLERİYLE grupla
             for region in terr_sorted['Region'].unique():
                 region_data = terr_sorted[terr_sorted['Region'] == region]
-                color = REGION_COLORS.get(region, PERFORMANCE_COLORS['neutral'])
+                color = REGION_COLORS.get(region, "#64748B")
                 fig_bar.add_trace(go.Bar(
                     x=region_data['Territory'],
                     y=region_data['PF_Satis'],
                     name=f'{region} (PF)',
                     marker_color=color,
-                    opacity=0.8
+                    opacity=0.85,
+                    text=region_data['PF_Satis'].apply(lambda x: f'{x:,.0f}' if x > 0 else ''),
+                    textposition='outside',
+                    textfont=dict(size=9)
                 ))
             
             fig_bar.update_layout(
+                title='Territory Bazlı Satış Karşılaştırması',
                 barmode='group',
                 height=500,
-                xaxis=dict(tickangle=-45),
-                plot_bgcolor='rgba(0,0,0,0)',
+                xaxis=dict(
+                    tickangle=-45,
+                    title='Territory'
+                ),
+                yaxis=dict(title='Satış Miktarı'),
+                plot_bgcolor='rgba(255,255,255,0.05)',
                 paper_bgcolor='rgba(0,0,0,0)',
-                font=dict(color='#e2e8f0')
+                font=dict(color='#e2e8f0'),
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1
+                )
             )
             
             st.plotly_chart(fig_bar, use_container_width=True)
         
         with col_v2:
             st.markdown("#### 🎯 Pazar Payı Dağılımı")
-            fig_pie = px.pie(
-                terr_sorted.head(10),
-                values='PF_Satis',
-                names='Territory',
-                title='Top 10 Territory - PF Satış Dağılımı',
-                color='Region',
-                color_discrete_map=REGION_COLORS
-            )
+            
+            # Top 10 için pazar payı grafiği
+            top10_for_pie = terr_sorted.head(10).copy()
+            
+            fig_pie = go.Figure()
+            
+            for idx, row in top10_for_pie.iterrows():
+                color = REGION_COLORS.get(row['Region'], "#64748B")
+                fig_pie.add_trace(go.Pie(
+                    labels=[row['Territory']],
+                    values=[row['PF_Satis']],
+                    name=row['Territory'],
+                    marker=dict(colors=[color]),
+                    textinfo='label+percent',
+                    textposition='inside',
+                    hovertemplate=(
+                        f"<b>{row['Territory']}</b><br>"
+                        f"PF Satış: {row['PF_Satis']:,.0f}<br>"
+                        f"Pazar Payı: {row['Pazar_Payi_%']:.1f}%<br>"
+                        f"Toplam Pazar: {row['Toplam_Pazar']:,.0f}<br>"
+                        f"<extra></extra>"
+                    ),
+                    showlegend=True
+                ))
+            
             fig_pie.update_layout(
+                title='Top 10 Territory - PF Satış Dağılımı',
                 height=500,
                 plot_bgcolor='rgba(0,0,0,0)',
                 paper_bgcolor='rgba(0,0,0,0)',
-                font=dict(color='#e2e8f0')
+                font=dict(color='#e2e8f0'),
+                showlegend=True,
+                legend=dict(
+                    orientation="v",
+                    yanchor="middle",
+                    y=0.5,
+                    xanchor="right",
+                    x=1.3
+                )
             )
+            
             st.plotly_chart(fig_pie, use_container_width=True)
         
         st.markdown("---")
         
         st.subheader("📋 Detaylı Territory Listesi")
         
-        display_cols = ['Territory', 'Region', 'City', 'Manager', 'PF_Satis', 'Rakip_Satis', 'Toplam_Pazar', 'Pazar_Payi_%', 'Goreceli_Pazar_Payi', 'Agirlik_%']
+        # GÜNCELLENMİŞ KOLON LİSTESİ - Toplam Pazar % eklendi
+        display_cols = [
+            'Territory', 'Region', 'City', 'Manager', 
+            'PF_Satis', 'Rakip_Satis', 'Toplam_Pazar', 'Toplam_Pazar_%',
+            'Pazar_Payi_%', 'Goreceli_Pazar_Payi', 'Agirlik_%'
+        ]
         
         terr_display = terr_sorted[display_cols].copy()
-        terr_display.columns = ['Territory', 'Region', 'City', 'Manager', 'PF Satış', 'Rakip Satış', 'Toplam Pazar', 'Pazar Payı %', 'Göreceli Pay', 'Ağırlık %']
+        terr_display.columns = [
+            'Territory', 'Region', 'City', 'Manager', 
+            'PF Satış', 'Rakip Satış', 'Toplam Pazar', 'Toplam Pazar %',
+            'Pazar Payı %', 'Göreceli Pay', 'Ağırlık %'
+        ]
+        
+        # Bölge renklerini ekle
         terr_display['Region_Color'] = terr_display['Region'].map(REGION_COLORS)
         terr_display.index = range(1, len(terr_display) + 1)
         
-        # DataFrame'i mavi tonlarında renklendir
-        def color_by_region(row):
-            color = REGION_COLORS.get(row['Region'], PERFORMANCE_COLORS['neutral'])
-            return [f'background-color: {color}20' for _ in row]
+        # PROFESYONEL RENKLENDİRME FONKSİYONU
+        def color_by_performance(row):
+            """
+            Performansa göre satır renklendirme:
+            - Pazar Payı %: Yüksek > 50, Orta 30-50, Düşük < 30
+            - Toplam Pazar %: Büyük > 10, Orta 5-10, Küçük < 5
+            """
+            pazar_payi = row['Pazar Payı %']
+            toplam_pazar_yuzde = row['Toplam Pazar %']
+            
+            # Pazar payına göre arkaplan
+            if pazar_payi > 50:
+                bg_color = f"rgba(37, 99, 235, 0.15)"  # Royal Blue - Yüksek
+            elif pazar_payi >= 30:
+                bg_color = f"rgba(59, 130, 246, 0.15)"  # Professional Blue - Orta
+            else:
+                bg_color = f"rgba(100, 116, 139, 0.15)"  # Slate - Düşük
+            
+            # Toplam pazar %'ye göre border
+            if toplam_pazar_yuzde > 10:
+                border_color = "2px solid rgba(37, 99, 235, 0.5)"
+            elif toplam_pazar_yuzde >= 5:
+                border_color = "2px solid rgba(59, 130, 246, 0.3)"
+            else:
+                border_color = "1px solid rgba(100, 116, 139, 0.2)"
+            
+            return [f'background-color: {bg_color}; border-left: {border_color}' for _ in row]
         
+        # VERİ ÇERÇEVESİNİ FORMATLA ve GÖSTER
         st.dataframe(
             terr_display.style.format({
                 'PF Satış': '{:,.0f}',
                 'Rakip Satış': '{:,.0f}',
                 'Toplam Pazar': '{:,.0f}',
-                'Pazar Payı %': '{:.1f}',
+                'Toplam Pazar %': '{:.1f}%',
+                'Pazar Payı %': '{:.1f}%',
                 'Göreceli Pay': '{:.2f}',
-                'Ağırlık %': '{:.1f}'
-            }).apply(color_by_region, axis=1).background_gradient(subset=['Pazar Payı %'], cmap='Blues'),
-            use_container_width=True
+                'Ağırlık %': '{:.1f}%'
+            }, na_rep='-')
+            .apply(color_by_performance, axis=1)
+            .background_gradient(
+                subset=['Pazar Payı %'], 
+                cmap='Blues',
+                vmin=0,
+                vmax=100
+            )
+            .background_gradient(
+                subset=['Toplam Pazar %'], 
+                cmap='Blues',
+                vmin=0
+            )
+            .background_gradient(
+                subset=['Ağırlık %'], 
+                cmap='Blues_r',
+                vmin=0
+            )
+            .set_properties(**{
+                'border': '0.5px solid rgba(100, 116, 139, 0.1)',
+                'padding': '8px'
+            }),
+            use_container_width=True,
+            height=600
         )
+        
+        # ÖZET İSTATİSTİKLER
+        st.markdown("---")
+        st.subheader("📊 Territory Performans Özeti")
+        
+        col_sum1, col_sum2, col_sum3, col_sum4 = st.columns(4)
+        
+        with col_sum1:
+            avg_pazar_payi = terr_display['Pazar Payı %'].mean()
+            st.metric("📊 Ort. Pazar Payı", f"{avg_pazar_payi:.1f}%")
+        
+        with col_sum2:
+            total_pf = terr_display['PF Satış'].sum()
+            st.metric("💰 Toplam PF Satış", f"{total_pf:,.0f}")
+        
+        with col_sum3:
+            avg_toplam_pazar_yuzde = terr_display['Toplam Pazar %'].mean()
+            st.metric("🏪 Ort. Pazar Büyüklüğü", f"{avg_toplam_pazar_yuzde:.1f}%")
+        
+        with col_sum4:
+            dominant_region = terr_display['Region'].mode()[0] if len(terr_display) > 0 else "Yok"
+            dominant_color = REGION_COLORS.get(dominant_region, "#64748B")
+            st.markdown(f'<div style="color:{dominant_color}; font-size:1.2rem; font-weight:bold;">🏆 Dominant Bölge: {dominant_region}</div>', unsafe_allow_html=True)
     
-    # TAB 4: ZAMAN SERİSİ & ML (Önceki kodun aynısı)
+    # TAB 4: ZAMAN SERİSİ & ML
     with tab4:
         st.header("📈 Zaman Serisi Analizi & GERÇEK ML Tahminleme")
         
@@ -1817,7 +1961,7 @@ def main():
             with col_growth1:
                 fig_growth = go.Figure()
                 
-                # Mavi tonlarında büyüme grafiği
+                # Profesyonel renklerde büyüme grafiği
                 colors_pf = [PERFORMANCE_COLORS['high'] if x > 0 else PERFORMANCE_COLORS['low'] for x in monthly_df['PF_Buyume_%']]
                 
                 fig_growth.add_trace(go.Bar(
@@ -1975,7 +2119,7 @@ def main():
                         MAPE'e göre otomatik belirlenir.
                         """)
     
-    # TAB 5: RAKİP ANALİZİ (Önceki kodun aynısı)
+    # TAB 5: RAKİP ANALİZİ
     with tab5:
         st.header("📊 Detaylı Rakip Analizi")
         
@@ -2027,18 +2171,18 @@ def main():
             comp_display.columns = ['Ay', 'PF Satış', 'Rakip Satış', 'PF Pay %', 'PF Büyüme %', 'Rakip Büyüme %', 'Fark %']
             comp_display.index = range(1, len(comp_display) + 1)
             
-            # MAVİ TONLARINDA renklendirme
+            # PROFESYONEL RENKLENDİRME
             def highlight_performance(row):
                 if row['Fark %'] > 5:
-                    return [f'background-color: {PERFORMANCE_COLORS["high"]}30' for _ in row]
+                    return [f'background-color: rgba(37, 99, 235, 0.2)' for _ in row]  # Royal Blue
                 elif row['Fark %'] > 0:
-                    return [f'background-color: {PERFORMANCE_COLORS["high"]}20' for _ in row]
+                    return [f'background-color: rgba(59, 130, 246, 0.15)' for _ in row]  # Professional Blue
                 elif row['Fark %'] < -5:
-                    return [f'background-color: {PERFORMANCE_COLORS["low"]}30' for _ in row]
+                    return [f'background-color: rgba(239, 68, 68, 0.15)' for _ in row]  # Red
                 elif row['Fark %'] < 0:
-                    return [f'background-color: {PERFORMANCE_COLORS["low"]}20' for _ in row]
+                    return [f'background-color: rgba(239, 68, 68, 0.1)' for _ in row]  # Light Red
                 else:
-                    return [f'background-color: {PERFORMANCE_COLORS["neutral"]}15' for _ in row]
+                    return [f'background-color: rgba(100, 116, 139, 0.1)' for _ in row]  # Slate
             
             st.dataframe(
                 comp_display.style.format({
@@ -2070,7 +2214,7 @@ def main():
                 else:
                     st.warning(f"⚠️ Rakip pazar payında öne geçmiş (%{(100-avg_pf_share):.1f})")
     
-    # TAB 6: BCG & STRATEJİ (Önceki kodun aynısı)
+    # TAB 6: BCG & STRATEJİ
     with tab6:
         st.header("⭐ BCG Matrix & Yatırım Stratejisi")
         
@@ -2106,21 +2250,14 @@ def main():
         
         st.subheader("🎯 BCG Matrix")
         
-        # MAVİ TONLARINDA BCG RENKLERİ
-        color_map = {
-            "⭐ Star": "#0EA5E9",      # Parlak Mavi
-            "🐄 Cash Cow": "#3B82F6",  # Canlı Mavi
-            "❓ Question Mark": "#60A5FA",  # Açık Mavi
-            "🐶 Dog": "#94A3B8"        # Gri-Mavi
-        }
-        
+        # PROFESYONEL BCG RENKLERİ
         fig_bcg = px.scatter(
             bcg_df,
             x='Goreceli_Pazar_Payi',
             y='Pazar_Buyume_%',
             size='PF_Satis',
             color='BCG_Kategori',
-            color_discrete_map=color_map,
+            color_discrete_map=BCG_COLORS,
             hover_name='Territory',
             hover_data={
                 'PF_Satis': ':,.0f',
@@ -2191,17 +2328,17 @@ def main():
         bcg_display['Region_Color'] = bcg_display['Region'].map(REGION_COLORS)
         bcg_display.index = range(1, len(bcg_display) + 1)
         
-        # BCG renklendirme fonksiyonu
+        # BCG profesyonel renklendirme fonksiyonu
         def color_bcg(row):
             category = row['BCG']
             if category == "⭐ Star":
-                color = "#0EA5E9"
+                color = "#F59E0B"  # Amber
             elif category == "🐄 Cash Cow":
-                color = "#3B82F6"
+                color = "#10B981"  # Emerald
             elif category == "❓ Question Mark":
-                color = "#60A5FA"
+                color = "#8B5CF6"  # Violet
             else:
-                color = "#94A3B8"
+                color = "#6B7280"  # Gray
             return [f'background-color: {color}20' for _ in row]
         
         st.dataframe(
@@ -2223,6 +2360,10 @@ def main():
         if st.button("📥 Excel Raporu Oluştur", type="primary"):
             with st.spinner("Rapor hazırlanıyor..."):
                 terr_perf = calculate_territory_performance(df_filtered, selected_product, date_filter)
+                # Toplam Pazar % ekle
+                total_market_all = terr_perf['Toplam_Pazar'].sum()
+                terr_perf['Toplam_Pazar_%'] = safe_divide(terr_perf['Toplam_Pazar'], total_market_all) * 100
+                
                 monthly_df = calculate_time_series(df_filtered, selected_product, None, date_filter)
                 bcg_df = calculate_bcg_matrix(df_filtered, selected_product, date_filter)
                 city_data = calculate_city_performance(df_filtered, selected_product, date_filter)
@@ -2247,4 +2388,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
