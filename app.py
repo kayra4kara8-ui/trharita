@@ -135,126 +135,74 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # =============================================================================
-# ŞEHİR NORMALIZASYON
+# BÖLGE RENK PALETİ
 # =============================================================================
-CITY_NORMALIZE_CLEAN = {
-    'ADANA': 'Adana',
-    'ADIYAMAN': 'Adiyaman',
-    'AFYONKARAHISAR': 'Afyonkarahisar',
-    'AFYON': 'Afyonkarahisar',
-    'AGRI': 'Agri',
-    'AĞRI': 'Agri',
-    'ANKARA': 'Ankara',
-    'ANTALYA': 'Antalya',
-    'AYDIN': 'Aydin',
-    'BALIKESIR': 'Balikesir',
-    'BARTIN': 'Bartin',
-    'BATMAN': 'Batman',
-    'BILECIK': 'Bilecik',
-    'BINGOL': 'Bingol',
-    'BITLIS': 'Bitlis',
-    'BOLU': 'Bolu',
-    'BURDUR': 'Burdur',
-    'BURSA': 'Bursa',
-    'CANAKKALE': 'Canakkale',
-    'ÇANAKKALE': 'Canakkale',
-    'CANKIRI': 'Cankiri',
-    'ÇANKIRI': 'Cankiri',
-    'CORUM': 'Corum',
-    'ÇORUM': 'Corum',
-    'DENIZLI': 'Denizli',
-    'DIYARBAKIR': 'Diyarbakir',
-    'DUZCE': 'Duzce',
-    'DÜZCE': 'Duzce',
-    'EDIRNE': 'Edirne',
-    'ELAZIG': 'Elazig',
-    'ELAZĞ': 'Elazig',
-    'ELAZIĞ': 'Elazig',
-    'ERZINCAN': 'Erzincan',
-    'ERZURUM': 'Erzurum',
-    'ESKISEHIR': 'Eskisehir',
-    'ESKİŞEHİR': 'Eskisehir',
-    'GAZIANTEP': 'Gaziantep',
-    'GIRESUN': 'Giresun',
-    'GİRESUN': 'Giresun',
-    'GUMUSHANE': 'Gumushane',
-    'GÜMÜŞHANE': 'Gumushane',
-    'HAKKARI': 'Hakkari',
-    'HATAY': 'Hatay',
-    'IGDIR': 'Igdir',
-    'IĞDIR': 'Igdir',
-    'ISPARTA': 'Isparta',
-    'ISTANBUL': 'Istanbul',
-    'İSTANBUL': 'Istanbul',
-    'IZMIR': 'Izmir',
-    'İZMİR': 'Izmir',
-    'KAHRAMANMARAS': 'K. Maras',
-    'KAHRAMANMARAŞ': 'K. Maras',
-    'K.MARAS': 'K. Maras',
-    'KMARAS': 'K. Maras',
-    'KARABUK': 'Karabuk',
-    'KARABÜK': 'Karabuk',
-    'KARAMAN': 'Karaman',
-    'KARS': 'Kars',
-    'KASTAMONU': 'Kastamonu',
-    'KAYSERI': 'Kayseri',
-    'KIRIKKALE': 'Kinkkale',
-    'KIRKLARELI': 'Kirklareli',
-    'KIRKLARELİ': 'Kirklareli',
-    'KIRSEHIR': 'Kirsehir',
-    'KIRŞEHİR': 'Kirsehir',
-    'KILIS': 'Kilis',
-    'KİLİS': 'Kilis',
-    'KOCAELI': 'Kocaeli',
-    'KONYA': 'Konya',
-    'KUTAHYA': 'Kutahya',
-    'KÜTAHYA': 'Kutahya',
-    'MALATYA': 'Malatya',
-    'MANISA': 'Manisa',
-    'MANİSA': 'Manisa',
-    'MARDIN': 'Mardin',
-    'MARDİN': 'Mardin',
-    'MERSIN': 'Mersin',
-    'MERSİN': 'Mersin',
-    'MUGLA': 'Mugla',
-    'MUĞLA': 'Mugla',
-    'MUS': 'Mus',
-    'MUŞ': 'Mus',
-    'NEVSEHIR': 'Nevsehir',
-    'NEVŞEHİR': 'Nevsehir',
-    'NIGDE': 'Nigde',
-    'NİĞDE': 'Nigde',
-    'ORDU': 'Ordu',
-    'OSMANIYE': 'Osmaniye',
-    'OSMANİYE': 'Osmaniye',
-    'RIZE': 'Rize',
-    'RİZE': 'Rize',
-    'SAKARYA': 'Sakarya',
-    'SAMSUN': 'Samsun',
-    'SIIRT': 'Siirt',
-    'SİİRT': 'Siirt',
-    'SINOP': 'Sinop',
-    'SİNOP': 'Sinop',
-    'SIVAS': 'Sivas',
-    'SİVAS': 'Sivas',
-    'SANLIURFA': 'Sanliurfa',
-    'ŞANLIURFA': 'Sanliurfa',
-    'SIRNAK': 'Sirnak',
-    'ŞIRNAK': 'Sirnak',
-    'TEKIRDAG': 'Tekirdag',
-    'TEKİRDAĞ': 'Tekirdag',
-    'TOKAT': 'Tokat',
-    'TRABZON': 'Trabzon',
-    'TUNCELI': 'Tunceli',
-    'TUNCELİ': 'Tunceli',
-    'USAK': 'Usak',
-    'UŞAK': 'Usak',
-    'VAN': 'Van',
-    'YALOVA': 'Yalova',
-    'YOZGAT': 'Yozgat',
-    'ZONGULDAK': 'Zonguldak',
-    'ARDAHAN': 'Ardahan'
+REGION_COLORS = {
+    "MARMARA": "#0EA5E9",              # Sky Blue - Deniz ve boğazlar
+    "BATI ANADOLU": "#14B8A6",         # Turkuaz-yeşil arası
+    "EGE": "#FCD34D",                  # BAL SARI
+    "İÇ ANADOLU": "#F59E0B",           # Amber - Kuru bozkır
+    "GÜNEY DOĞU ANADOLU": "#E07A5F",   # Terracotta 
+    "KUZEY ANADOLU": "#059669",        # Emerald - Yemyeşil ormanlar
+    "KARADENİZ": "#059669",            # Emerald
+    "AKDENİZ": "#8B5CF6",              # Violet - Akdeniz
+    "DOĞU ANADOLU": "#7C3AED",         # Purple - Yüksek dağlar
+    "DİĞER": "#64748B"                 # Slate Gray
 }
+
+# =============================================================================
+# ŞEHİR NORMALİZASYON - GEOJSON UYUMLU
+# =============================================================================
+FIX_CITY_MAP = {
+    "AGRI": "AĞRI",
+    "BARTIN": "BARTIN",
+    "BINGOL": "BİNGÖL",
+    "DUZCE": "DÜZCE",
+    "ELAZIG": "ELAZIĞ",
+    "ESKISEHIR": "ESKİŞEHİR",
+    "GUMUSHANE": "GÜMÜŞHANE",
+    "HAKKARI": "HAKKARİ",
+    "ISTANBUL": "İSTANBUL",
+    "IZMIR": "İZMİR",
+    "IGDIR": "IĞDIR",
+    "KARABUK": "KARABÜK",
+    "KINKKALE": "KIRIKKALE",
+    "KIRSEHIR": "KIRŞEHİR",
+    "KUTAHYA": "KÜTAHYA",
+    "MUGLA": "MUĞLA",
+    "MUS": "MUŞ",
+    "NEVSEHIR": "NEVŞEHİR",
+    "NIGDE": "NİĞDE",
+    "SANLIURFA": "ŞANLIURFA",
+    "SIRNAK": "ŞIRNAK",
+    "TEKIRDAG": "TEKİRDAĞ",
+    "USAK": "UŞAK",
+    "ZONGULDAK": "ZONGULDAK",
+    "CANAKKALE": "ÇANAKKALE",
+    "CANKIRI": "ÇANKIRI",
+    "CORUM": "ÇORUM",
+    "K. MARAS": "KAHRAMANMARAŞ"
+}
+
+def normalize_city(name):
+    """GeoJSON uyumlu şehir normalizasyonu"""
+    if pd.isna(name):
+        return None
+    name = str(name).upper().strip()
+    
+    # Türkçe karakterleri İngilizce'ye dönüştür
+    tr_map = {
+        "İ": "I", "Ğ": "G", "Ü": "U",
+        "Ş": "S", "Ö": "O", "Ç": "C", "Â": "A"
+    }
+    for k, v in tr_map.items():
+        name = name.replace(k, v)
+    
+    # Fix map ile düzelt
+    if name in FIX_CITY_MAP:
+        return FIX_CITY_MAP[name]
+    
+    return name
 
 # =============================================================================
 # HELPER FUNCTIONS
@@ -276,18 +224,8 @@ def get_product_columns(product):
         return {"pf": "PF IZOTONIK", "rakip": "DIGER IZOTONIK"}
 
 def normalize_city_name_fixed(city_name):
-    """Düzeltilmiş şehir normalizasyon"""
-    if pd.isna(city_name):
-        return None
-    city_upper = str(city_name).strip().upper()
-    city_upper = (city_upper
-                  .replace('İ', 'I')
-                  .replace('Ş', 'S')
-                  .replace('Ğ', 'G')
-                  .replace('Ü', 'U')
-                  .replace('Ö', 'O')
-                  .replace('Ç', 'C'))
-    return CITY_NORMALIZE_CLEAN.get(city_upper, city_name)
+    """GeoJSON uyumlu şehir normalizasyonu"""
+    return normalize_city(city_name)
 
 # =============================================================================
 # DATA LOADING
@@ -1596,3 +1534,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
