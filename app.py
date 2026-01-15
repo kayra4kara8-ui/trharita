@@ -135,40 +135,37 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # =============================================================================
-# BÖLGE RENK PALETİ
+# CONSTANTS
 # =============================================================================
 REGION_COLORS = {
     "MARMARA": "#0EA5E9",              # Sky Blue - Deniz ve boğazlar
     "BATI ANADOLU": "#14B8A6",         # Turkuaz-yeşil arası
-    "EGE": "#FCD34D",                  # BAL SARI
+    "EGE": "#FCD34D",                  # BAL SARI (Batı Anadolu ile aynı)
     "İÇ ANADOLU": "#F59E0B",           # Amber - Kuru bozkır
-    "GÜNEY DOĞU ANADOLU": "#E07A5F",   # Terracotta 
+    "GÜNEY DOĞU ANADOLU": "#E07A5F",   # Terracotta
     "KUZEY ANADOLU": "#059669",        # Emerald - Yemyeşil ormanlar
-    "KARADENİZ": "#059669",            # Emerald
+    "KARADENİZ": "#059669",            # Emerald (Kuzey Anadolu ile aynı)
     "AKDENİZ": "#8B5CF6",              # Violet - Akdeniz
     "DOĞU ANADOLU": "#7C3AED",         # Purple - Yüksek dağlar
     "DİĞER": "#64748B"                 # Slate Gray
 }
 
-# =============================================================================
-# ŞEHİR NORMALİZASYON - GEOJSON UYUMLU
-# =============================================================================
 FIX_CITY_MAP = {
     "AGRI": "AĞRI",
-    "BARTIN": "BARTIN",
-    "BINGOL": "BİNGÖL",
-    "DUZCE": "DÜZCE",
+    "BARTÄ±N": "BARTIN",
+    "BINGÃ¶L": "BİNGÖL",
+    "DÃ1⁄4ZCE": "DÜZCE",
     "ELAZIG": "ELAZIĞ",
     "ESKISEHIR": "ESKİŞEHİR",
-    "GUMUSHANE": "GÜMÜŞHANE",
+    "GÃ1⁄4MÃ1⁄4SHANE": "GÜMÜŞHANE",
     "HAKKARI": "HAKKARİ",
     "ISTANBUL": "İSTANBUL",
     "IZMIR": "İZMİR",
-    "IGDIR": "IĞDIR",
-    "KARABUK": "KARABÜK",
+    "IÄ\x9fDIR": "IĞDIR",
+    "KARABÃ1⁄4K": "KARABÜK",
     "KINKKALE": "KIRIKKALE",
     "KIRSEHIR": "KIRŞEHİR",
-    "KUTAHYA": "KÜTAHYA",
+    "KÃ1⁄4TAHYA": "KÜTAHYA",
     "MUGLA": "MUĞLA",
     "MUS": "MUŞ",
     "NEVSEHIR": "NEVŞEHİR",
@@ -177,32 +174,139 @@ FIX_CITY_MAP = {
     "SIRNAK": "ŞIRNAK",
     "TEKIRDAG": "TEKİRDAĞ",
     "USAK": "UŞAK",
-    "ZONGULDAK": "ZONGULDAK",
-    "CANAKKALE": "ÇANAKKALE",
-    "CANKIRI": "ÇANKIRI",
+    "ZINGULDAK": "ZONGULDAK",
+    "Ã\x87ANAKKALE": "ÇANAKKALE",
+    "Ã\x87ANKIRI": "ÇANKIRI",
+    "Ã\x87ORUM": "ÇORUM",
+    "K. MARAS": "KAHRAMANMARAŞ",
     "CORUM": "ÇORUM",
-    "K. MARAS": "KAHRAMANMARAŞ"
+    "CANKIRI": "ÇANKIRI",
+    "ZONGULDAK": "ZONGULDak",
+    "KARABUK": "KARABÜK",
+    "GUMUSHANE": "GÜMÜŞHANE",
+    "ELÂZıĞ": "ELAZIĞ",
+    "KUTAHYA": "KÜTAHYA",
+    "CANAKKALE": "ÇANAKKALE"
 }
 
-def normalize_city(name):
-    """GeoJSON uyumlu şehir normalizasyonu"""
-    if pd.isna(name):
-        return None
-    name = str(name).upper().strip()
-    
-    # Türkçe karakterleri İngilizce'ye dönüştür
-    tr_map = {
-        "İ": "I", "Ğ": "G", "Ü": "U",
-        "Ş": "S", "Ö": "O", "Ç": "C", "Â": "A"
-    }
-    for k, v in tr_map.items():
-        name = name.replace(k, v)
-    
-    # Fix map ile düzelt
-    if name in FIX_CITY_MAP:
-        return FIX_CITY_MAP[name]
-    
-    return name
+CITY_NORMALIZE_CLEAN = {
+    'ADANA': 'Adana',
+    'ADIYAMAN': 'Adiyaman',
+    'AFYONKARAHISAR': 'Afyonkarahisar',
+    'AFYON': 'Afyonkarahisar',
+    'AGRI': 'Agri',
+    'AĞRI': 'Agri',
+    'ANKARA': 'Ankara',
+    'ANTALYA': 'Antalya',
+    'AYDIN': 'Aydin',
+    'BALIKESIR': 'Balikesir',
+    'BARTIN': 'Bartin',
+    'BATMAN': 'Batman',
+    'BILECIK': 'Bilecik',
+    'BINGOL': 'Bingol',
+    'BITLIS': 'Bitlis',
+    'BOLU': 'Bolu',
+    'BURDUR': 'Burdur',
+    'BURSA': 'Bursa',
+    'CANAKKALE': 'Canakkale',
+    'ÇANAKKALE': 'Canakkale',
+    'CANKIRI': 'Cankiri',
+    'ÇANKIRI': 'Cankiri',
+    'CORUM': 'Corum',
+    'ÇORUM': 'Corum',
+    'DENIZLI': 'Denizli',
+    'DIYARBAKIR': 'Diyarbakir',
+    'DUZCE': 'Duzce',
+    'DÜZCE': 'Duzce',
+    'EDIRNE': 'Edirne',
+    'ELAZIG': 'Elazig',
+    'ELAZĞ': 'Elazig',
+    'ELAZIĞ': 'Elazig',
+    'ERZINCAN': 'Erzincan',
+    'ERZURUM': 'Erzurum',
+    'ESKISEHIR': 'Eskisehir',
+    'ESKİŞEHİR': 'Eskisehir',
+    'GAZIANTEP': 'Gaziantep',
+    'GIRESUN': 'Giresun',
+    'GİRESUN': 'Giresun',
+    'GUMUSHANE': 'Gumushane',
+    'GÜMÜŞHANE': 'Gumushane',
+    'HAKKARI': 'Hakkari',
+    'HATAY': 'Hatay',
+    'IGDIR': 'Igdir',
+    'IĞDIR': 'Igdir',
+    'ISPARTA': 'Isparta',
+    'ISTANBUL': 'Istanbul',
+    'İSTANBUL': 'Istanbul',
+    'IZMIR': 'Izmir',
+    'İZMİR': 'Izmir',
+    'KAHRAMANMARAS': 'K. Maras',
+    'KAHRAMANMARAŞ': 'K. Maras',
+    'K.MARAS': 'K. Maras',
+    'KMARAS': 'K. Maras',
+    'KARABUK': 'Karabuk',
+    'KARABÜK': 'Karabuk',
+    'KARAMAN': 'Karaman',
+    'KARS': 'Kars',
+    'KASTAMONU': 'Kastamonu',
+    'KAYSERI': 'Kayseri',
+    'KIRIKKALE': 'Kinkkale',
+    'KIRKLARELI': 'Kirklareli',
+    'KIRKLARELİ': 'Kirklareli',
+    'KIRSEHIR': 'Kirsehir',
+    'KIRŞEHİR': 'Kirsehir',
+    'KILIS': 'Kilis',
+    'KİLİS': 'Kilis',
+    'KOCAELI': 'Kocaeli',
+    'KONYA': 'Konya',
+    'KUTAHYA': 'Kutahya',
+    'KÜTAHYA': 'Kutahya',
+    'MALATYA': 'Malatya',
+    'MANISA': 'Manisa',
+    'MANİSA': 'Manisa',
+    'MARDIN': 'Mardin',
+    'MARDİN': 'Mardin',
+    'MERSIN': 'Mersin',
+    'MERSİN': 'Mersin',
+    'MUGLA': 'Mugla',
+    'MUĞLA': 'Mugla',
+    'MUS': 'Mus',
+    'MUŞ': 'Mus',
+    'NEVSEHIR': 'Nevsehir',
+    'NEVŞEHİR': 'Nevsehir',
+    'NIGDE': 'Nigde',
+    'NİĞDE': 'Nigde',
+    'ORDU': 'Ordu',
+    'OSMANIYE': 'Osmaniye',
+    'OSMANİYE': 'Osmaniye',
+    'RIZE': 'Rize',
+    'RİZE': 'Rize',
+    'SAKARYA': 'Sakarya',
+    'SAMSUN': 'Samsun',
+    'SIIRT': 'Siirt',
+    'SİİRT': 'Siirt',
+    'SINOP': 'Sinop',
+    'SİNOP': 'Sinop',
+    'SIVAS': 'Sivas',
+    'SİVAS': 'Sivas',
+    'SANLIURFA': 'Sanliurfa',
+    'ŞANLIURFA': 'Sanliurfa',
+    'SIRNAK': 'Sirnak',
+    'ŞIRNAK': 'Sirnak',
+    'TEKIRDAG': 'Tekirdag',
+    'TEKİRDAĞ': 'Tekirdag',
+    'TOKAT': 'Tokat',
+    'TRABZON': 'Trabzon',
+    'TUNCELI': 'Tunceli',
+    'TUNCELİ': 'Tunceli',
+    'USAK': 'Usak',
+    'UŞAK': 'Usak',
+    'VAN': 'Van',
+    'YALOVA': 'Yalova',
+    'YOZGAT': 'Yozgat',
+    'ZONGULDAK': 'Zonguldak',
+    'ARDAHAN': 'Ardahan'
+}
 
 # =============================================================================
 # HELPER FUNCTIONS
@@ -224,8 +328,27 @@ def get_product_columns(product):
         return {"pf": "PF IZOTONIK", "rakip": "DIGER IZOTONIK"}
 
 def normalize_city_name_fixed(city_name):
-    """GeoJSON uyumlu şehir normalizasyonu"""
-    return normalize_city(city_name)
+    """Düzeltilmiş şehir normalizasyon"""
+    if pd.isna(city_name):
+        return None
+    
+    city_upper = str(city_name).strip().upper()
+    
+    # Fix known encoding issues
+    if city_upper in FIX_CITY_MAP:
+        return FIX_CITY_MAP[city_upper]
+    
+    # Turkish character mapping
+    tr_map = {
+        "İ": "I", "Ğ": "G", "Ü": "U",
+        "Ş": "S", "Ö": "O", "Ç": "C",
+        "Â": "A", "Î": "I", "Û": "U"
+    }
+    
+    for k, v in tr_map.items():
+        city_upper = city_upper.replace(k, v)
+    
+    return CITY_NORMALIZE_CLEAN.get(city_upper, city_name)
 
 # =============================================================================
 # DATA LOADING
@@ -393,12 +516,12 @@ def calculate_city_performance(df, product, date_filter=None):
     if date_filter:
         df = df[(df['DATE'] >= date_filter[0]) & (df['DATE'] <= date_filter[1])]
     
-    city_perf = df.groupby(['CITY_NORMALIZED']).agg({
+    city_perf = df.groupby(['CITY_NORMALIZED', 'REGION']).agg({
         cols['pf']: 'sum',
         cols['rakip']: 'sum'
     }).reset_index()
     
-    city_perf.columns = ['City', 'PF_Satis', 'Rakip_Satis']
+    city_perf.columns = ['City', 'Region', 'PF_Satis', 'Rakip_Satis']
     city_perf['Toplam_Pazar'] = city_perf['PF_Satis'] + city_perf['Rakip_Satis']
     city_perf['Pazar_Payi_%'] = safe_divide(city_perf['PF_Satis'], city_perf['Toplam_Pazar']) * 100
     
@@ -529,34 +652,64 @@ def create_turkey_map_fixed(city_data, geojson, title="Türkiye Satış Haritas�
         st.error("❌ GeoJSON yüklenemedi")
         return None
     
-    geojson_cities = [f['properties']['name'] for f in geojson['features']]
-    data_cities = city_data['City'].unique()
+    city_data = city_data.copy()
+    city_data['City_Fixed'] = city_data['City'].apply(normalize_city_name_fixed)
     
-    missing = set(data_cities) - set(geojson_cities)
-    if missing:
-        st.warning(f"⚠️ GeoJSON'da bulunamayan şehirler: {missing}")
+    # GeoJSON'daki şehir isimlerini al
+    geojson_cities = [f['properties']['name'] for f in geojson['features']]
+    
+    # Verideki şehir isimlerini GeoJSON ile eşle
+    city_data['City_Mapped'] = city_data['City_Fixed'].apply(
+        lambda x: x if x in geojson_cities else None
+    )
+    
+    # Eşleşmeyen şehirleri kontrol et
+    missing = city_data[city_data['City_Mapped'].isna()]['City'].unique()
+    if len(missing) > 0:
+        st.warning(f"⚠️ GeoJSON'da bulunamayan şehirler: {set(missing)}")
+    
+    # Bölge renklerini ekle
+    city_data['Region_Color'] = city_data['Region'].map(REGION_COLORS).fillna('#64748B')
     
     fig = px.choropleth_mapbox(
         city_data,
         geojson=geojson,
-        locations='City',
+        locations='City_Fixed',
         featureidkey="properties.name",
-        color='PF_Satis',
-        hover_name='City',
+        color='Region',
+        color_discrete_map=REGION_COLORS,
+        hover_name='City_Fixed',
         hover_data={
+            'Region': True,
             'PF_Satis': ':,.0f',
-            'Pazar_Payi_%': ':.1f',
-            'City': False
+            'Rakip_Satis': ':,.0f',
+            'Toplam_Pazar': ':,.0f',
+            'Pazar_Payi_%': ':.1f%',
+            'City_Fixed': False
         },
-        color_continuous_scale="YlOrRd",
-        labels={'PF_Satis': 'PF Satış'},
+        labels={'Region': 'Bölge', 'PF_Satis': 'PF Satış'},
         title=title,
         mapbox_style="carto-positron",
         center={"lat": 39.0, "lon": 35.0},
         zoom=5
     )
     
-    fig.update_layout(height=600, margin=dict(l=0, r=0, t=50, b=0))
+    # Bölge açıklaması ekle
+    fig.update_layout(
+        height=700,
+        margin=dict(l=0, r=0, t=50, b=0),
+        coloraxis_colorbar=dict(
+            title="Bölgeler",
+            tickvals=list(REGION_COLORS.keys()),
+            ticktext=list(REGION_COLORS.keys()),
+            len=0.8
+        ),
+        hoverlabel=dict(
+            bgcolor="rgba(15, 23, 42, 0.9)",
+            font_size=14,
+            font_color="white"
+        )
+    )
     
     return fig
 
@@ -588,7 +741,10 @@ def create_forecast_chart(historical_df, forecast_df):
         xaxis_title='Tarih',
         yaxis_title='PF Satış',
         height=400,
-        hovermode='x unified'
+        hovermode='x unified',
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='#e2e8f0')
     )
     
     return fig
@@ -616,7 +772,10 @@ def create_competitor_comparison_chart(comp_data):
         xaxis_title='Ay',
         yaxis_title='Satış',
         barmode='group',
-        height=400
+        height=400,
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='#e2e8f0')
     )
     
     return fig
@@ -648,7 +807,10 @@ def create_market_share_trend(comp_data):
         xaxis_title='Ay',
         yaxis_title='Pazar Payı (%)',
         height=400,
-        yaxis=dict(range=[0, 100])
+        yaxis=dict(range=[0, 100]),
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='#e2e8f0')
     )
     
     return fig
@@ -679,7 +841,10 @@ def create_growth_comparison(comp_data):
         title='Büyüme Oranları Karşılaştırması (%)',
         xaxis_title='Ay',
         yaxis_title='Büyüme (%)',
-        height=400
+        height=400,
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='#e2e8f0')
     )
     
     return fig
@@ -832,7 +997,10 @@ def main():
             yaxis_title='Satış',
             barmode='group',
             height=500,
-            xaxis=dict(tickangle=-45)
+            xaxis=dict(tickangle=-45),
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            font=dict(color='#e2e8f0')
         )
         
         st.plotly_chart(fig_top10, use_container_width=True)
@@ -878,10 +1046,7 @@ def main():
         if geojson:
             st.subheader("📍 İl Bazlı Dağılım")
             
-            city_data_fixed = city_data.copy()
-            city_data_fixed['City'] = city_data_fixed['City'].apply(normalize_city_name_fixed)
-            
-            turkey_map = create_turkey_map_fixed(city_data_fixed, geojson, f"{selected_product} - Şehir Bazlı Satış Dağılımı")
+            turkey_map = create_turkey_map_fixed(city_data, geojson, f"{selected_product} - Şehir Bazlı Satış Dağılımı")
             
             if turkey_map:
                 st.plotly_chart(turkey_map, use_container_width=True)
@@ -903,10 +1068,16 @@ def main():
                 x='City',
                 y='PF_Satis',
                 title='En Yüksek Satış Yapan Şehirler',
-                color='Pazar_Payi_%',
-                color_continuous_scale='Blues'
+                color='Region',
+                color_discrete_map=REGION_COLORS,
+                hover_data=['Region', 'PF_Satis', 'Pazar_Payi_%']
             )
-            fig_bar.update_layout(xaxis_tickangle=-45)
+            fig_bar.update_layout(
+                xaxis_tickangle=-45,
+                plot_bgcolor='rgba(0,0,0,0)',
+                paper_bgcolor='rgba(0,0,0,0)',
+                font=dict(color='#e2e8f0')
+            )
             st.plotly_chart(fig_bar, use_container_width=True)
         
         with col_chart2:
@@ -914,15 +1085,77 @@ def main():
                 top_cities,
                 values='PF_Satis',
                 names='City',
-                title='Top 10 Şehir Satış Dağılımı'
+                title='Top 10 Şehir Satış Dağılımı',
+                color='Region',
+                color_discrete_map=REGION_COLORS
+            )
+            fig_pie.update_layout(
+                plot_bgcolor='rgba(0,0,0,0)',
+                paper_bgcolor='rgba(0,0,0,0)',
+                font=dict(color='#e2e8f0')
             )
             st.plotly_chart(fig_pie, use_container_width=True)
+        
+        st.markdown("---")
+        
+        # Bölge bazlı performans
+        st.subheader("🗺️ Bölge Bazlı Performans")
+        region_perf = city_data.groupby('Region').agg({
+            'PF_Satis': 'sum',
+            'Rakip_Satis': 'sum'
+        }).reset_index()
+        
+        region_perf['Toplam_Pazar'] = region_perf['PF_Satis'] + region_perf['Rakip_Satis']
+        region_perf['Pazar_Payi_%'] = safe_divide(region_perf['PF_Satis'], region_perf['Toplam_Pazar']) * 100
+        
+        col_reg1, col_reg2 = st.columns(2)
+        
+        with col_reg1:
+            fig_reg_bar = px.bar(
+                region_perf,
+                x='Region',
+                y='PF_Satis',
+                title='Bölgelere Göre PF Satış',
+                color='Region',
+                color_discrete_map=REGION_COLORS,
+                text='PF_Satis'
+            )
+            fig_reg_bar.update_layout(
+                xaxis_tickangle=-45,
+                plot_bgcolor='rgba(0,0,0,0)',
+                paper_bgcolor='rgba(0,0,0,0)',
+                font=dict(color='#e2e8f0'),
+                showlegend=False
+            )
+            fig_reg_bar.update_traces(texttemplate='%{text:,.0f}', textposition='outside')
+            st.plotly_chart(fig_reg_bar, use_container_width=True)
+        
+        with col_reg2:
+            fig_reg_pie = px.pie(
+                region_perf,
+                values='PF_Satis',
+                names='Region',
+                title='Bölgelere Göre Satış Dağılımı',
+                color='Region',
+                color_discrete_map=REGION_COLORS
+            )
+            fig_reg_pie.update_layout(
+                plot_bgcolor='rgba(0,0,0,0)',
+                paper_bgcolor='rgba(0,0,0,0)',
+                font=dict(color='#e2e8f0')
+            )
+            st.plotly_chart(fig_reg_pie, use_container_width=True)
         
         st.markdown("---")
         st.subheader("📋 Detaylı Şehir Listesi")
         
         city_display = city_data.sort_values('PF_Satis', ascending=False).copy()
+        city_display['Region_Color'] = city_display['Region'].map(REGION_COLORS)
         city_display.index = range(1, len(city_display) + 1)
+        
+        # DataFrame'i renklendir
+        def color_row(row):
+            return [f'background-color: {row["Region_Color"]}30' for _ in row]
         
         st.dataframe(
             city_display.style.format({
@@ -930,7 +1163,7 @@ def main():
                 'Rakip_Satis': '{:,.0f}',
                 'Toplam_Pazar': '{:,.0f}',
                 'Pazar_Payi_%': '{:.1f}'
-            }).background_gradient(subset=['Pazar_Payi_%'], cmap='RdYlGn'),
+            }).apply(color_row, axis=1).background_gradient(subset=['Pazar_Payi_%'], cmap='RdYlGn'),
             use_container_width=True,
             height=400
         )
@@ -966,24 +1199,25 @@ def main():
             st.markdown("#### 📊 PF vs Rakip Satış")
             fig_bar = go.Figure()
             
-            fig_bar.add_trace(go.Bar(
-                x=terr_sorted['Territory'],
-                y=terr_sorted['PF_Satis'],
-                name='PF Satış',
-                marker_color='#3B82F6'
-            ))
-            
-            fig_bar.add_trace(go.Bar(
-                x=terr_sorted['Territory'],
-                y=terr_sorted['Rakip_Satis'],
-                name='Rakip Satış',
-                marker_color='#EF4444'
-            ))
+            # Bölge renklerine göre grupla
+            for region in terr_sorted['Region'].unique():
+                region_data = terr_sorted[terr_sorted['Region'] == region]
+                color = REGION_COLORS.get(region, '#64748B')
+                fig_bar.add_trace(go.Bar(
+                    x=region_data['Territory'],
+                    y=region_data['PF_Satis'],
+                    name=f'{region} (PF)',
+                    marker_color=color,
+                    opacity=0.8
+                ))
             
             fig_bar.update_layout(
                 barmode='group',
                 height=500,
-                xaxis=dict(tickangle=-45)
+                xaxis=dict(tickangle=-45),
+                plot_bgcolor='rgba(0,0,0,0)',
+                paper_bgcolor='rgba(0,0,0,0)',
+                font=dict(color='#e2e8f0')
             )
             
             st.plotly_chart(fig_bar, use_container_width=True)
@@ -994,9 +1228,16 @@ def main():
                 terr_sorted.head(10),
                 values='PF_Satis',
                 names='Territory',
-                title='Top 10 Territory - PF Satış Dağılımı'
+                title='Top 10 Territory - PF Satış Dağılımı',
+                color='Region',
+                color_discrete_map=REGION_COLORS
             )
-            fig_pie.update_layout(height=500)
+            fig_pie.update_layout(
+                height=500,
+                plot_bgcolor='rgba(0,0,0,0)',
+                paper_bgcolor='rgba(0,0,0,0)',
+                font=dict(color='#e2e8f0')
+            )
             st.plotly_chart(fig_pie, use_container_width=True)
         
         st.markdown("---")
@@ -1007,7 +1248,13 @@ def main():
         
         terr_display = terr_sorted[display_cols].copy()
         terr_display.columns = ['Territory', 'Region', 'City', 'Manager', 'PF Satış', 'Rakip Satış', 'Toplam Pazar', 'Pazar Payı %', 'Göreceli Pay', 'Ağırlık %']
+        terr_display['Region_Color'] = terr_display['Region'].map(REGION_COLORS)
         terr_display.index = range(1, len(terr_display) + 1)
+        
+        # DataFrame'i bölge renklerine göre renklendir
+        def color_by_region(row):
+            color = REGION_COLORS.get(row['Region'], '#64748B')
+            return [f'background-color: {color}20' for _ in row]
         
         st.dataframe(
             terr_display.style.format({
@@ -1017,7 +1264,7 @@ def main():
                 'Pazar Payı %': '{:.1f}',
                 'Göreceli Pay': '{:.2f}',
                 'Ağırlık %': '{:.1f}'
-            }).background_gradient(subset=['Pazar Payı %'], cmap='RdYlGn'),
+            }).apply(color_by_region, axis=1).background_gradient(subset=['Pazar Payı %'], cmap='RdYlGn'),
             use_container_width=True
         )
     
@@ -1094,7 +1341,10 @@ def main():
                     xaxis_title='Tarih',
                     yaxis_title='Satış',
                     height=400,
-                    hovermode='x unified'
+                    hovermode='x unified',
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    font=dict(color='#e2e8f0')
                 )
                 
                 st.plotly_chart(fig_ts, use_container_width=True)
@@ -1115,7 +1365,10 @@ def main():
                 fig_share.update_layout(
                     xaxis_title='Tarih',
                     yaxis_title='Pazar Payı (%)',
-                    height=400
+                    height=400,
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    font=dict(color='#e2e8f0')
                 )
                 
                 st.plotly_chart(fig_share, use_container_width=True)
@@ -1144,7 +1397,10 @@ def main():
                     title='Aylık Büyüme Oranları',
                     xaxis_title='Tarih',
                     yaxis_title='Büyüme (%)',
-                    height=400
+                    height=400,
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    font=dict(color='#e2e8f0')
                 )
                 
                 st.plotly_chart(fig_growth, use_container_width=True)
@@ -1333,14 +1589,68 @@ def main():
             
             comp_display = comp_data[['YIL_AY', 'PF', 'Rakip', 'PF_Pay_%', 'PF_Buyume', 'Rakip_Buyume', 'Fark']].copy()
             comp_display.columns = ['Ay', 'PF Satış', 'Rakip Satış', 'PF Pay %', 'PF Büyüme %', 'Rakip Büyüme %', 'Fark %']
+            comp_display.index = range(1, len(comp_display) + 1)
             
+            # İyileştirilmiş renklendirme - daha açık arka planlar
             def highlight_winner(row):
-                if row['Fark %'] > 0:
-                    return ['background-color: #d4edda'] * len(row)
+                if row['Fark %'] > 5:
+                    return ['background-color: rgba(21, 128, 61, 0.3)',   # Yeşil açık
+                            'background-color: rgba(21, 128, 61, 0.3)',
+                            'background-color: rgba(21, 128, 61, 0.3)',
+                            'background-color: rgba(21, 128, 61, 0.3)',
+                            'background-color: rgba(21, 128, 61, 0.3)',
+                            'background-color: rgba(21, 128, 61, 0.3)',
+                            'background-color: rgba(21, 128, 61, 0.3)']
+                elif row['Fark %'] > 0:
+                    return ['background-color: rgba(21, 128, 61, 0.2)',
+                            'background-color: rgba(21, 128, 61, 0.2)',
+                            'background-color: rgba(21, 128, 61, 0.2)',
+                            'background-color: rgba(21, 128, 61, 0.2)',
+                            'background-color: rgba(21, 128, 61, 0.2)',
+                            'background-color: rgba(21, 128, 61, 0.2)',
+                            'background-color: rgba(21, 128, 61, 0.2)']
+                elif row['Fark %'] < -5:
+                    return ['background-color: rgba(185, 28, 28, 0.3)',   # Kırmızı açık
+                            'background-color: rgba(185, 28, 28, 0.3)',
+                            'background-color: rgba(185, 28, 28, 0.3)',
+                            'background-color: rgba(185, 28, 28, 0.3)',
+                            'background-color: rgba(185, 28, 28, 0.3)',
+                            'background-color: rgba(185, 28, 28, 0.3)',
+                            'background-color: rgba(185, 28, 28, 0.3)']
                 elif row['Fark %'] < 0:
-                    return ['background-color: #f8d7da'] * len(row)
+                    return ['background-color: rgba(185, 28, 28, 0.2)',
+                            'background-color: rgba(185, 28, 28, 0.2)',
+                            'background-color: rgba(185, 28, 28, 0.2)',
+                            'background-color: rgba(185, 28, 28, 0.2)',
+                            'background-color: rgba(185, 28, 28, 0.2)',
+                            'background-color: rgba(185, 28, 28, 0.2)',
+                            'background-color: rgba(185, 28, 28, 0.2)']
                 else:
-                    return [''] * len(row)
+                    return ['background-color: rgba(100, 116, 139, 0.1)',   # Gri açık
+                            'background-color: rgba(100, 116, 139, 0.1)',
+                            'background-color: rgba(100, 116, 139, 0.1)',
+                            'background-color: rgba(100, 116, 139, 0.1)',
+                            'background-color: rgba(100, 116, 139, 0.1)',
+                            'background-color: rgba(100, 116, 139, 0.1)',
+                            'background-color: rgba(100, 116, 139, 0.1)']
+            
+            # Daha iyi okunabilirlik için CSS
+            st.markdown("""
+            <style>
+                .dataframe-container {
+                    color: #e2e8f0 !important;
+                    font-weight: 500 !important;
+                }
+                .dataframe th {
+                    color: #94a3b8 !important;
+                    font-weight: 600 !important;
+                }
+                .dataframe td {
+                    color: #cbd5e1 !important;
+                    font-weight: 500 !important;
+                }
+            </style>
+            """, unsafe_allow_html=True)
             
             st.dataframe(
                 comp_display.style.format({
@@ -1350,7 +1660,7 @@ def main():
                     'PF Büyüme %': '{:.1f}',
                     'Rakip Büyüme %': '{:.1f}',
                     'Fark %': '{:.1f}'
-                }).apply(highlight_winner, axis=1),
+                }, na_rep='-').apply(highlight_winner, axis=1),
                 use_container_width=True,
                 height=400
             )
@@ -1489,6 +1799,7 @@ def main():
         bcg_display = bcg_df[display_cols_bcg].copy()
         bcg_display.columns = ['Territory', 'Region', 'BCG', 'PF Satış', 'Pazar Payı %', 'Göreceli Pay', 'Büyüme %']
         bcg_display = bcg_display.sort_values('PF Satış', ascending=False)
+        bcg_display['Region_Color'] = bcg_display['Region'].map(REGION_COLORS)
         bcg_display.index = range(1, len(bcg_display) + 1)
         
         st.dataframe(
@@ -1534,4 +1845,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
