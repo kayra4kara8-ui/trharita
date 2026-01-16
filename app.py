@@ -261,16 +261,16 @@ REGION_COLORS = {
 
 # PERFORMANS RENKLERİ - Sade
 PERFORMANCE_COLORS = {
-    "high": "#10B981",      # Yeşil - Yüksek Performans
-    "medium": "#F59E0B",    # Turuncu - Orta Performans
-    "low": "#EF4444",       # Kırmızı - Düşük Performans
-    "positive": "#10B981",  # Yeşil - Pozitif
-    "negative": "#EF4444",  # Kırmızı - Negatif
-    "neutral": "#94A3B8",   # Gri - Nötr
-    "warning": "#F59E0B",   # Turuncu - Uyarı
-    "info": "#3B82F6",      # Mavi - Bilgi
-    "success": "#10B981",   # Yeşil - Başarı
-    "danger": "#EF4444"     # Kırmızı - Tehlike
+    "high": "#1F7A5A",       # Koyu Yeşil – Yüksek Performans
+    "medium": "#C48A2A",     # Altın Sarısı – Orta Performans
+    "low": "#B23A3A",        # Bordo – Düşük Performans
+    "positive": "#1F7A5A",   # Koyu Yeşil – Pozitif
+    "negative": "#B23A3A",   # Bordo – Negatif
+    "neutral": "#6B7280",    # Kurumsal Gri – Nötr
+    "warning": "#C48A2A",    # Altın – Uyarı
+    "info": "#1E40AF",       # Lacivert – Bilgi
+    "success": "#166534",    # Koyu Yeşil – Başarı
+    "danger": "#991B1B"      # Koyu Kırmızı – Risk / Tehlike
 }
 
 # BCG MATRIX RENKLERİ
@@ -2557,3 +2557,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
