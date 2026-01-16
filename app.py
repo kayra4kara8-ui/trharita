@@ -247,16 +247,16 @@ st.markdown("""
 # =============================================================================
 # Sade ve profesyonel bölge renkleri
 REGION_COLORS = {
-    "MARMARA": "#3B82F6",      # Mavi
-    "BATI ANADOLU": "#10B981", # Yeşil
-    "EGE": "#F59E0B",          # Turuncu
-    "İÇ ANADOLU": "#8B5CF6",   # Mor
-    "GÜNEY DOĞU ANADOLU": "#EF4444", # Kırmızı
-    "KUZEY ANADOLU": "#06B6D4",      # Camgöbeği
-    "KARADENİZ": "#06B6D4",          # Camgöbeği
-    "AKDENİZ": "#3B82F6",            # Mavi
-    "DOĞU ANADOLU": "#10B981",       # Yeşil
-    "DİĞER": "#64748B"               # Gri
+    "MARMARA": "#0EA5E9",              # Sky Blue - Deniz ve boğazlar
+    "BATI ANADOLU": "#14B8A6",         # Turkuaz-yeşil arası
+    "EGE": "#FCD34D",                  # BAL SARI (Batı Anadolu ile aynı)
+    "İÇ ANADOLU": "#F59E0B",           # Amber - Kuru bozkır
+    "GÜNEY DOĞU ANADOLU": "#E07A5F",   # Terracotta 
+    "KUZEY ANADOLU": "#059669",        # Emerald - Yemyeşil ormanlar
+    "KARADENİZ": "#059669",            # Emerald (Kuzey Anadolu ile aynı)
+    "AKDENİZ": "#8B5CF6",              # Violet - Akdeniz
+    "DOĞU ANADOLU": "#7C3AED",         # Purple - Yüksek dağlar
+    "DİĞER": "#64748B"                 # Slate Gray
 }
 
 # PERFORMANS RENKLERİ - Sade
@@ -2557,4 +2557,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
