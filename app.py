@@ -159,6 +159,8 @@ FIX_CITY_MAP = {
     "BINGOL": "BİNGÖL",
     "DUZCE": "DÜZCE",
     "ELAZIG": "ELAZIĞ",
+    "ELAZĞ": "ELAZIĞ",
+    "ELAZIĞ": "ELAZIĞ",
     "ESKISEHIR": "ESKİŞEHİR",
     "GUMUSHANE": "GÜMÜŞHANE",
     "HAKKARI": "HAKKARİ",
@@ -405,7 +407,7 @@ def calculate_city_performance(df, product, date_filter=None):
     return city_perf
 
 def calculate_territory_performance(df, product, date_filter=None):
-    """Territory bazlı performans"""
+    """Territory bazlı performans - TOPLAM PAZAR % ile"""
     cols = get_product_columns(product)
     
     if date_filter:
@@ -423,6 +425,10 @@ def calculate_territory_performance(df, product, date_filter=None):
     total_pf = terr_perf['PF_Satis'].sum()
     terr_perf['Agirlik_%'] = safe_divide(terr_perf['PF_Satis'], total_pf) * 100
     terr_perf['Goreceli_Pazar_Payi'] = safe_divide(terr_perf['PF_Satis'], terr_perf['Rakip_Satis'])
+    
+    # TOPLAM PAZAR YÜZDE HESAPLA
+    total_market_all = terr_perf['Toplam_Pazar'].sum()
+    terr_perf['Toplam_Pazar_%'] = safe_divide(terr_perf['Toplam_Pazar'], total_market_all) * 100
     
     return terr_perf.sort_values('PF_Satis', ascending=False)
 
@@ -1001,11 +1007,12 @@ def main():
         with col_f1:
             sort_by = st.selectbox(
                 "Sıralama",
-                ['PF_Satis', 'Pazar_Payi_%', 'Toplam_Pazar', 'Agirlik_%'],
+                ['PF_Satis', 'Pazar_Payi_%', 'Toplam_Pazar', 'Toplam_Pazar_%', 'Agirlik_%'],
                 format_func=lambda x: {
                     'PF_Satis': 'PF Satış',
                     'Pazar_Payi_%': 'Pazar Payı %',
                     'Toplam_Pazar': 'Toplam Pazar',
+                    'Toplam_Pazar_%': 'Toplam Pazar %',
                     'Agirlik_%': 'Ağırlık %'
                 }[x]
             )
@@ -1056,12 +1063,63 @@ def main():
         
         st.markdown("---")
         
+        # EKSTRA ANALİZLER
+        st.subheader("📊 Ekstra Analizler")
+        
+        col_extra1, col_extra2 = st.columns(2)
+        
+        with col_extra1:
+            st.markdown("#### 🎯 Pazar Büyüklüğü vs Pazar Payı")
+            fig_scatter = px.scatter(
+                terr_sorted,
+                x='Toplam_Pazar_%',
+                y='Pazar_Payi_%',
+                size='PF_Satis',
+                color='Region',
+                hover_name='Territory',
+                hover_data={
+                    'PF_Satis': ':,.0f',
+                    'Toplam_Pazar_%': ':.2f',
+                    'Pazar_Payi_%': ':.1f'
+                },
+                labels={
+                    'Toplam_Pazar_%': 'Pazar Büyüklüğü (%)',
+                    'Pazar_Payi_%': 'Pazar Payı (%)'
+                }
+            )
+            fig_scatter.update_layout(
+                height=400,
+                xaxis_title='Toplam Pazar Büyüklüğü (%)',
+                yaxis_title='Pazar Payı (%)'
+            )
+            st.plotly_chart(fig_scatter, use_container_width=True)
+        
+        with col_extra2:
+            st.markdown("#### 📈 Toplam Pazar Dağılımı")
+            fig_market = px.bar(
+                terr_sorted.head(15),
+                x='Territory',
+                y='Toplam_Pazar_%',
+                color='Region',
+                title='Top 15 Territory - Pazar Büyüklüğü',
+                text='Toplam_Pazar_%'
+            )
+            fig_market.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
+            fig_market.update_layout(
+                height=400,
+                xaxis=dict(tickangle=-45),
+                yaxis_title='Toplam Pazar %'
+            )
+            st.plotly_chart(fig_market, use_container_width=True)
+        
+        st.markdown("---")
+        
         st.subheader("📋 Detaylı Territory Listesi")
         
-        display_cols = ['Territory', 'Region', 'City', 'Manager', 'PF_Satis', 'Rakip_Satis', 'Toplam_Pazar', 'Pazar_Payi_%', 'Goreceli_Pazar_Payi', 'Agirlik_%']
+        display_cols = ['Territory', 'Region', 'City', 'Manager', 'PF_Satis', 'Rakip_Satis', 'Toplam_Pazar', 'Toplam_Pazar_%', 'Pazar_Payi_%', 'Goreceli_Pazar_Payi', 'Agirlik_%']
         
         terr_display = terr_sorted[display_cols].copy()
-        terr_display.columns = ['Territory', 'Region', 'City', 'Manager', 'PF Satış', 'Rakip Satış', 'Toplam Pazar', 'Pazar Payı %', 'Göreceli Pay', 'Ağırlık %']
+        terr_display.columns = ['Territory', 'Region', 'City', 'Manager', 'PF Satış', 'Rakip Satış', 'Toplam Pazar', 'Toplam Pazar %', 'Pazar Payı %', 'Göreceli Pay', 'Ağırlık %']
         terr_display.index = range(1, len(terr_display) + 1)
         
         st.dataframe(
@@ -1069,10 +1127,11 @@ def main():
                 'PF Satış': '{:,.0f}',
                 'Rakip Satış': '{:,.0f}',
                 'Toplam Pazar': '{:,.0f}',
+                'Toplam Pazar %': '{:.2f}',
                 'Pazar Payı %': '{:.1f}',
                 'Göreceli Pay': '{:.2f}',
                 'Ağırlık %': '{:.1f}'
-            }).background_gradient(subset=['Pazar Payı %'], cmap='RdYlGn'),
+            }).background_gradient(subset=['Pazar Payı %'], cmap='RdYlGn').background_gradient(subset=['Toplam Pazar %'], cmap='Blues'),
             use_container_width=True
         )
     
