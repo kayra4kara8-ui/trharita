@@ -59,10 +59,10 @@ st.markdown("""
         font-weight: 900;
         text-align: center;
         padding: 2rem 0;
-        background: linear-gradient(135deg, #0EA5E9 0%, #8B5CF6 25%, #F59E0B 50%, #059669 75%, #14B8A6 100%);
+        background: linear-gradient(135deg, #3B82F6 0%, #10B981 50%, #F59E0B 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        text-shadow: 0 0 50px rgba(14, 165, 233, 0.2);
+        text-shadow: 0 0 50px rgba(59, 130, 246, 0.2);
         letter-spacing: -0.5px;
         margin-bottom: 1rem;
     }
@@ -70,7 +70,7 @@ st.markdown("""
     div[data-testid="stMetricValue"] {
         font-size: 2.8rem;
         font-weight: 800;
-        background: linear-gradient(135deg, #0EA5E9 0%, #8B5CF6 50%, #F59E0B 100%);
+        background: linear-gradient(135deg, #3B82F6 0%, #10B981 50%, #F59E0B 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
     }
@@ -79,7 +79,7 @@ st.markdown("""
         background: rgba(30, 41, 59, 0.85);
         padding: 1.5rem;
         border-radius: 16px;
-        border: 1px solid rgba(99, 102, 241, 0.2);
+        border: 1px solid rgba(59, 130, 246, 0.2);
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
         backdrop-filter: blur(12px);
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -87,8 +87,8 @@ st.markdown("""
     
     div[data-testid="metric-container"]:hover {
         transform: translateY(-8px);
-        box-shadow: 0 16px 48px rgba(14, 165, 233, 0.25);
-        border-color: rgba(14, 165, 233, 0.4);
+        box-shadow: 0 16px 48px rgba(59, 130, 246, 0.25);
+        border-color: rgba(59, 130, 246, 0.4);
     }
     
     .stTabs [data-baseweb="tab-list"] {
@@ -110,15 +110,15 @@ st.markdown("""
     }
     
     .stTabs [data-baseweb="tab"]:hover {
-        background: rgba(14, 165, 233, 0.15);
+        background: rgba(59, 130, 246, 0.15);
         color: #e0e7ff;
-        border-color: rgba(14, 165, 233, 0.3);
+        border-color: rgba(59, 130, 246, 0.3);
     }
     
     .stTabs [data-baseweb="tab"][aria-selected="true"] {
-        background: linear-gradient(135deg, #0EA5E9 0%, #8B5CF6 50%, #F59E0B 100%);
+        background: linear-gradient(135deg, #3B82F6 0%, #10B981 50%, #F59E0B 100%);
         color: white;
-        box-shadow: 0 8px 24px rgba(14, 165, 233, 0.3);
+        box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
         border: 1px solid rgba(255, 255, 255, 0.1);
         transform: scale(1.02);
     }
@@ -148,21 +148,21 @@ st.markdown("""
     }
     
     .stButton>button {
-        background: linear-gradient(135deg, #0EA5E9 0%, #8B5CF6 100%);
+        background: linear-gradient(135deg, #3B82F6 0%, #10B981 100%);
         color: white;
         border: none;
         padding: 0.75rem 2rem;
         border-radius: 12px;
         font-weight: 600;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 4px 16px rgba(14, 165, 233, 0.3);
+        box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
         position: relative;
         overflow: hidden;
     }
     
     .stButton>button:hover {
         transform: translateY(-4px);
-        box-shadow: 0 8px 28px rgba(14, 165, 233, 0.4);
+        box-shadow: 0 8px 28px rgba(59, 130, 246, 0.4);
     }
     
     .stButton>button:active {
@@ -205,12 +205,12 @@ st.markdown("""
     }
     
     ::-webkit-scrollbar-thumb {
-        background: linear-gradient(135deg, #0EA5E9 0%, #8B5CF6 100%);
+        background: linear-gradient(135deg, #3B82F6 0%, #10B981 100%);
         border-radius: 5px;
     }
     
     ::-webkit-scrollbar-thumb:hover {
-        background: linear-gradient(135deg, #8B5CF6 0%, #F59E0B 100%);
+        background: linear-gradient(135deg, #10B981 0%, #F59E0B 100%);
     }
     
     /* Card styling for visualizations */
@@ -224,7 +224,7 @@ st.markdown("""
     [data-testid="stSidebar"] {
         background: rgba(15, 23, 41, 0.95);
         backdrop-filter: blur(20px);
-        border-right: 1px solid rgba(14, 165, 233, 0.1);
+        border-right: 1px solid rgba(59, 130, 246, 0.1);
     }
     
     /* Input field styling */
@@ -232,70 +232,70 @@ st.markdown("""
         background: rgba(30, 41, 59, 0.7);
         padding: 8px;
         border-radius: 10px;
-        border: 1px solid rgba(14, 165, 233, 0.2);
+        border: 1px solid rgba(59, 130, 246, 0.2);
     }
     
     /* Progress bar */
     .stProgress > div > div > div > div {
-        background: linear-gradient(135deg, #0EA5E9 0%, #8B5CF6 50%, #F59E0B 100%);
+        background: linear-gradient(135deg, #3B82F6 0%, #10B981 50%, #F59E0B 100%);
     }
 </style>
 """, unsafe_allow_html=True)
 
 # =============================================================================
-# MODERN PROFESYONEL RENK PALETİ - YENİ TONLAR
+# SADE RENK PALETİ
 # =============================================================================
-# Yeni Bölge Renkleri
+# Sade ve profesyonel bölge renkleri
 REGION_COLORS = {
-    "MARMARA": "#0EA5E9",              # Sky Blue - Deniz ve boğazlar
-    "BATI ANADOLU": "#14B8A6",         # Turkuaz-yeşil arası
-    "EGE": "#FCD34D",                  # BAL SARI
-    "İÇ ANADOLU": "#F59E0B",           # Amber - Kuru bozkır
-    "GÜNEY DOĞU ANADOLU": "#E07A5F",   # Terracotta
-    "KUZEY ANADOLU": "#059669",        # Emerald - Yemyeşil ormanlar
-    "KARADENİZ": "#059669",            # Emerald
-    "AKDENİZ": "#8B5CF6",              # Violet - Akdeniz
-    "DOĞU ANADOLU": "#7C3AED",         # Purple - Yüksek dağlar
-    "DİĞER": "#64748B"                 # Slate Gray
+    "MARMARA": "#3B82F6",      # Mavi
+    "BATI ANADOLU": "#10B981", # Yeşil
+    "EGE": "#F59E0B",          # Turuncu
+    "İÇ ANADOLU": "#8B5CF6",   # Mor
+    "GÜNEY DOĞU ANADOLU": "#EF4444", # Kırmızı
+    "KUZEY ANADOLU": "#06B6D4",      # Camgöbeği
+    "KARADENİZ": "#06B6D4",          # Camgöbeği
+    "AKDENİZ": "#3B82F6",            # Mavi
+    "DOĞU ANADOLU": "#10B981",       # Yeşil
+    "DİĞER": "#64748B"               # Gri
 }
 
-# PERFORMANS RENKLERİ - Modern Gradient
+# PERFORMANS RENKLERİ - Sade
 PERFORMANCE_COLORS = {
-    "high": "#059669",        # Emerald - Yüksek Performans
-    "medium": "#F59E0B",      # Amber - Orta Performans
-    "low": "#E07A5F",         # Terracotta - Düşük Performans
-    "positive": "#059669",    # Emerald - Pozitif
-    "negative": "#EF4444",    # Red - Negatif
-    "neutral": "#94A3B8",     # Slate - Nötr
-    "warning": "#F59E0B",     # Amber - Uyarı
-    "info": "#0EA5E9",        # Sky Blue - Bilgi
-    "success": "#059669",     # Emerald - Başarı
-    "danger": "#EF4444"       # Red - Tehlike
+    "high": "#10B981",      # Yeşil - Yüksek Performans
+    "medium": "#F59E0B",    # Turuncu - Orta Performans
+    "low": "#EF4444",       # Kırmızı - Düşük Performans
+    "positive": "#10B981",  # Yeşil - Pozitif
+    "negative": "#EF4444",  # Kırmızı - Negatif
+    "neutral": "#94A3B8",   # Gri - Nötr
+    "warning": "#F59E0B",   # Turuncu - Uyarı
+    "info": "#3B82F6",      # Mavi - Bilgi
+    "success": "#10B981",   # Yeşil - Başarı
+    "danger": "#EF4444"     # Kırmızı - Tehlike
 }
 
-# BCG MATRIX RENKLERİ - Modern
+# BCG MATRIX RENKLERİ
 BCG_COLORS = {
-    "⭐ Star": "#FCD34D",      # Bal Sarısı
-    "🐄 Cash Cow": "#059669",  # Emerald
-    "❓ Question Mark": "#0EA5E9",  # Sky Blue
-    "🐶 Dog": "#64748B"        # Gray
+    "⭐ Star": "#F59E0B",      # Turuncu
+    "🐄 Cash Cow": "#10B981",  # Yeşil
+    "❓ Question Mark": "#3B82F6",  # Mavi
+    "🐶 Dog": "#64748B"        # Gri
 }
 
 # YATIRIM STRATEJİSİ RENKLERİ
 STRATEGY_COLORS = {
-    "🚀 Agresif": "#EF4444",      # Red
-    "⚡ Hızlandırılmış": "#F59E0B",  # Amber
-    "🛡️ Koruma": "#059669",        # Emerald
-    "💎 Potansiyel": "#8B5CF6",     # Violet
-    "👁️ İzleme": "#64748B"         # Slate
+    "🚀 Agresif": "#EF4444",      # Kırmızı
+    "⚡ Hızlandırılmış": "#F59E0B",  # Turuncu
+    "🛡️ Koruma": "#10B981",        # Yeşil
+    "💎 Potansiyel": "#3B82F6",     # Mavi
+    "👁️ İzleme": "#64748B"         # Gri
 }
 
 # GRADIENT SCALES for Visualizations
 GRADIENT_SCALES = {
-    "purple_teal": ["#8B5CF6", "#7C3AED", "#6366F1", "#0EA5E9", "#14B8A6", "#059669"],
-    "sequential_purple": ["#EDE9FE", "#DDD6FE", "#C4B5FD", "#A78BFA", "#8B5CF6", "#7C3AED", "#6D28D9"],
-    "diverging": ["#EF4444", "#F59E0B", "#FCD34D", "#059669", "#0EA5E9", "#8B5CF6"],
-    "temperature": ["#0EA5E9", "#22D3EE", "#67E8F9", "#A5F3FC", "#CCFBF1", "#99F6E4", "#5EEAD4", "#2DD4BF", "#14B8A6"]
+    "blue_green": ["#3B82F6", "#06B6D4", "#10B981"],
+    "sequential_blue": ["#DBEAFE", "#BFDBFE", "#93C5FD", "#60A5FA", "#3B82F6"],
+    "diverging": ["#EF4444", "#F59E0B", "#10B981", "#3B82F6", "#8B5CF6"],
+    "temperature": ["#3B82F6", "#60A5FA", "#93C5FD", "#BFDBFE", "#DBEAFE"]
 }
 
 # =============================================================================
@@ -1138,7 +1138,7 @@ def create_modern_forecast_chart(historical_df, forecast_df):
             line=dict(width=2, color=PERFORMANCE_COLORS['success'])
         ),
         fill='tozeroy',
-        fillcolor='rgba(5, 150, 105, 0.1)'
+        fillcolor='rgba(16, 185, 129, 0.1)'
     ))
     
     # Tahmin
@@ -1161,7 +1161,7 @@ def create_modern_forecast_chart(historical_df, forecast_df):
                 line=dict(width=2, color=PERFORMANCE_COLORS['info'])
             ),
             fill='tozeroy',
-            fillcolor='rgba(14, 165, 233, 0.1)'
+            fillcolor='rgba(59, 130, 246, 0.1)'
         ))
     
     # Modern layout
@@ -1184,17 +1184,17 @@ def create_modern_forecast_chart(historical_df, forecast_df):
             xanchor="right",
             x=1,
             bgcolor='rgba(30, 41, 59, 0.8)',
-            bordercolor='rgba(14, 165, 233, 0.3)',
+            bordercolor='rgba(59, 130, 246, 0.3)',
             borderwidth=1
         ),
         xaxis=dict(
-            gridcolor='rgba(14, 165, 233, 0.1)',
-            linecolor='rgba(14, 165, 233, 0.3)',
+            gridcolor='rgba(59, 130, 246, 0.1)',
+            linecolor='rgba(59, 130, 246, 0.3)',
             showgrid=True
         ),
         yaxis=dict(
-            gridcolor='rgba(14, 165, 233, 0.1)',
-            linecolor='rgba(14, 165, 233, 0.3)',
+            gridcolor='rgba(59, 130, 246, 0.1)',
+            linecolor='rgba(59, 130, 246, 0.3)',
             showgrid=True
         )
     )
@@ -1246,10 +1246,10 @@ def create_modern_competitor_chart(comp_data):
             bgcolor='rgba(30, 41, 59, 0.8)'
         ),
         xaxis=dict(
-            gridcolor='rgba(14, 165, 233, 0.1)'
+            gridcolor='rgba(59, 130, 246, 0.1)'
         ),
         yaxis=dict(
-            gridcolor='rgba(14, 165, 233, 0.1)'
+            gridcolor='rgba(59, 130, 246, 0.1)'
         )
     )
     
@@ -1276,7 +1276,7 @@ def create_modern_growth_chart(comp_data):
             line=dict(width=2, color=PERFORMANCE_COLORS['success'])
         ),
         fill='tozeroy',
-        fillcolor='rgba(5, 150, 105, 0.15)'
+        fillcolor='rgba(16, 185, 129, 0.15)'
     ))
     
     # Rakip Büyüme
@@ -1327,10 +1327,10 @@ def create_modern_growth_chart(comp_data):
             bgcolor='rgba(30, 41, 59, 0.8)'
         ),
         xaxis=dict(
-            gridcolor='rgba(14, 165, 233, 0.1)'
+            gridcolor='rgba(59, 130, 246, 0.1)'
         ),
         yaxis=dict(
-            gridcolor='rgba(14, 165, 233, 0.1)'
+            gridcolor='rgba(59, 130, 246, 0.1)'
         )
     )
     
@@ -1389,16 +1389,16 @@ def create_modern_bcg_chart(bcg_df):
         legend=dict(
             title='<b>BCG Kategorisi</b>',
             bgcolor='rgba(30, 41, 59, 0.8)',
-            bordercolor='rgba(14, 165, 233, 0.3)',
+            bordercolor='rgba(59, 130, 246, 0.3)',
             borderwidth=1
         ),
         xaxis=dict(
-            gridcolor='rgba(14, 165, 233, 0.1)',
-            linecolor='rgba(14, 165, 233, 0.3)'
+            gridcolor='rgba(59, 130, 246, 0.1)',
+            linecolor='rgba(59, 130, 246, 0.3)'
         ),
         yaxis=dict(
-            gridcolor='rgba(14, 165, 233, 0.1)',
-            linecolor='rgba(14, 165, 233, 0.3)'
+            gridcolor='rgba(59, 130, 246, 0.1)',
+            linecolor='rgba(59, 130, 246, 0.3)'
         )
     )
     
@@ -1419,7 +1419,7 @@ def style_dataframe(df, color_column=None, gradient_columns=None):
     styled_df = styled_df.set_properties(**{
         'background-color': 'rgba(30, 41, 59, 0.7)',
         'color': '#e2e8f0',
-        'border': '1px solid rgba(14, 165, 233, 0.2)',
+        'border': '1px solid rgba(59, 130, 246, 0.2)',
         'font-family': 'Inter, sans-serif'
     })
     
@@ -1427,10 +1427,10 @@ def style_dataframe(df, color_column=None, gradient_columns=None):
     styled_df = styled_df.set_table_styles([{
         'selector': 'thead th',
         'props': [
-            ('background-color', 'rgba(14, 165, 233, 0.3)'),
+            ('background-color', 'rgba(59, 130, 246, 0.3)'),
             ('color', 'white'),
             ('font-weight', '700'),
-            ('border', '1px solid rgba(14, 165, 233, 0.4)'),
+            ('border', '1px solid rgba(59, 130, 246, 0.4)'),
             ('padding', '12px 8px'),
             ('text-align', 'center')
         ]
@@ -1460,7 +1460,7 @@ def style_dataframe(df, color_column=None, gradient_columns=None):
         def color_cells(val):
             if isinstance(val, (int, float)):
                 if val >= 70:
-                    return 'background-color: rgba(5, 150, 105, 0.3); color: #059669; font-weight: 600'
+                    return 'background-color: rgba(16, 185, 129, 0.3); color: #10B981; font-weight: 600'
                 elif val >= 40:
                     return 'background-color: rgba(245, 158, 11, 0.3); color: #F59E0B; font-weight: 600'
                 else:
@@ -1493,7 +1493,7 @@ def main():
     
     # SIDEBAR
     with st.sidebar:
-        st.markdown('<div style="background: linear-gradient(135deg, #0EA5E9 0%, #8B5CF6 100%); '
+        st.markdown('<div style="background: linear-gradient(135deg, #3B82F6 0%, #10B981 100%); '
                    'padding: 1rem; border-radius: 12px; margin-bottom: 2rem;">'
                    '<h3 style="color: white; margin: 0; text-align: center;">📂 VERİ YÜKLEME</h3>'
                    '</div>', unsafe_allow_html=True)
@@ -1725,7 +1725,7 @@ def main():
                 values='PF_Satis',
                 names='Territory',
                 title='<b>Top 5 Territory Dağılımı</b>',
-                color_discrete_sequence=GRADIENT_SCALES['purple_teal'],
+                color_discrete_sequence=GRADIENT_SCALES['blue_green'],
                 hole=0.4
             )
             
@@ -2205,7 +2205,7 @@ def main():
                     line=dict(color=PERFORMANCE_COLORS['success'], width=3, shape='spline'),
                     marker=dict(size=8, color='white', line=dict(width=2, color=PERFORMANCE_COLORS['success'])),
                     fill='tozeroy',
-                    fillcolor='rgba(5, 150, 105, 0.1)'
+                    fillcolor='rgba(16, 185, 129, 0.1)'
                 ))
                 
                 fig_ts.add_trace(go.Scatter(
@@ -2250,7 +2250,7 @@ def main():
                     line=dict(color=PERFORMANCE_COLORS['info'], width=3, shape='spline'),
                     marker=dict(size=8, color='white', line=dict(width=2, color=PERFORMANCE_COLORS['info'])),
                     fill='tozeroy',
-                    fillcolor='rgba(14, 165, 233, 0.1)'
+                    fillcolor='rgba(59, 130, 246, 0.1)'
                 ))
                 
                 fig_share.add_hline(
@@ -2319,7 +2319,7 @@ def main():
                         
                         if best_mape < 10:
                             confidence_level = "🟢 YÜKSEK"
-                            confidence_color = "#059669"
+                            confidence_color = "#10B981"
                         elif best_mape < 20:
                             confidence_level = "🟡 ORTA"
                             confidence_color = "#F59E0B"
@@ -2557,4 +2557,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
