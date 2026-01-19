@@ -458,6 +458,26 @@ CITY_NORMALIZE_CLEAN = {
     'YOZGAT': 'Yozgat',
     'ZONGULDAK': 'Zonguldak',
     'ARDAHAN': 'Ardahan'
+     # EKSİK ŞEHİRLERİ EKLEYELİM
+    'BARTÄ±N': 'Bartin',
+    'KARABÃ1⁄4K': 'Karabuk',
+    'TUNCELI': 'Tunceli',
+    'OSMANIYE': 'Osmaniye',
+    'KILIS': 'Kilis',
+    'HAKKARI': 'Hakkari',
+    'SIRNAK': 'Sirnak',
+    'SIIRT': 'Siirt',
+    'BATMAN': 'Batman',
+    'BITLIS': 'Bitlis',
+    'BINGOL': 'Bingol',
+    'BINGÃ¶L': 'Bingol',
+    'IGDIR': 'Igdir',
+    'IÄ\x9fDIR': 'Igdir',
+    'ARDAHAN': 'Ardahan',
+    'KUTAHYA': 'Kutahya',
+    'KÃ1⁄4TAHYA': 'Kutahya',
+    'DUZCE': 'Duzce',
+    'DÃ1⁄4ZCE': 'Duzce'
 }
 
 # =============================================================================
@@ -2557,5 +2577,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
