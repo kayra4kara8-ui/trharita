@@ -259,19 +259,22 @@ REGION_COLORS = {
     "DİĞER": "#64748B"                 # Slate Gray
 }
 
-# PERFORMANS RENKLERİ - Sade
+# PERFORMANS RENKLERİ - Profesyonel / Kurumsal
 PERFORMANCE_COLORS = {
     "high": "#1F7A5A",       # Koyu Yeşil – Yüksek Performans
     "medium": "#C48A2A",     # Altın Sarısı – Orta Performans
     "low": "#B23A3A",        # Bordo – Düşük Performans
+
     "positive": "#1F7A5A",   # Koyu Yeşil – Pozitif
     "negative": "#B23A3A",   # Bordo – Negatif
     "neutral": "#6B7280",    # Kurumsal Gri – Nötr
+
     "warning": "#C48A2A",    # Altın – Uyarı
     "info": "#1E40AF",       # Lacivert – Bilgi
     "success": "#166534",    # Koyu Yeşil – Başarı
     "danger": "#991B1B"      # Koyu Kırmızı – Risk / Tehlike
 }
+
 
 # BCG MATRIX RENKLERİ
 BCG_COLORS = {
@@ -458,26 +461,7 @@ CITY_NORMALIZE_CLEAN = {
     'YOZGAT': 'Yozgat',
     'ZONGULDAK': 'Zonguldak',
     'ARDAHAN': 'Ardahan'
-     # EKSİK ŞEHİRLERİ EKLEYELİM
-    'BARTÄ±N': 'Bartin',
-    'KARABÃ1⁄4K': 'Karabuk',
-    'TUNCELI': 'Tunceli',
-    'OSMANIYE': 'Osmaniye',
-    'KILIS': 'Kilis',
-    'HAKKARI': 'Hakkari',
-    'SIRNAK': 'Sirnak',
-    'SIIRT': 'Siirt',
-    'BATMAN': 'Batman',
-    'BITLIS': 'Bitlis',
-    'BINGOL': 'Bingol',
-    'BINGÃ¶L': 'Bingol',
-    'IGDIR': 'Igdir',
-    'IÄ\x9fDIR': 'Igdir',
-    'ARDAHAN': 'Ardahan',
-    'KUTAHYA': 'Kutahya',
-    'KÃ1⁄4TAHYA': 'Kutahya',
-    'DUZCE': 'Duzce',
-    'DÃ1⁄4ZCE': 'Duzce'
+  
 }
 
 # =============================================================================
@@ -2577,6 +2561,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
