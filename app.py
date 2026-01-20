@@ -308,81 +308,40 @@ GRADIENT_SCALES = {
 FIX_CITY_MAP = {
     "AGRI": "AĞRI",
     "BARTÄ±N": "BARTIN",
-    "BARTIN": "BARTIN",
     "BINGÃ¶L": "BİNGÖL",
-    "BINGOL": "BİNGÖL",
     "DÃ1⁄4ZCE": "DÜZCE",
-    "DUZCE": "DÜZCE",
-    "DÜZCE": "DÜZCE",
     "ELAZIG": "ELAZIĞ",
-    "ELAZIĞ": "ELAZIĞ",
     "ESKISEHIR": "ESKİŞEHİR",
-    "ESKİŞEHİR": "ESKİŞEHİR",
     "GÃ1⁄4MÃ1⁄4SHANE": "GÜMÜŞHANE",
-    "GÜMÜŞHANE": "GÜMÜŞHANE",
     "HAKKARI": "HAKKARİ",
-    "HAKKARİ": "HAKKARİ",
     "ISTANBUL": "İSTANBUL",
-    "İSTANBUL": "İSTANBUL",
     "IZMIR": "İZMİR",
-    "İZMİR": "İZMİR",
     "IÄ\x9fDIR": "IĞDIR",
-    "IĞDIR": "IĞDIR",
     "KARABÃ1⁄4K": "KARABÜK",
-    "KARABÜK": "KARABÜK",
     "KINKKALE": "KIRIKKALE",
-    "KIRIKKALE": "KIRIKKALE",
     "KIRSEHIR": "KIRŞEHİR",
-    "KIRŞEHİR": "KIRŞEHİR",
     "KÃ1⁄4TAHYA": "KÜTAHYA",
-    "KÜTAHYA": "KÜTAHYA",
     "MUGLA": "MUĞLA",
-    "MUĞLA": "MUĞLA",
     "MUS": "MUŞ",
-    "MUŞ": "MUŞ",
     "NEVSEHIR": "NEVŞEHİR",
-    "NEVŞEHİR": "NEVŞEHİR",
     "NIGDE": "NİĞDE",
-    "NİĞDE": "NİĞDE",
     "SANLIURFA": "ŞANLIURFA",
-    "ŞANLIURFA": "ŞANLIURFA",
     "SIRNAK": "ŞIRNAK",
-    "ŞIRNAK": "ŞIRNAK",
     "TEKIRDAG": "TEKİRDAĞ",
-    "TEKİRDAĞ": "TEKİRDAĞ",
     "USAK": "UŞAK",
-    "UŞAK": "UŞAK",
     "ZINGULDAK": "ZONGULDAK",
-    "ZONGULDAK": "ZONGULDAK",
     "Ã\x87ANAKKALE": "ÇANAKKALE",
-    "ÇANAKKALE": "ÇANAKKALE",
     "Ã\x87ANKIRI": "ÇANKIRI",
-    "ÇANKIRI": "ÇANKIRI",
     "Ã\x87ORUM": "ÇORUM",
-    "ÇORUM": "ÇORUM",
     "K. MARAS": "KAHRAMANMARAŞ",
-    "KAHRAMANMARAŞ": "KAHRAMANMARAŞ",
     "CORUM": "ÇORUM",
     "CANKIRI": "ÇANKIRI",
+    "ZONGULDAK": "ZONGULDak",
     "KARABUK": "KARABÜK",
     "GUMUSHANE": "GÜMÜŞHANE",
+    "ELÂZıĞ": "ELAZIĞ",
     "KUTAHYA": "KÜTAHYA",
-    "CANAKKALE": "ÇANAKKALE",
-    "TUNCELİ": "TUNCELİ",
-    "TUNCELI": "TUNCELİ",
-    "OSMANİYE": "OSMANİYE",
-    "OSMANIYE": "OSMANİYE",
-    "KİLİS": "KİLİS",
-    "KILIS": "KİLİS",
-    "ŞIRNAK": "ŞIRNAK",
-    "SİİRT": "SİİRT",
-    "SIIRT": "SİİRT",
-    "BATMAN": "BATMAN",
-    "BİTLİS": "BİTLİS",
-    "BITLIS": "BİTLİS",
-    "BİNGÖL": "BİNGÖL",
-    "IĞDIR": "IĞDIR",
-    "ARDAHAN": "ARDAHAN"
+    "CANAKKALE": "ÇANAKKALE"
 }
 
 CITY_NORMALIZE_CLEAN = {
@@ -392,7 +351,6 @@ CITY_NORMALIZE_CLEAN = {
     'AFYON': 'Afyonkarahisar',
     'AGRI': 'Agri',
     'AĞRI': 'Agri',
-    'AKSARAY': 'Aksaray',
     'ANKARA': 'Ankara',
     'ANTALYA': 'Antalya',
     'AYDIN': 'Aydin',
@@ -429,7 +387,6 @@ CITY_NORMALIZE_CLEAN = {
     'GUMUSHANE': 'Gumushane',
     'GÜMÜŞHANE': 'Gumushane',
     'HAKKARI': 'Hakkari',
-    'HAKKARİ': 'Hakkari',
     'HATAY': 'Hatay',
     'IGDIR': 'Igdir',
     'IĞDIR': 'Igdir',
@@ -503,10 +460,8 @@ CITY_NORMALIZE_CLEAN = {
     'YALOVA': 'Yalova',
     'YOZGAT': 'Yozgat',
     'ZONGULDAK': 'Zonguldak',
-    'ZONGULDAK': 'Zonguldak',
-    'ARDAHAN': 'Ardahan',
-    'AKSARAY': 'Aksaray',
-    'KIRIKKALE': 'Kirikkale'
+    'ARDAHAN': 'Ardahan'
+  
 }
 
 # =============================================================================
@@ -550,35 +505,6 @@ def normalize_city_name_fixed(city_name):
         city_upper = city_upper.replace(k, v)
     
     return CITY_NORMALIZE_CLEAN.get(city_upper, city_name)
-
-def format_number(num):
-    """Sayıları binlik ayırıcılı ve sadeleştirilmiş formatta göster"""
-    if pd.isna(num):
-        return "0"
-    
-    try:
-        num = float(num)
-        if num == 0:
-            return "0"
-        elif abs(num) >= 1_000_000_000:
-            return f"{num/1_000_000_000:,.1f}B"
-        elif abs(num) >= 1_000_000:
-            return f"{num/1_000_000:,.1f}M"
-        elif abs(num) >= 1_000:
-            return f"{num/1_000:,.1f}K"
-        else:
-            return f"{num:,.0f}"
-    except:
-        return str(num)
-
-def format_percentage(num):
-    """Yüzdelikleri formatla"""
-    if pd.isna(num):
-        return "0%"
-    try:
-        return f"{float(num):.1f}%"
-    except:
-        return str(num)
 
 # =============================================================================
 # DATA LOADING
@@ -655,12 +581,12 @@ def get_region_center(gdf_region):
     return centroid.x, centroid.y
 
 # =============================================================================
-# MODERN HARİTA OLUŞTURUCU - GELİŞTİRİLMİŞ
+# MODERN HARİTA OLUŞTURUCU
 # =============================================================================
 
 def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası", view_mode="Bölge Görünümü", filtered_pf_toplam=None):
     """
-    Modern Türkiye haritası - Eksik şehirler eklendi
+    Modern Türkiye haritası
     """
     if gdf is None:
         st.error("❌ GeoJSON yüklenemedi")
@@ -671,40 +597,10 @@ def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası",
     city_data['City_Fixed'] = city_data['City'].apply(normalize_city_name_fixed)
     city_data['City_Fixed'] = city_data['City_Fixed'].str.upper()
     
-    # Eksik şehirleri kontrol et ve ekle
-    all_cities_in_data = set(city_data['City_Fixed'].unique())
-    
-    # GeoJSON'daki tüm şehirleri al
+    # GeoJSON'daki isimleri normalize et
     gdf = gdf.copy()
     gdf['name_upper'] = gdf['name'].str.upper()
-    
-    # FIX_CITY_MAP'i kullanarak isimleri düzelt
-    gdf['name_fixed'] = gdf['name_upper'].apply(lambda x: FIX_CITY_MAP.get(x, x))
-    
-    # GeoJSON'daki tüm şehirleri listele
-    all_cities_in_geojson = set(gdf['name_fixed'].unique())
-    
-    # Eksik şehirleri bul
-    missing_cities = all_cities_in_geojson - all_cities_in_data
-    
-    # Eksik şehirleri city_data'ya ekle (0 değerlerle)
-    for city in missing_cities:
-        if city not in city_data['City_Fixed'].values:
-            # Bu şehrin bölgesini bul
-            region_row = gdf[gdf['name_fixed'] == city]
-            if len(region_row) > 0:
-                region = region_row.iloc[0].get('region', 'DİĞER')
-                new_row = pd.DataFrame({
-                    'City': [city],
-                    'City_Fixed': [city],
-                    'Region': [region],
-                    'Bölge': [region],
-                    'PF_Satis': [0],
-                    'Rakip_Satis': [0],
-                    'Toplam_Pazar': [0],
-                    'Pazar_Payi_%': [0]
-                })
-                city_data = pd.concat([city_data, new_row], ignore_index=True)
+    gdf['name_fixed'] = gdf['name_upper'].replace(FIX_CITY_MAP)
     
     # Birleştir
     merged = gdf.merge(city_data, left_on='name_fixed', right_on='City_Fixed', how='left')
@@ -793,7 +689,7 @@ def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası",
                 label_lats.append(lat)
                 label_texts.append(
                     f"<b>{region}</b><br>"
-                    f"{format_number(total)}<br>"
+                    f"{total:,.0f}<br>"
                     f"({percent:.1f}%)"
                 )
         
@@ -823,7 +719,7 @@ def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası",
                 city_lats.append(centroid.y)
                 city_texts.append(
                     f"<b>{row['name']}</b><br>"
-                    f"{format_number(row['PF_Satis'])}"
+                    f"{row['PF_Satis']:,.0f}"
                 )
         
         fig.add_trace(go.Scattermapbox(
@@ -1222,11 +1118,11 @@ def calculate_investment_strategy(city_perf):
     return df
 
 # =============================================================================
-# VISUALIZATION FUNCTIONS - MODERN & MCKINSEY STYLE
+# VISUALIZATION FUNCTIONS - MODERN
 # =============================================================================
 
 def create_modern_forecast_chart(historical_df, forecast_df):
-    """Modern tahmin grafiği - McKinsey tarzı"""
+    """Modern tahmin grafiği"""
     fig = go.Figure()
     
     # Gerçek veri
@@ -1272,7 +1168,7 @@ def create_modern_forecast_chart(historical_df, forecast_df):
             fillcolor='rgba(59, 130, 246, 0.1)'
         ))
     
-    # McKinsey tarzı layout
+    # Modern layout
     fig.update_layout(
         title=dict(
             text='<b>Satış Trendi ve ML Tahmin</b>',
@@ -1303,18 +1199,16 @@ def create_modern_forecast_chart(historical_df, forecast_df):
         yaxis=dict(
             gridcolor='rgba(59, 130, 246, 0.1)',
             linecolor='rgba(59, 130, 246, 0.3)',
-            showgrid=True,
-            tickformat=',.0f'  # Binlik ayırıcı
+            showgrid=True
         )
     )
     
     return fig
 
 def create_modern_competitor_chart(comp_data):
-    """Modern rakip karşılaştırma - McKinsey tarzı"""
+    """Modern rakip karşılaştırma"""
     fig = go.Figure()
     
-    # PF Satış
     fig.add_trace(go.Bar(
         x=comp_data['YIL_AY'],
         y=comp_data['PF'],
@@ -1322,12 +1216,9 @@ def create_modern_competitor_chart(comp_data):
         marker_color=PERFORMANCE_COLORS['success'],
         marker=dict(
             line=dict(width=2, color='rgba(255, 255, 255, 0.8)')
-        ),
-        text=[format_number(x) for x in comp_data['PF']],
-        textposition='auto',
+        )
     ))
     
-    # Rakip Satış
     fig.add_trace(go.Bar(
         x=comp_data['YIL_AY'],
         y=comp_data['Rakip'],
@@ -1335,9 +1226,7 @@ def create_modern_competitor_chart(comp_data):
         marker_color=PERFORMANCE_COLORS['danger'],
         marker=dict(
             line=dict(width=2, color='rgba(255, 255, 255, 0.8)')
-        ),
-        text=[format_number(x) for x in comp_data['Rakip']],
-        textposition='auto',
+        )
     ))
     
     fig.update_layout(
@@ -1364,15 +1253,14 @@ def create_modern_competitor_chart(comp_data):
             gridcolor='rgba(59, 130, 246, 0.1)'
         ),
         yaxis=dict(
-            gridcolor='rgba(59, 130, 246, 0.1)',
-            tickformat=',.0f'  # Binlik ayırıcı
+            gridcolor='rgba(59, 130, 246, 0.1)'
         )
     )
     
     return fig
 
 def create_modern_growth_chart(comp_data):
-    """Modern büyüme grafiği - McKinsey tarzı"""
+    """Modern büyüme grafiği"""
     fig = go.Figure()
     
     # PF Büyüme
@@ -1446,15 +1334,14 @@ def create_modern_growth_chart(comp_data):
             gridcolor='rgba(59, 130, 246, 0.1)'
         ),
         yaxis=dict(
-            gridcolor='rgba(59, 130, 246, 0.1)',
-            ticksuffix='%'  # Yüzdelik işareti
+            gridcolor='rgba(59, 130, 246, 0.1)'
         )
     )
     
     return fig
 
 def create_modern_bcg_chart(bcg_df):
-    """Modern BCG Matrix - McKinsey tarzı"""
+    """Modern BCG Matrix"""
     fig = px.scatter(
         bcg_df,
         x='Goreceli_Pazar_Payi',
@@ -1464,7 +1351,6 @@ def create_modern_bcg_chart(bcg_df):
         color_discrete_map=BCG_COLORS,
         hover_name='Territory',
         hover_data={
-            'Region': True,
             'PF_Satis': ':,.0f',
             'Pazar_Payi_%': ':.1f',
             'Goreceli_Pazar_Payi': ':.2f',
@@ -1516,47 +1402,32 @@ def create_modern_bcg_chart(bcg_df):
         ),
         yaxis=dict(
             gridcolor='rgba(59, 130, 246, 0.1)',
-            linecolor='rgba(59, 130, 246, 0.3)',
-            ticksuffix='%'
+            linecolor='rgba(59, 130, 246, 0.3)'
         )
     )
     
     return fig
 
 # =============================================================================
-# MODERN DATA TABLE STYLING - MCKINSEY STYLE
+# MODERN DATA TABLE STYLING
 # =============================================================================
 
 def style_dataframe(df, color_column=None, gradient_columns=None):
-    """Modern dataframe stilini uygula - McKinsey tarzı"""
+    """Modern dataframe stilini uygula"""
     if gradient_columns is None:
         gradient_columns = []
     
-    # Sayısal sütunları formatla
-    df_formatted = df.copy()
-    
-    # Sayısal sütunları bul ve formatla
-    for col in df_formatted.columns:
-        if df_formatted[col].dtype in ['int64', 'float64']:
-            if any(keyword in col.lower() for keyword in ['%', 'yüzde', 'pay', 'oran', 'büyüme']):
-                # Yüzdelik sütunlar
-                df_formatted[col] = df_formatted[col].apply(lambda x: f"{x:,.1f}%" if pd.notnull(x) else "")
-            else:
-                # Normal sayısal sütunlar
-                df_formatted[col] = df_formatted[col].apply(lambda x: format_number(x) if pd.notnull(x) else "")
-    
-    styled_df = df_formatted.style
+    styled_df = df.style
     
     # Genel stil
     styled_df = styled_df.set_properties(**{
         'background-color': 'rgba(30, 41, 59, 0.7)',
         'color': '#e2e8f0',
         'border': '1px solid rgba(59, 130, 246, 0.2)',
-        'font-family': 'Inter, sans-serif',
-        'text-align': 'center'
+        'font-family': 'Inter, sans-serif'
     })
     
-    # Başlık satırı - McKinsey tarzı
+    # Başlık satırı
     styled_df = styled_df.set_table_styles([{
         'selector': 'thead th',
         'props': [
@@ -1578,7 +1449,7 @@ def style_dataframe(df, color_column=None, gradient_columns=None):
         ]
     }])
     
-    # Orijinal DataFrame'den gradient uygula (formatlanmamış değerlerle)
+    # Gradient columns
     for col in gradient_columns:
         if col in df.columns:
             styled_df = styled_df.background_gradient(
@@ -1602,7 +1473,7 @@ def style_dataframe(df, color_column=None, gradient_columns=None):
         
         styled_df = styled_df.applymap(color_cells, subset=[color_column])
     
-    # Alternatif satır renkleri - McKinsey tarzı
+    # Alternatif satır renkleri
     styled_df = styled_df.set_table_styles([{
         'selector': 'tbody tr:nth-child(even)',
         'props': [('background-color', 'rgba(30, 41, 59, 0.5)')]
@@ -1765,7 +1636,7 @@ def main():
         else:
             df_period = df_filtered
         
-        # Metrikler - Formatlanmış
+        # Metrikler
         total_pf = df_period[cols['pf']].sum()
         total_rakip = df_period[cols['rakip']].sum()
         total_market = total_pf + total_rakip
@@ -1776,14 +1647,14 @@ def main():
         col1, col2, col3, col4 = st.columns(4)
         
         with col1:
-            st.metric("💊 PF Satış", format_number(total_pf), f"{format_number(avg_monthly_pf)}/ay")
+            st.metric("💊 PF Satış", f"{total_pf:,.0f}", f"{avg_monthly_pf:,.0f}/ay")
         with col2:
-            st.metric("🏪 Toplam Pazar", format_number(total_market), f"{format_number(total_rakip)} rakip")
+            st.metric("🏪 Toplam Pazar", f"{total_market:,.0f}", f"{total_rakip:,.0f} rakip")
         with col3:
-            st.metric("📊 Pazar Payı", format_percentage(market_share), 
-                     f"{format_percentage(100-market_share)} rakip")
+            st.metric("📊 Pazar Payı", f"%{market_share:.1f}", 
+                     f"%{100-market_share:.1f} rakip")
         with col4:
-            st.metric("🏢 Active Territory", str(active_territories), 
+            st.metric("🏢 Active Territory", active_territories, 
                      f"{df_period['MANAGER'].nunique()} manager")
         
         st.markdown("---")
@@ -1802,16 +1673,12 @@ def main():
         with col_chart1:
             fig_top10 = go.Figure()
             
-            # Formatlanmış metinler
-            pf_texts = [format_number(x) for x in top10['PF_Satis']]
-            rakip_texts = [format_number(x) for x in top10['Rakip_Satis']]
-            
             fig_top10.add_trace(go.Bar(
                 x=top10['Territory'],
                 y=top10['PF_Satis'],
                 name='PF Satış',
                 marker_color=PERFORMANCE_COLORS['success'],
-                text=pf_texts,
+                text=top10['PF_Satis'].apply(lambda x: f'{x:,.0f}'),
                 textposition='outside',
                 marker=dict(
                     line=dict(width=2, color='rgba(255, 255, 255, 0.8)')
@@ -1823,7 +1690,7 @@ def main():
                 y=top10['Rakip_Satis'],
                 name='Rakip Satış',
                 marker_color=PERFORMANCE_COLORS['danger'],
-                text=rakip_texts,
+                text=top10['Rakip_Satis'].apply(lambda x: f'{x:,.0f}'),
                 textposition='outside',
                 marker=dict(
                     line=dict(width=2, color='rgba(255, 255, 255, 0.8)')
@@ -1849,9 +1716,6 @@ def main():
                     y=1.02,
                     xanchor="right",
                     x=1
-                ),
-                yaxis=dict(
-                    tickformat=',.0f'  # Binlik ayırıcı
                 )
             )
             
@@ -1914,7 +1778,7 @@ def main():
             height=400
         )
     
-    # TAB 2: MODERN HARİTA - GELİŞTİRİLMİŞ
+    # TAB 2: MODERN HARİTA
     with tab2:
         st.header("🗺️ Modern Türkiye Haritası")
         
@@ -1926,7 +1790,7 @@ def main():
         # Filtrelenmiş PF toplam
         filtered_pf_toplam = city_data['PF_Satis'].sum()
         
-        # Quick Stats - Formatlanmış
+        # Quick Stats
         col1, col2, col3, col4, col5 = st.columns(5)
         
         total_pf = city_data['PF_Satis'].sum()
@@ -1936,21 +1800,21 @@ def main():
         top_city = city_data.loc[city_data['PF_Satis'].idxmax(), 'City'] if len(city_data) > 0 else "Yok"
         
         with col1:
-            st.metric("💊 PF Satış", format_number(total_pf))
+            st.metric("💊 PF Satış", f"{total_pf:,.0f}")
         with col2:
-            st.metric("🏪 Toplam Pazar", format_number(total_market))
+            st.metric("🏪 Toplam Pazar", f"{total_market:,.0f}")
         with col3:
-            st.metric("📊 Ort. Pazar Payı", format_percentage(avg_share))
+            st.metric("📊 Ort. Pazar Payı", f"%{avg_share:.1f}")
         with col4:
-            st.metric("🏙️ Aktif Şehir", str(active_cities))
+            st.metric("🏙️ Aktif Şehir", active_cities)
         with col5:
             st.metric("🏆 Lider Şehir", top_city)
         
         st.markdown("---")
         
-        # Modern Harita - Tüm şehirlerle
+        # Modern Harita
         if gdf is not None:
-            st.subheader("📍 İl Bazlı Dağılım (Tüm Şehirler)")
+            st.subheader("📍 İl Bazlı Dağılım")
             
             turkey_map = create_modern_turkey_map(
                 city_data, 
@@ -1976,9 +1840,6 @@ def main():
             st.subheader("🏆 Top 10 Şehir")
             top_cities = city_data.nlargest(10, 'PF_Satis')
             
-            # Formatlanmış metinler
-            bar_texts = [format_number(x) for x in top_cities['PF_Satis']]
-            
             fig_bar = px.bar(
                 top_cities,
                 x='City',
@@ -1987,7 +1848,7 @@ def main():
                 color='Region',
                 color_discrete_map=REGION_COLORS,
                 hover_data=['Region', 'PF_Satis', 'Pazar_Payi_%'],
-                text=bar_texts
+                text='PF_Satis'
             )
             
             fig_bar.update_layout(
@@ -1997,13 +1858,11 @@ def main():
                 paper_bgcolor='rgba(0,0,0,0)',
                 font=dict(color='#e2e8f0'),
                 yaxis_title='<b>PF Satış</b>',
-                xaxis_title='<b>Şehir</b>',
-                yaxis=dict(
-                    tickformat=',.0f'  # Binlik ayırıcı
-                )
+                xaxis_title='<b>Şehir</b>'
             )
             
             fig_bar.update_traces(
+                texttemplate='%{text:,.0f}',
                 textposition='outside',
                 marker=dict(line=dict(width=2, color='rgba(255, 255, 255, 0.8)'))
             )
@@ -2077,7 +1936,7 @@ def main():
                     st.metric(
                         strategy_name,
                         f"{count} şehir",
-                        f"{format_number(total_value)} PF"
+                        f"{total_value:,.0f} PF"
                     )
             
             st.markdown("---")
@@ -2148,10 +2007,6 @@ def main():
         with col_viz1:
             st.subheader("📊 PF vs Rakip Satış")
             
-            # Formatlanmış metinler
-            pf_texts = [format_number(x) for x in terr_sorted['PF_Satis']]
-            rakip_texts = [format_number(x) for x in terr_sorted['Rakip_Satis']]
-            
             fig_bar = go.Figure()
             
             # Her territory için çubuk grafik
@@ -2160,7 +2015,7 @@ def main():
                 y=terr_sorted['PF_Satis'],
                 name='PF Satış',
                 marker_color=PERFORMANCE_COLORS['success'],
-                text=pf_texts,
+                text=terr_sorted['PF_Satis'].apply(lambda x: f'{x:,.0f}'),
                 textposition='outside',
                 marker=dict(
                     line=dict(width=1.5, color='rgba(255, 255, 255, 0.8)')
@@ -2172,7 +2027,7 @@ def main():
                 y=terr_sorted['Rakip_Satis'],
                 name='Rakip Satış',
                 marker_color=PERFORMANCE_COLORS['danger'],
-                text=rakip_texts,
+                text=terr_sorted['Rakip_Satis'].apply(lambda x: f'{x:,.0f}'),
                 textposition='outside',
                 marker=dict(
                     line=dict(width=1.5, color='rgba(255, 255, 255, 0.8)')
@@ -2198,9 +2053,6 @@ def main():
                     y=1.02,
                     xanchor="right",
                     x=1
-                ),
-                yaxis=dict(
-                    tickformat=',.0f'  # Binlik ayırıcı
                 )
             )
             
@@ -2239,12 +2091,6 @@ def main():
                 legend=dict(
                     title='<b>Bölge</b>',
                     bgcolor='rgba(30, 41, 59, 0.8)'
-                ),
-                xaxis=dict(
-                    tickformat=',.0f'  # Binlik ayırıcı
-                ),
-                yaxis=dict(
-                    ticksuffix='%'  # Yüzdelik işareti
                 )
             )
             
@@ -2269,9 +2115,12 @@ def main():
         ]
         terr_display.index = range(1, len(terr_display) + 1)
         
+        # Format numeric columns
+        terr_display_formatted = terr_display.copy()
+        
         # Modern tablo stilini uygula
         styled_territory = style_dataframe(
-            terr_display,
+            terr_display_formatted,
             color_column='Pazar Payı %',
             gradient_columns=['Toplam Pazar %', 'Ağırlık %', 'Göreceli Pay']
         )
@@ -2289,19 +2138,19 @@ def main():
         col_sum1, col_sum2, col_sum3, col_sum4 = st.columns(4)
         
         with col_sum1:
-            avg_pazar_payi = terr_display['Pazar Payı %'].astype(str).str.replace('%', '').astype(float).mean()
-            st.metric("📊 Ort. Pazar Payı", format_percentage(avg_pazar_payi))
+            avg_pazar_payi = terr_display_formatted['Pazar Payı %'].mean()
+            st.metric("📊 Ort. Pazar Payı", f"{avg_pazar_payi:.1f}%")
         
         with col_sum2:
-            total_pf = terr_sorted['PF_Satis'].sum()
-            st.metric("💰 Toplam PF Satış", format_number(total_pf))
+            total_pf = terr_display_formatted['PF Satış'].sum()
+            st.metric("💰 Toplam PF Satış", f"{total_pf:,.0f}")
         
         with col_sum3:
-            avg_toplam_pazar_yuzde = terr_sorted['Toplam_Pazar_%'].mean()
-            st.metric("🏪 Ort. Pazar Payı", format_percentage(avg_toplam_pazar_yuzde))
+            avg_toplam_pazar_yuzde = terr_display_formatted['Toplam Pazar %'].mean()
+            st.metric("🏪 Ort. Pazar Payı", f"{avg_toplam_pazar_yuzde:.1f}%")
         
         with col_sum4:
-            dominant_region = terr_display['Region'].mode()[0] if len(terr_display) > 0 else "Yok"
+            dominant_region = terr_display_formatted['Region'].mode()[0] if len(terr_display_formatted) > 0 else "Yok"
             region_color = REGION_COLORS.get(dominant_region, "#64748B")
             st.markdown(
                 f'<div style="color:{region_color}; font-size:1.2rem; font-weight:bold; text-align: center;">'
@@ -2324,20 +2173,20 @@ def main():
         if len(monthly_df) == 0:
             st.warning("⚠️ Seçilen filtrelerde veri bulunamadı")
         else:
-            # Özet Metrikler - Formatlanmış
+            # Özet Metrikler
             col_ts1, col_ts2, col_ts3, col_ts4 = st.columns(4)
             
             with col_ts1:
                 avg_pf = monthly_df['PF_Satis'].mean()
-                st.metric("📊 Ort. Aylık PF", format_number(avg_pf))
+                st.metric("📊 Ort. Aylık PF", f"{avg_pf:,.0f}")
             
             with col_ts2:
                 avg_growth = monthly_df['PF_Buyume_%'].mean()
-                st.metric("📈 Ort. Büyüme", format_percentage(avg_growth))
+                st.metric("📈 Ort. Büyüme", f"%{avg_growth:.1f}")
             
             with col_ts3:
                 avg_share = monthly_df['Pazar_Payi_%'].mean()
-                st.metric("🎯 Ort. Pazar Payı", format_percentage(avg_share))
+                st.metric("🎯 Ort. Pazar Payı", f"%{avg_share:.1f}")
             
             with col_ts4:
                 total_months = len(monthly_df)
@@ -2388,9 +2237,6 @@ def main():
                         y=1.02,
                         xanchor="right",
                         x=1
-                    ),
-                    yaxis=dict(
-                        tickformat=',.0f'  # Binlik ayırıcı
                     )
                 )
                 
@@ -2427,8 +2273,7 @@ def main():
                     yaxis=dict(range=[0, 100]),
                     plot_bgcolor='rgba(0,0,0,0)',
                     paper_bgcolor='rgba(0,0,0,0)',
-                    font=dict(color='#e2e8f0'),
-                    yaxis_ticksuffix='%'  # Yüzdelik işareti
+                    font=dict(color='#e2e8f0')
                 )
                 
                 st.plotly_chart(fig_share, use_container_width=True)
@@ -2524,7 +2369,7 @@ def main():
         if len(comp_data) == 0:
             st.warning("⚠️ Seçilen filtrelerde veri bulunamadı")
         else:
-            # Özet Metrikler - Formatlanmış
+            # Özet Metrikler
             col1, col2, col3, col4 = st.columns(4)
             
             avg_pf_share = comp_data['PF_Pay_%'].mean()
@@ -2533,11 +2378,11 @@ def main():
             win_months = len(comp_data[comp_data['Fark'] > 0])
             
             with col1:
-                st.metric("🎯 Ort. PF Pazar Payı", format_percentage(avg_pf_share))
+                st.metric("🎯 Ort. PF Pazar Payı", f"%{avg_pf_share:.1f}")
             with col2:
-                st.metric("📈 Ort. PF Büyüme", format_percentage(avg_pf_growth))
+                st.metric("📈 Ort. PF Büyüme", f"%{avg_pf_growth:.1f}")
             with col3:
-                st.metric("📉 Ort. Rakip Büyüme", format_percentage(avg_rakip_growth))
+                st.metric("📉 Ort. Rakip Büyüme", f"%{avg_rakip_growth:.1f}")
             with col4:
                 st.metric("🏆 Kazanılan Aylar", f"{win_months}/{len(comp_data)}")
             
@@ -2582,7 +2427,7 @@ def main():
         
         bcg_df = calculate_bcg_matrix(df_filtered, selected_product, date_filter)
         
-        # BCG Dağılımı - Formatlanmış
+        # BCG Dağılımı
         st.subheader("📊 Portföy Dağılımı")
         
         bcg_counts = bcg_df['BCG_Kategori'].value_counts()
@@ -2592,22 +2437,22 @@ def main():
         with col_bcg1:
             star_count = bcg_counts.get("⭐ Star", 0)
             star_pf = bcg_df[bcg_df['BCG_Kategori'] == "⭐ Star"]['PF_Satis'].sum()
-            st.metric("⭐ Star", f"{star_count}", delta=f"{format_number(star_pf)} PF")
+            st.metric("⭐ Star", f"{star_count}", delta=f"{star_pf:,.0f} PF")
         
         with col_bcg2:
             cow_count = bcg_counts.get("🐄 Cash Cow", 0)
             cow_pf = bcg_df[bcg_df['BCG_Kategori'] == "🐄 Cash Cow"]['PF_Satis'].sum()
-            st.metric("🐄 Cash Cow", f"{cow_count}", delta=f"{format_number(cow_pf)} PF")
+            st.metric("🐄 Cash Cow", f"{cow_count}", delta=f"{cow_pf:,.0f} PF")
         
         with col_bcg3:
             q_count = bcg_counts.get("❓ Question Mark", 0)
             q_pf = bcg_df[bcg_df['BCG_Kategori'] == "❓ Question Mark"]['PF_Satis'].sum()
-            st.metric("❓ Question", f"{q_count}", delta=f"{format_number(q_pf)} PF")
+            st.metric("❓ Question", f"{q_count}", delta=f"{q_pf:,.0f} PF")
         
         with col_bcg4:
             dog_count = bcg_counts.get("🐶 Dog", 0)
             dog_pf = bcg_df[bcg_df['BCG_Kategori'] == "🐶 Dog"]['PF_Satis'].sum()
-            st.metric("🐶 Dog", f"{dog_count}", delta=f"{format_number(dog_pf)} PF")
+            st.metric("🐶 Dog", f"{dog_count}", delta=f"{dog_pf:,.0f} PF")
         
         st.markdown("---")
         
@@ -2716,3 +2561,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
+
