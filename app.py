@@ -1,4 +1,3 @@
-"""
 🎯 GELİŞMİŞ TİCARİ PORTFÖY ANALİZ SİSTEMİ
 Territory Bazlı Performans, ML Tahminleme, Türkiye Haritası ve Rekabet Analizi
 
@@ -267,21 +266,18 @@ REGION_COLORS = {
 
 # PERFORMANS RENKLERİ - Profesyonel / Kurumsal
 PERFORMANCE_COLORS = {
-    # Performans
-    "high": "#2A9D8F",       # Okyanus Yeşili (Sakin ve güvenli)
-    "medium": "#E9C46A",     # Kum Sarısı (Rahatsız etmeyen uyarı)
-    "low": "#E76F51",        # Terracotta / Kiremit (Sıcak ama agresif değil)
+    "high": "#1F7A5A",       # Koyu Yeşil – Yüksek Performans
+    "medium": "#C48A2A",     # Altın Sarısı – Orta Performans
+    "low": "#B23A3A",        # Bordo – Düşük Performans
 
-    # Durum
-    "positive": "#2A9D8F",
-    "negative": "#E76F51",
-    "neutral": "#8D99AE",    # Metalik Gri
+    "positive": "#1F7A5A",   # Koyu Yeşil – Pozitif
+    "negative": "#B23A3A",   # Bordo – Negatif
+    "neutral": "#6B7280",    # Kurumsal Gri – Nötr
 
-    # Diğer
-    "warning": "#F4A261",    # Şeftali Turuncusu
-    "info": "#264653",       # Koyu Petrol Yeşili/Mavisi (Ana metin rengi olabilir)
-    "success": "#2A9D8F",
-    "danger": "#D62828"      # Mat Kırmızı
+    "warning": "#C48A2A",    # Altın – Uyarı
+    "info": "#1E40AF",       # Lacivert – Bilgi
+    "success": "#166534",    # Koyu Yeşil – Başarı
+    "danger": "#991B1B"      # Koyu Kırmızı – Risk / Tehlike
 }
 
 # TREND ANALİZİ RENKLERİ
@@ -471,6 +467,7 @@ CITY_NORMALIZE_CLEAN = {
     'KARABÜK': 'Karabuk',
     'KARAMAN': 'Karaman',
     'KARS': 'Kars',
+    'KASTAMONU': 'Kastamonu',
     'KASTAMONU': 'Kastamonu',
     'KAYSERI': 'Kayseri',
     'KIRIKKALE': 'Kinkkale',
@@ -1093,7 +1090,7 @@ def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası",
             showlegend=False
         ))
     
-    # Modern etiketler
+    # Modern etiketler - STANDART FORMAT: İsim<br>Adet (Yüzde%)
     if view_mode == "Bölge Görünümü":
         label_lons, label_lats, label_texts = [], [], []
         
@@ -1109,8 +1106,7 @@ def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası",
                 label_lats.append(lat)
                 label_texts.append(
                     f"<b>{region}</b><br>"
-                    f"{format_number(total)}<br>"
-                    f"({percent:.1f}%)"
+                    f"{format_number(total)} ({percent:.1f}%)"
                 )
         
         fig.add_trace(go.Scattermapbox(
@@ -1128,7 +1124,7 @@ def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası",
             showlegend=False
         ))
     
-    else:
+    else:  # "Şehir Görünümü"
         city_lons, city_lats, city_texts = [], [], []
         
         for idx, row in merged.iterrows():
@@ -1139,7 +1135,7 @@ def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası",
                 city_lats.append(centroid.y)
                 city_texts.append(
                     f"<b>{row['name']}</b><br>"
-                    f"{format_number(row['PF_Satis'])}"
+                    f"{format_number(row['PF_Satis'])} ({percent:.1f}%)"
                 )
         
         fig.add_trace(go.Scattermapbox(
@@ -1931,12 +1927,17 @@ def create_seasonality_chart(monthly_df):
         'Pazar_Payi_%': 'mean'
     }).reset_index()
     
+    monthly_avg.columns = ['Month', 'PF_Satis', 'Pazar_Payi_%']
+    monthly_avg['Month_Name'] = monthly_avg['Month'].map({
+        1: 'Oca', 2: 'Şub', 3: 'Mar', 4: 'Nis', 5: 'May', 6: 'Haz',
+        7: 'Tem', 8: 'Ağu', 9: 'Eyl', 10: 'Eki', 11: 'Kas', 12: 'Ara'
+    })
+    
     fig = go.Figure()
     
     fig.add_trace(go.Scatterpolar(
         r=monthly_avg['PF_Satis'],
-        theta=['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 
-               'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'],
+        theta=monthly_avg['Month_Name'],
         fill='toself',
         name='Aylık Ortalama Satış',
         line=dict(color=PERFORMANCE_COLORS['success'], width=2),
@@ -2648,12 +2649,24 @@ def main():
     with tab2:
         st.header("🗺️ Modern Türkiye Haritası")
         
+        # YENİ EKLENDİ: Harita için Bölge Filtresi
+        col_map_filter1, col_map_filter2 = st.columns(2)
+        with col_map_filter1:
+            # Harita için ayrı bir bölge seçici
+            unique_regions = ["TÜMÜ"] + sorted(df_filtered['REGION'].dropna().unique())
+            selected_map_region = st.selectbox(
+                "Harita için Bölge Seçin",
+                unique_regions,
+                key='map_region_filter'
+            )
+        
+        # Şehir performans verisini BÖLGEYE GÖRE FİLTRELE
         city_data = calculate_city_performance(df_filtered, selected_product, date_filter)
+        if selected_map_region != "TÜMÜ":
+            city_data = city_data[city_data['Region'] == selected_map_region]
         
-        # Yatırım stratejisi hesapla
+        # Yatırım stratejisini FİLTRELENMİŞ veri ile hesapla
         investment_df = calculate_investment_strategy(city_data)
-        
-        # Filtrelenmiş PF toplam
         filtered_pf_toplam = city_data['PF_Satis'].sum()
         
         # Quick Stats
@@ -2680,12 +2693,12 @@ def main():
         
         # Modern Harita
         if gdf is not None:
-            st.subheader("📍 İl Bazlı Dağılım (Tüm Şehirler)")
+            st.subheader(f"📍 İl Bazlı Dağılım - {selected_map_region if selected_map_region != 'TÜMÜ' else 'Tüm Bölgeler'}")
             
             turkey_map = create_modern_turkey_map(
                 city_data, 
                 gdf, 
-                title=f"{selected_product} - {view_mode}",
+                title=f"{selected_product} - {view_mode} - {selected_map_region if selected_map_region != 'TÜMÜ' else 'Tüm Bölgeler'}",
                 view_mode=view_mode,
                 filtered_pf_toplam=filtered_pf_toplam
             )
@@ -3567,10 +3580,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
