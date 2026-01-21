@@ -23,6 +23,8 @@ import json
 from sklearn.linear_model import LinearRegression, Ridge
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from statsmodels.tsa.seasonal import seasonal_decompose
+from statsmodels.tsa.stattools import adfuller
 import geopandas as gpd
 from shapely.geometry import LineString, MultiLineString
 import warnings
@@ -317,7 +319,7 @@ GRADIENT_SCALES = {
 }
 
 # =============================================================================
-# GÜNCELLENMİŞ CONSTANTS - ŞEHİR EŞLEŞTİRMELERİ
+# CONSTANTS
 # =============================================================================
 
 FIX_CITY_MAP = {
@@ -397,17 +399,9 @@ FIX_CITY_MAP = {
     "BITLIS": "BİTLİS",
     "BİNGÖL": "BİNGÖL",
     "IĞDIR": "IĞDIR",
-    "ARDAHAN": "ARDAHAN",
-    "ZONGULDAK": "ZONGULDAK",
-    "GUMUSHANE": "GÜMÜŞHANE",
-    "KUTAHYA": "KÜTAHYA",
-    "KARABUK": "KARABÜK",
-    "GÜMÜŞHANE": "GÜMÜŞHANE",
-    "KÜTAHYA": "KÜTAHYA",
-    "KARABÜK": "KARABÜK"
+    "ARDAHAN": "ARDAHAN"
 }
 
-# GÜNCELLENMİŞ ŞEHİR NORMALİZASYON HARİTASI
 CITY_NORMALIZE_CLEAN = {
     'ADANA': 'Adana',
     'ADIYAMAN': 'Adiyaman',
@@ -471,7 +465,7 @@ CITY_NORMALIZE_CLEAN = {
     'KARS': 'Kars',
     'KASTAMONU': 'Kastamonu',
     'KAYSERI': 'Kayseri',
-    'KIRIKKALE': 'Kirikkale',
+    'KIRIKKALE': 'Kinkkale',
     'KIRKLARELI': 'Kirklareli',
     'KIRKLARELİ': 'Kirklareli',
     'KIRSEHIR': 'Kirsehir',
@@ -526,63 +520,10 @@ CITY_NORMALIZE_CLEAN = {
     'YALOVA': 'Yalova',
     'YOZGAT': 'Yozgat',
     'ZONGULDAK': 'Zonguldak',
+    'ZONGULDAK': 'Zonguldak',
     'ARDAHAN': 'Ardahan',
     'AKSARAY': 'Aksaray',
     'KIRIKKALE': 'Kirikkale'
-}
-
-# HARİTA İÇİN ÖZEL ŞEHİR EŞLEŞTİRMELERİ
-MAP_CITY_MAPPING = {
-    'KUTAHYA': 'KÜTAHYA',
-    'KÜTAHYA': 'KÜTAHYA',
-    'KUTAHYA': 'KÜTAHYA',
-    
-    'ZONGULDAK': 'ZONGULDAK',
-    'ZONGULDAK': 'ZONGULDAK',
-    
-    'KARABUK': 'KARABÜK',
-    'KARABÜK': 'KARABÜK',
-    'KARABUK': 'KARABÜK',
-    
-    'GUMUSHANE': 'GÜMÜŞHANE',
-    'GÜMÜŞHANE': 'GÜMÜŞHANE',
-    'GUMUSHANE': 'GÜMÜŞHANE',
-    
-    'GUMUSHANE': 'GÜMÜŞHANE',
-    'GÜMÜŞHANE': 'GÜMÜŞHANE',
-    
-    'KARABUK': 'KARABÜK',
-    'KARABÜK': 'KARABÜK',
-    
-    # Diğer sorunlu şehirler için
-    'CORUM': 'ÇORUM',
-    'CANKIRI': 'ÇANKIRI',
-    'CANAKKALE': 'ÇANAKKALE',
-    'BARTIN': 'BARTIN',
-    'BINGOL': 'BİNGÖL',
-    'BINGÖL': 'BİNGÖL',
-    'DÜZCE': 'DÜZCE',
-    'DUZCE': 'DÜZCE',
-    'ELAZIG': 'ELAZIĞ',
-    'ESKISEHIR': 'ESKİŞEHİR',
-    'GIRESUN': 'GİRESUN',
-    'HAKKARI': 'HAKKARİ',
-    'IGDIR': 'IĞDIR',
-    'ISTANBUL': 'İSTANBUL',
-    'IZMIR': 'İZMİR',
-    'KAHRAMANMARAS': 'KAHRAMANMARAŞ',
-    'KIRKLARELI': 'KIRKLARELİ',
-    'KIRSEHIR': 'KIRŞEHİR',
-    'KOCAELI': 'KOCAELİ',
-    'MUGLA': 'MUĞLA',
-    'MUS': 'MUŞ',
-    'NEVSEHIR': 'NEVŞEHİR',
-    'NIGDE': 'NİĞDE',
-    'SANLIURFA': 'ŞANLIURFA',
-    'SIRNAK': 'ŞIRNAK',
-    'TEKIRDAG': 'TEKİRDAĞ',
-    'USAK': 'UŞAK',
-    'CANAKKALE': 'ÇANAKKALE'
 }
 
 # =============================================================================
@@ -605,21 +546,17 @@ def get_product_columns(product):
         return {"pf": "PF IZOTONIK", "rakip": "DIGER IZOTONIK"}
 
 def normalize_city_name_fixed(city_name):
-    """Düzeltilmiş şehir normalizasyon - HARİTA İÇİN ÖZEL"""
+    """Düzeltilmiş şehir normalizasyon"""
     if pd.isna(city_name):
         return None
     
     city_upper = str(city_name).strip().upper()
     
-    # Önce özel eşleştirmeleri kontrol et
-    if city_upper in MAP_CITY_MAPPING:
-        return MAP_CITY_MAPPING[city_upper]
-    
-    # Sonra genel fix map'i kontrol et
+    # Fix known encoding issues
     if city_upper in FIX_CITY_MAP:
         return FIX_CITY_MAP[city_upper]
     
-    # Türkçe karakter dönüşümü
+    # Turkish character mapping
     tr_map = {
         "İ": "I", "Ğ": "G", "Ü": "U",
         "Ş": "S", "Ö": "O", "Ç": "C",
@@ -629,8 +566,7 @@ def normalize_city_name_fixed(city_name):
     for k, v in tr_map.items():
         city_upper = city_upper.replace(k, v)
     
-    # Son olarak normalize clean map'i kontrol et
-    return CITY_NORMALIZE_CLEAN.get(city_upper, city_upper)
+    return CITY_NORMALIZE_CLEAN.get(city_upper, city_name)
 
 def format_number(num):
     """Sayıları binlik ayırıcılı ve sadeleştirilmiş formatta göster"""
@@ -1027,101 +963,65 @@ def get_region_center(gdf_region):
     return centroid.x, centroid.y
 
 # =============================================================================
-# GELİŞTİRİLMİŞ HARİTA OLUŞTURUCU - EKSİK ŞEHİRLER SORUNU ÇÖZÜLMÜŞ
+# MODERN HARİTA OLUŞTURUCU - GELİŞTİRİLMİŞ
 # =============================================================================
 
 def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası", view_mode="Bölge Görünümü", filtered_pf_toplam=None):
     """
-    Geliştirilmiş Türkiye haritası - Eksik şehirler sorunu çözüldü
+    Modern Türkiye haritası - Eksik şehirler eklendi
     """
     if gdf is None:
         st.error("❌ GeoJSON yüklenemedi")
         return None
     
-    # Veriyi hazırla - HARİTA İÇİN ÖZEL NORMALİZASYON
+    # Veriyi hazırla
     city_data = city_data.copy()
     city_data['City_Fixed'] = city_data['City'].apply(normalize_city_name_fixed)
     city_data['City_Fixed'] = city_data['City_Fixed'].str.upper()
     
-    # GeoJSON'daki tüm şehirleri al ve normalize et
+    # Eksik şehirleri kontrol et ve ekle
+    all_cities_in_data = set(city_data['City_Fixed'].unique())
+    
+    # GeoJSON'daki tüm şehirleri al
     gdf = gdf.copy()
     gdf['name_upper'] = gdf['name'].str.upper()
     
-    # GeoJSON'daki şehir isimlerini normalize et
-    def normalize_geojson_city(city_name):
-        city_upper = str(city_name).strip().upper()
-        
-        # Önce özel eşleştirmeler
-        if city_upper in MAP_CITY_MAPPING:
-            return MAP_CITY_MAPPING[city_upper]
-        
-        # Türkçe karakter dönüşümü
-        tr_map = {
-            "İ": "I", "Ğ": "G", "Ü": "U",
-            "Ş": "S", "Ö": "O", "Ç": "C",
-            "Â": "A", "Î": "I", "Û": "U"
-        }
-        
-        for k, v in tr_map.items():
-            city_upper = city_upper.replace(k, v)
-        
-        return city_upper
+    # FIX_CITY_MAP'i kullanarak isimleri düzelt
+    gdf['name_fixed'] = gdf['name_upper'].apply(lambda x: FIX_CITY_MAP.get(x, x))
     
-    gdf['name_fixed'] = gdf['name_upper'].apply(normalize_geojson_city)
-    
-    # Eksik şehirleri kontrol et
-    all_cities_in_data = set(city_data['City_Fixed'].unique())
+    # GeoJSON'daki tüm şehirleri listele
     all_cities_in_geojson = set(gdf['name_fixed'].unique())
-    
-    # Hata ayıklama için
-    st.sidebar.info(f"Verideki şehirler: {len(all_cities_in_data)}")
-    st.sidebar.info(f"GeoJSON'daki şehirler: {len(all_cities_in_geojson)}")
     
     # Eksik şehirleri bul
     missing_cities = all_cities_in_geojson - all_cities_in_data
     
-    # DEBUG: Eksik şehirleri göster
-    if missing_cities:
-        st.sidebar.warning(f"Eksik {len(missing_cities)} şehir: {', '.join(list(missing_cities)[:10])}...")
-    
     # Eksik şehirleri city_data'ya ekle (0 değerlerle)
-    missing_rows = []
     for city in missing_cities:
-        # Bu şehrin bölgesini bul
-        region_row = gdf[gdf['name_fixed'] == city]
-        if len(region_row) > 0:
-            region = region_row.iloc[0].get('region', 'DİĞER')
-            missing_rows.append({
-                'City': city,
-                'City_Fixed': city,
-                'Region': region,
-                'Bölge': region,
-                'PF_Satis': 0,
-                'Rakip_Satis': 0,
-                'Toplam_Pazar': 0,
-                'Pazar_Payi_%': 0
-            })
-    
-    if missing_rows:
-        missing_df = pd.DataFrame(missing_rows)
-        city_data = pd.concat([city_data, missing_df], ignore_index=True)
-    
-    # DEBUG: Birleştirmeden önce kontrol
-    st.sidebar.success(f"Toplam şehir sayısı (veri + eksikler): {len(city_data)}")
+        if city not in city_data['City_Fixed'].values:
+            # Bu şehrin bölgesini bul
+            region_row = gdf[gdf['name_fixed'] == city]
+            if len(region_row) > 0:
+                region = region_row.iloc[0].get('region', 'DİĞER')
+                new_row = pd.DataFrame({
+                    'City': [city],
+                    'City_Fixed': [city],
+                    'Region': [region],
+                    'Bölge': [region],
+                    'PF_Satis': [0],
+                    'Rakip_Satis': [0],
+                    'Toplam_Pazar': [0],
+                    'Pazar_Payi_%': [0]
+                })
+                city_data = pd.concat([city_data, new_row], ignore_index=True)
     
     # Birleştir
     merged = gdf.merge(city_data, left_on='name_fixed', right_on='City_Fixed', how='left')
     
-    # DEBUG: Birleştirme sonrası
-    st.sidebar.info(f"Birleştirme sonrası satır: {len(merged)}")
-    
     # NaN'leri doldur
     merged['PF_Satis'] = merged['PF_Satis'].fillna(0)
-    merged['Rakip_Satis'] = merged['Rakip_Satis'].fillna(0)
-    merged['Toplam_Pazar'] = merged['Toplam_Pazar'].fillna(0)
     merged['Pazar_Payi_%'] = merged['Pazar_Payi_%'].fillna(0)
     merged['Bölge'] = merged['Bölge'].fillna('DİĞER')
-    merged['Region'] = merged['Region'].fillna('DİĞER')
+    merged['Region'] = merged['Bölge']
     
     # Bölge renklerini ata
     merged['Region_Color'] = merged['Region'].map(REGION_COLORS).fillna('#64748B')
@@ -1137,9 +1037,6 @@ def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası",
     for region in merged['Region'].unique():
         region_data = merged[merged['Region'] == region]
         color = REGION_COLORS.get(region, "#64748B")
-        
-        if len(region_data) == 0:
-            continue
         
         # GeoJSON'u JSON'a çevir
         region_json = json.loads(region_data.to_json())
@@ -1196,7 +1093,7 @@ def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası",
             region_data = merged[merged['Region'] == region]
             total = region_data['PF_Satis'].sum()
             
-            if total > 0 or region != 'DİĞER':  # DİĞER bölgesini de göster
+            if total > 0:
                 percent = (total / filtered_pf_toplam * 100) if filtered_pf_toplam > 0 else 0
                 
                 lon, lat = get_region_center(region_data)
@@ -2470,33 +2367,6 @@ def main():
             gdf = load_geojson_gpd()
             geojson = load_geojson_json()
             st.success(f"✅ **{len(df):,}** satır veri yüklendi")
-            
-            # Verideki şehirleri kontrol et
-            unique_cities = df['CITY_NORMALIZED'].unique()
-            st.sidebar.info(f"Verideki benzersiz şehirler: {len(unique_cities)}")
-            
-            # Sorunlu şehirleri kontrol et
-            problem_cities = ["KÜTAHYA", "ZONGULDAK", "KARABÜK", "GÜMÜŞHANE"]
-            for city in problem_cities:
-                if city in unique_cities:
-                    st.sidebar.success(f"✓ {city} veride mevcut")
-                else:
-                    # Alternatif isimleri kontrol et
-                    alternatives = {
-                        "KÜTAHYA": ["KUTAHYA", "KUTAHYA"],
-                        "ZONGULDAK": ["ZONGULDAK"],
-                        "KARABÜK": ["KARABUK", "KARABUK"],
-                        "GÜMÜŞHANE": ["GUMUSHANE", "GUMUSHANE"]
-                    }
-                    found = False
-                    for alt in alternatives.get(city, []):
-                        if alt in unique_cities:
-                            st.sidebar.warning(f"⚠ {city} -> {alt} olarak bulundu")
-                            found = True
-                            break
-                    if not found:
-                        st.sidebar.error(f"✗ {city} veride bulunamadı")
-            
         except Exception as e:
             st.error(f"❌ Veri yükleme hatası: {str(e)}")
             st.stop()
@@ -2588,38 +2458,6 @@ def main():
         selected_strateji = st.selectbox("Yatırım Stratejisi", strateji_list)
         
         st.markdown('</div>', unsafe_allow_html=True)
-        
-        # Harita Hata Ayıklama
-        st.markdown("---")
-        st.markdown('<h4 style="color: #e2e8f0;">🐛 HARİTA HATA AYIKLAMA</h4>', unsafe_allow_html=True)
-        
-        if st.checkbox("Harita hata ayıklama modunu göster"):
-            # Şehir verilerini hesapla
-            city_data = calculate_city_performance(df_filtered, selected_product, date_filter)
-            
-            # Sorunlu şehirleri kontrol et
-            problem_cities = ["KÜTAHYA", "ZONGULDAK", "KARABÜK", "GÜMÜŞHANE"]
-            st.sidebar.write("### Sorunlu Şehir Kontrolü")
-            
-            for city in problem_cities:
-                if city in city_data['City'].values:
-                    st.sidebar.success(f"✓ {city} harita verisinde mevcut")
-                    city_row = city_data[city_data['City'] == city].iloc[0]
-                    st.sidebar.write(f"  - PF Satış: {city_row['PF_Satis']}")
-                    st.sidebar.write(f"  - Pazar Payı: {city_row['Pazar_Payi_%']:.1f}%")
-                else:
-                    st.sidebar.error(f"✗ {city} harita verisinde YOK")
-                    
-                    # Alternatif isimleri kontrol et
-                    city_fixed = normalize_city_name_fixed(city)
-                    if city_fixed in city_data['City'].values:
-                        st.sidebar.warning(f"⚠ {city} -> {city_fixed} olarak bulundu")
-                    else:
-                        st.sidebar.error(f"✗ {city} hiçbir formatta bulunamadı")
-            
-            # Tüm şehirleri listele
-            st.sidebar.write(f"### Tüm Şehirler ({len(city_data)})")
-            st.sidebar.write(city_data['City'].sort_values().tolist())
         
         # Renk Legend
         st.markdown("---")
@@ -2798,24 +2636,11 @@ def main():
             height=400
         )
     
-    # TAB 2: MODERN HARİTA - GÜNCELLENMİŞ
+    # TAB 2: MODERN HARİTA
     with tab2:
         st.header("🗺️ Modern Türkiye Haritası")
         
         city_data = calculate_city_performance(df_filtered, selected_product, date_filter)
-        
-        # DEBUG: Şehir verilerini göster
-        st.sidebar.write("### Harita Verisi")
-        st.sidebar.write(f"Toplam şehir: {len(city_data)}")
-        st.sidebar.write(f"Toplam PF Satış: {city_data['PF_Satis'].sum():,.0f}")
-        
-        # Sorunlu şehirleri kontrol et
-        problem_cities_check = ["KÜTAHYA", "ZONGULDAK", "KARABÜK", "GÜMÜŞHANE"]
-        for city in problem_cities_check:
-            if city in city_data['City'].values:
-                st.sidebar.success(f"✓ {city}: {city_data[city_data['City'] == city]['PF_Satis'].values[0]:,.0f}")
-            else:
-                st.sidebar.error(f"✗ {city} veride yok")
         
         # Yatırım stratejisi hesapla
         investment_df = calculate_investment_strategy(city_data)
@@ -2845,7 +2670,7 @@ def main():
         
         st.markdown("---")
         
-        # Modern Harita - GÜNCELLENMİŞ
+        # Modern Harita
         if gdf is not None:
             st.subheader("📍 İl Bazlı Dağılım (Tüm Şehirler)")
             
