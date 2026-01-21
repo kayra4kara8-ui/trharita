@@ -24,7 +24,6 @@ from sklearn.linear_model import LinearRegression, Ridge
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 import geopandas as gpd
-from shapely.geometry import LineString, MultiLineString
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -220,6 +219,7 @@ st.markdown("""
     
 </style>
 """, unsafe_allow_html=True)
+
 # =============================================================================
 # MCKINSEY COLOR PALETTE
 # =============================================================================
@@ -290,18 +290,15 @@ GRADIENT_SCALES = {
 
 FIX_CITY_MAP = {
     "AGRI": "AĞRI",
-    "BARTÄ±N": "BARTIN",
     "BARTIN": "BARTIN",
-    "BINGÃ¶L": "BİNGÖL",
     "BINGOL": "BİNGÖL",
-    "DÃ1⁄4ZCE": "DÜZCE",
     "DUZCE": "DÜZCE",
     "DÜZCE": "DÜZCE",
     "ELAZIG": "ELAZIĞ",
     "ELAZIĞ": "ELAZIĞ",
     "ESKISEHIR": "ESKİŞEHİR",
     "ESKİŞEHİR": "ESKİŞEHİR",
-    "GÃ1⁄4MÃ1⁄4SHANE": "GÜMÜŞHANE",
+    "GUMUSHANE": "GÜMÜŞHANE",
     "GÜMÜŞHANE": "GÜMÜŞHANE",
     "HAKKARI": "HAKKARİ",
     "HAKKARİ": "HAKKARİ",
@@ -309,15 +306,14 @@ FIX_CITY_MAP = {
     "İSTANBUL": "İSTANBUL",
     "IZMIR": "İZMİR",
     "İZMİR": "İZMİR",
-    "IÄ\x9fDIR": "IĞDIR",
+    "IGDIR": "IĞDIR",
     "IĞDIR": "IĞDIR",
-    "KARABÃ1⁄4K": "KARABÜK",
+    "KARABUK": "KARABÜK",
     "KARABÜK": "KARABÜK",
-    "KINKKALE": "KIRIKKALE",
     "KIRIKKALE": "KIRIKKALE",
     "KIRSEHIR": "KIRŞEHİR",
     "KIRŞEHİR": "KIRŞEHİR",
-    "KÃ1⁄4TAHYA": "KÜTAHYA",
+    "KUTAHYA": "KÜTAHYA",
     "KÜTAHYA": "KÜTAHYA",
     "MUGLA": "MUĞLA",
     "MUĞLA": "MUĞLA",
@@ -335,21 +331,15 @@ FIX_CITY_MAP = {
     "TEKİRDAĞ": "TEKİRDAĞ",
     "USAK": "UŞAK",
     "UŞAK": "UŞAK",
-    "ZINGULDAK": "ZONGULDAK",
     "ZONGULDAK": "ZONGULDAK",
-    "Ã\x87ANAKKALE": "ÇANAKKALE",
     "ÇANAKKALE": "ÇANAKKALE",
-    "Ã\x87ANKIRI": "ÇANKIRI",
     "ÇANKIRI": "ÇANKIRI",
-    "Ã\x87ORUM": "ÇORUM",
     "ÇORUM": "ÇORUM",
     "K. MARAS": "KAHRAMANMARAŞ",
     "KAHRAMANMARAŞ": "KAHRAMANMARAŞ",
     "CORUM": "ÇORUM",
     "CANKIRI": "ÇANKIRI",
-    "KARABUK": "KARABÜK",
     "GUMUSHANE": "GÜMÜŞHANE",
-    "KUTAHYA": "KÜTAHYA",
     "CANAKKALE": "ÇANAKKALE",
     "TUNCELİ": "TUNCELİ",
     "TUNCELI": "TUNCELİ",
@@ -357,13 +347,11 @@ FIX_CITY_MAP = {
     "OSMANIYE": "OSMANİYE",
     "KİLİS": "KİLİS",
     "KILIS": "KİLİS",
-    "ŞIRNAK": "ŞIRNAK",
     "SİİRT": "SİİRT",
     "SIIRT": "SİİRT",
     "BATMAN": "BATMAN",
     "BİTLİS": "BİTLİS",
     "BITLIS": "BİTLİS",
-    "BİNGÖL": "BİNGÖL",
     "IĞDIR": "IĞDIR",
     "ARDAHAN": "ARDAHAN"
 }
@@ -376,14 +364,19 @@ CITY_NORMALIZE_CLEAN = {
     'AGRI': 'Agri',
     'AĞRI': 'Agri',
     'AKSARAY': 'Aksaray',
+    'AMASYA': 'Amasya',
     'ANKARA': 'Ankara',
     'ANTALYA': 'Antalya',
+    'ARDAHAN': 'Ardahan',
+    'ARTVIN': 'Artvin',
     'AYDIN': 'Aydin',
     'BALIKESIR': 'Balikesir',
     'BARTIN': 'Bartin',
     'BATMAN': 'Batman',
+    'BAYBURT': 'Bayburt',
     'BILECIK': 'Bilecik',
     'BINGOL': 'Bingol',
+    'BİNGÖL': 'Bingol',
     'BITLIS': 'Bitlis',
     'BOLU': 'Bolu',
     'BURDUR': 'Burdur',
@@ -400,7 +393,6 @@ CITY_NORMALIZE_CLEAN = {
     'DÜZCE': 'Duzce',
     'EDIRNE': 'Edirne',
     'ELAZIG': 'Elazig',
-    'ELAZĞ': 'Elazig',
     'ELAZIĞ': 'Elazig',
     'ERZINCAN': 'Erzincan',
     'ERZURUM': 'Erzurum',
@@ -421,17 +413,16 @@ CITY_NORMALIZE_CLEAN = {
     'İSTANBUL': 'Istanbul',
     'IZMIR': 'Izmir',
     'İZMİR': 'Izmir',
-    'KAHRAMANMARAS': 'K. Maras',
-    'KAHRAMANMARAŞ': 'K. Maras',
-    'K.MARAS': 'K. Maras',
-    'KMARAS': 'K. Maras',
+    'KAHRAMANMARAS': 'Kahramanmaras',
+    'KAHRAMANMARAŞ': 'Kahramanmaras',
+    'K.MARAS': 'Kahramanmaras',
     'KARABUK': 'Karabuk',
     'KARABÜK': 'Karabuk',
     'KARAMAN': 'Karaman',
     'KARS': 'Kars',
     'KASTAMONU': 'Kastamonu',
     'KAYSERI': 'Kayseri',
-    'KIRIKKALE': 'Kinkkale',
+    'KIRIKKALE': 'Kirikkale',
     'KIRKLARELI': 'Kirklareli',
     'KIRKLARELİ': 'Kirklareli',
     'KIRSEHIR': 'Kirsehir',
@@ -486,10 +477,8 @@ CITY_NORMALIZE_CLEAN = {
     'YALOVA': 'Yalova',
     'YOZGAT': 'Yozgat',
     'ZONGULDAK': 'Zonguldak',
-    "ZONGULDAK": "Zonguldak",
     'ARDAHAN': 'Ardahan',
-    'AKSARAY': 'Aksaray',
-    'KIRIKKALE': 'Kirikkale'
+    'AKSARAY': 'Aksaray'
 }
 
 # =============================================================================
@@ -577,7 +566,8 @@ def create_mckinsey_metric_card(value, label, previous_value=None, format_func=f
         trend_color = "#64748B"
     
     html = f"""
-    <div class="mckinsey-card">
+    <div style="background: rgba(30, 41, 59, 0.7); padding: 1.5rem; border-radius: 10px; 
+                border-left: 4px solid #00A9BD; margin-bottom: 1rem;">
         <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
             <div style="font-size: 1.5rem; margin-right: 0.5rem;">{icon}</div>
             <div style="color: #94a3b8; font-size: 0.9rem; font-weight: 600;">{label}</div>
@@ -733,57 +723,19 @@ def load_excel_data(file):
     return df
 
 @st.cache_resource
-def load_geojson_gpd():
-    """GeoPandas ile GeoJSON yükle"""
+def load_turkey_geojson():
+    """Türkiye GeoJSON verisini yükle"""
+    # Türkiye harita verisi için URL (alternatif olarak)
+    geojson_url = "https://raw.githubusercontent.com/cihadturhan/tr-geojson/master/geo/tr-cities-utf8.json"
+    
     try:
-        gdf = gpd.read_file("turkey.geojson")
+        # GeoPandas ile yükleme
+        import geopandas as gpd
+        gdf = gpd.read_file(geojson_url)
         return gdf
-    except:
-        try:
-            gdf = gpd.read_file("turkey.geojson", encoding='utf-8')
-            return gdf
-        except Exception as e:
-            st.error(f"❌ GeoJSON yüklenemedi: {e}")
-            return None
-
-@st.cache_resource
-def load_geojson_json():
-    """JSON formatında GeoJSON yükle"""
-    try:
-        with open('turkey.geojson', 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except:
-        try:
-            with open('./turkey.geojson', 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except Exception as e:
-            st.error(f"❌ JSON GeoJSON yüklenemedi: {e}")
-            return None
-
-# =============================================================================
-# GEOMETRY HELPERS
-# =============================================================================
-
-def lines_to_lonlat(geom):
-    """LineString veya MultiLineString'den koordinatları al"""
-    lons, lats = [], []
-    if isinstance(geom, LineString):
-        xs, ys = geom.xy
-        lons += list(xs) + [None]
-        lats += list(ys) + [None]
-    elif isinstance(geom, MultiLineString):
-        for line in geom.geoms:
-            xs, ys = line.xy
-            lons += list(xs) + [None]
-            lats += list(ys) + [None]
-    return lons, lats
-
-def get_region_center(gdf_region):
-    """Bölgenin merkez koordinatlarını hesapla"""
-    if len(gdf_region) == 0:
-        return 35.0, 39.0
-    centroid = gdf_region.geometry.unary_union.centroid
-    return centroid.x, centroid.y
+    except Exception as e:
+        st.warning(f"GeoJSON yüklenemedi: {e}. Harita görseli olmadan devam edilecek.")
+        return None
 
 # =============================================================================
 # ENHANCED MAP WITH DRILL-DOWN CAPABILITY
@@ -794,41 +746,40 @@ def create_hierarchical_turkey_map(city_data, gdf, current_level="BÖLGE", selec
     Hiyerarşik harita sistemi: Bölge → Şehir drill-down
     """
     if gdf is None:
+        st.warning("Harita verisi yüklenemedi. GeoJSON dosyası bulunamadı.")
         return None
     
     city_data = city_data.copy()
-    city_data['City_Fixed'] = city_data['City'].apply(normalize_city_name_fixed)
-    city_data['City_Fixed'] = city_data['City_Fixed'].str.upper()
     
-    # GeoJSON hazırlığı
-    gdf = gdf.copy()
-    gdf['name_upper'] = gdf['name'].str.upper()
-    gdf['name_fixed'] = gdf['name_upper'].apply(lambda x: FIX_CITY_MAP.get(x, x))
+    # Şehir verilerini normalize et
+    city_data['City_Fixed'] = city_data['City'].apply(lambda x: normalize_city_name_fixed(x).upper() if pd.notnull(x) else '')
     
     # Seviyeye göre filtrele
-    if current_level == "ŞEHİR" and selected_region:
+    if current_level == "ŞEHİR" and selected_region and selected_region != "TÜMÜ":
         # Sadece seçili bölgenin şehirlerini göster
         region_cities = city_data[city_data['Region'] == selected_region]
-        gdf = gdf[gdf['name_fixed'].isin(region_cities['City_Fixed'])]
-        city_data = city_data[city_data['Region'] == selected_region]
+        gdf_filtered = gdf[gdf['name'].str.upper().isin(region_cities['City_Fixed'])]
+        data_to_map = region_cities
     else:
         # Bölge bazında topla
-        city_data = city_data.groupby('Region').agg({
+        region_data = city_data.groupby('Region').agg({
             'PF_Satis': 'sum',
             'Toplam_Pazar': 'sum',
             'Pazar_Payi_%': 'mean'
         }).reset_index()
-        city_data['City_Fixed'] = city_data['Region']
+        
+        region_data['City_Fixed'] = region_data['Region']
+        
+        # Bölge adlarını eşleştir
+        gdf_filtered = gdf.copy()
+        data_to_map = region_data
     
-    # Birleştir
-    merged = gdf.merge(city_data, left_on='name_fixed', right_on='City_Fixed', how='left')
-    merged['PF_Satis'] = merged['PF_Satis'].fillna(0)
-    merged['Pazar_Payi_%'] = merged['Pazar_Payi_%'].fillna(0)
-    merged['Region'] = merged['Region'].fillna('DİĞER')
+    # Harita oluştur
+    fig = go.Figure()
     
-    # Renk skalası
-    max_sales = merged['PF_Satis'].max() if len(merged) > 0 else 1
-    merged['Color_Intensity'] = merged['PF_Satis'] / max_sales if max_sales > 0 else 0
+    # Renk skalası oluştur
+    max_sales = data_to_map['PF_Satis'].max() if len(data_to_map) > 0 else 1
+    data_to_map['Color_Intensity'] = data_to_map['PF_Satis'] / max_sales if max_sales > 0 else 0
     
     # McKinsey-style sequential color scale
     def get_mckinsey_color(intensity):
@@ -841,69 +792,57 @@ def create_hierarchical_turkey_map(city_data, gdf, current_level="BÖLGE", selec
         else:
             return "#475569"  # Slate
     
-    merged['Color'] = merged['Color_Intensity'].apply(get_mckinsey_color)
+    data_to_map['Color'] = data_to_map['Color_Intensity'].apply(get_mckinsey_color)
     
-    # Harita oluştur
-    fig = go.Figure()
-    
-    fig.add_trace(go.Choroplethmapbox(
-        geojson=json.loads(merged.to_json()),
-        locations=merged.index,
-        z=[1] * len(merged),
-        colorscale=[[0, '#64748B'], [1, '#64748B']],
-        marker_opacity=0.7,
-        marker_line_width=1.5,
-        marker_line_color='rgba(255, 255, 255, 0.9)',
-        showscale=False,
-        customdata=list(zip(
-            merged['name'],
-            merged['Region'],
-            merged['PF_Satis'],
-            merged['Pazar_Payi_%']
-        )),
-        hovertemplate=(
-            "<b>%{customdata[0]}</b><br>"
-            "Bölge: %{customdata[1]}<br>"
-            "PF Satış: %{customdata[2]:,.0f}<br>"
-            "Pazar Payı: %{customdata[3]:.1f}%"
-            "<extra></extra>"
-        )
-    ))
-    
-    # Layout
-    fig.update_layout(
-        mapbox_style="carto-darkmatter",
-        mapbox=dict(
-            center=dict(lat=39.0, lon=35.0),
-            zoom=4.5 if current_level == "BÖLGE" else 6,
-            bearing=0,
-            pitch=0
-        ),
-        height=650,
-        margin=dict(l=0, r=0, t=100, b=0),
-        title=dict(
-            text=f"<b>{title}</b><br><span style='font-size:14px; color:#94a3b8'>{current_level} Bazlı Görünüm" + 
-                 (f" - {selected_region}" if selected_region else "") + "</span>",
-            x=0.5,
-            font=dict(
-                size=24, 
-                color='white',
-                family='Inter, sans-serif'
+    # Choroplethmapbox için veriyi hazırla
+    try:
+        # GeoJSON'u JSON formatına çevir
+        geojson_data = json.loads(gdf_filtered.to_json())
+        
+        fig.add_trace(go.Choroplethmapbox(
+            geojson=geojson_data,
+            locations=gdf_filtered.index,
+            z=[1] * len(gdf_filtered),
+            colorscale=[[0, '#64748B'], [1, '#64748B']],
+            marker_opacity=0.7,
+            marker_line_width=1.5,
+            marker_line_color='rgba(255, 255, 255, 0.9)',
+            showscale=False,
+            hoverinfo='none'
+        ))
+        
+        # Layout
+        fig.update_layout(
+            mapbox_style="carto-darkmatter",
+            mapbox=dict(
+                center=dict(lat=39.0, lon=35.0),
+                zoom=4.5 if current_level == "BÖLGE" else 6,
+                bearing=0,
+                pitch=0
             ),
-            y=0.95
-        ),
-        plot_bgcolor='rgba(0,0,0,0)',
-        paper_bgcolor='rgba(0,0,0,0)',
-        showlegend=False,
-        hoverlabel=dict(
-            bgcolor="rgba(15, 23, 41, 0.95)",
-            font_size=12,
-            font_family="Inter, sans-serif",
-            bordercolor="rgba(59, 130, 246, 0.3)"
+            height=650,
+            margin=dict(l=0, r=0, t=100, b=0),
+            title=dict(
+                text=f"<b>{title}</b><br><span style='font-size:14px; color:#94a3b8'>{current_level} Bazlı Görünüm" + 
+                     (f" - {selected_region}" if selected_region and selected_region != "TÜMÜ" else "") + "</span>",
+                x=0.5,
+                font=dict(
+                    size=24, 
+                    color='white',
+                    family='Inter, sans-serif'
+                ),
+                y=0.95
+            ),
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            showlegend=False
         )
-    )
-    
-    return fig
+        
+        return fig
+        
+    except Exception as e:
+        st.error(f"Harita oluşturulurken hata: {e}")
+        return None
 
 # =============================================================================
 # ENHANCED VISUALIZATION ENGINE - MCKINSEY STYLE
@@ -1489,7 +1428,7 @@ def train_ml_models(df, forecast_periods=3):
         
         mae = mean_absolute_error(y_test, y_pred)
         rmse = np.sqrt(mean_squared_error(y_test, y_pred))
-        mape = np.mean(np.abs((y_test - y_pred) / y_test)) * 100
+        mape = np.mean(np.abs((y_test - y_pred) / y_test)) * 100 if y_test.sum() > 0 else 100
         
         results[name] = {
             'model': model,
@@ -1557,9 +1496,6 @@ def calculate_city_performance(df, product, date_filter=None):
     city_perf.columns = ['City', 'Region', 'PF_Satis', 'Rakip_Satis']
     city_perf['Toplam_Pazar'] = city_perf['PF_Satis'] + city_perf['Rakip_Satis']
     city_perf['Pazar_Payi_%'] = safe_divide(city_perf['PF_Satis'], city_perf['Toplam_Pazar']) * 100
-    
-    # Bölge isimlerini düzelt
-    city_perf['Bölge'] = city_perf['Region']
     
     return city_perf
 
@@ -1792,7 +1728,7 @@ def style_dataframe(df, color_column=None, gradient_columns=None):
     
     # Sayısal sütunları bul ve formatla
     for col in df_formatted.columns:
-        if col in numeric_data.columns and numeric_data[col].dtype in ['int64', 'float64', 'int32', 'float32']:
+        if col in numeric_data.columns and pd.api.types.is_numeric_dtype(numeric_data[col]):
             if any(keyword in col.lower() for keyword in ['%', 'yüzde', 'pay', 'oran', 'büyüme']):
                 # Yüzdelik sütunlar
                 df_formatted[col] = numeric_data[col].apply(lambda x: f"{x:,.1f}%" if pd.notnull(x) else "")
@@ -1835,7 +1771,7 @@ def style_dataframe(df, color_column=None, gradient_columns=None):
     
     # Gradient uygula - ORIJINAL sayısal veri ile
     for col in gradient_columns:
-        if col in numeric_data.columns and numeric_data[col].dtype in ['int64', 'float64', 'int32', 'float32']:
+        if col in numeric_data.columns and pd.api.types.is_numeric_dtype(numeric_data[col]):
             # Gradient için sadece sayısal sütunları kullan
             try:
                 col_data = numeric_data[col].astype(float)
@@ -1908,8 +1844,7 @@ def main():
         
         try:
             df = load_excel_data(uploaded_file)
-            gdf = load_geojson_gpd()
-            geojson = load_geojson_json()
+            gdf = load_turkey_geojson()
             st.success(f"✅ **{len(df):,}** satır veri yüklendi")
         except Exception as e:
             st.error(f"❌ Veri yükleme hatası: {str(e)}")
@@ -3262,6 +3197,3 @@ if __name__ == "__main__":
         st.session_state.map_level = "BÖLGE"
     
     main()
-
-
-
