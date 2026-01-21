@@ -267,24 +267,22 @@ REGION_COLORS = {
 
 # PERFORMANS RENKLERİ - Profesyonel / Kurumsal
 
+PERFORMANCE_COLORS_PASTEL = {
+    # Performans
+    "high": "#2A9D8F",       # Okyanus Yeşili (Sakin ve güvenli)
+    "medium": "#E9C46A",     # Kum Sarısı (Rahatsız etmeyen uyarı)
+    "low": "#E76F51",        # Terracotta / Kiremit (Sıcak ama agresif değil)
 
-PERFORMANCE_COLORS = {
-    # PERFORMANS (McKinsey Scale)
-    # McKinsey "High" genellikle parlak yeşil değil, otoriter bir Turkuaz/Teal tonudur.
-    "high": "#007A7C",       # McKinsey Teal – Yüksek Performans / Büyüme
-    "medium": "#D4A017",     # Ocre (Kirli Altın) – Orta Performans / Stabil
-    "low": "#A63434",        # Kiremit Kırmızısı – Düşük Performans / Düşüş
+    # Durum
+    "positive": "#2A9D8F",
+    "negative": "#E76F51",
+    "neutral": "#8D99AE",    # Metalik Gri
 
-    # DURUM (Sentiment)
-    "positive": "#007A7C",   # McKinsey Teal – Pozitif
-    "negative": "#A63434",   # Kiremit Kırmızısı – Negatif
-    "neutral": "#8C96A6",    # Soğuk Gri – Nötr (Veri odaklı gri)
-
-    # UYARI VE BİLGİ
-    "warning": "#E69F00",    # Amber – Dikkat çekici ama göz yormayan sarı
-    "info": "#051C2C",       # McKinsey Midnight Blue – Markanın ana laciverti
-    "success": "#2D6A4F",    # Orman Yeşili – Onaylanmış / Başarılı (Teal'den daha koyu)
-    "danger": "#8B0000"      # Derin Bordo – Kritik Hata / Risk
+    # Diğer
+    "warning": "#F4A261",    # Şeftali Turuncusu
+    "info": "#264653",       # Koyu Petrol Yeşili/Mavisi (Ana metin rengi olabilir)
+    "success": "#2A9D8F",
+    "danger": "#D62828"      # Mat Kırmızı
 }
 
 # TREND ANALİZİ RENKLERİ
@@ -3570,6 +3568,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
