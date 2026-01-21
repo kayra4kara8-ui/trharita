@@ -266,7 +266,6 @@ REGION_COLORS = {
 }
 
 # PERFORMANS RENKLERİ - Profesyonel / Kurumsal
-
 PERFORMANCE_COLORS_PASTEL = {
     # Performans
     "high": "#2A9D8F",       # Okyanus Yeşili (Sakin ve güvenli)
@@ -3568,6 +3567,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
