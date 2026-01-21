@@ -2,12 +2,13 @@
 🎯 GELİŞMİŞ TİCARİ PORTFÖY ANALİZ SİSTEMİ
 Territory Bazlı Performans, ML Tahminleme, Türkiye Haritası ve Rekabet Analizi
 
-Özellikler:
+GELİŞTİRİLMİŞ ÖZELLİKLER:
 - 🗺️ Türkiye il bazlı harita görselleştirme (GELİŞTİRİLMİŞ VERSİYON)
 - 🤖 GERÇEK Machine Learning (Linear Regression, Ridge, Random Forest)
-- 📊 Aylık/Yıllık dönem seçimi
+- 📊 GELİŞMİŞ Zaman Serisi Analizi (3 aylık, 6 aylık ortalamalar, mevsimsellik analizi)
 - 📈 Gelişmiş rakip analizi ve trend karşılaştırması
 - 🎯 Dinamik zaman aralığı filtreleme
+- 📉 Trend analizi ve performans metrikleri
 """
 
 import streamlit as st
@@ -21,10 +22,13 @@ from io import BytesIO
 import json
 from sklearn.linear_model import LinearRegression, Ridge
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_absolute_error, mean_squared_error
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from statsmodels.tsa.seasonal import seasonal_decompose
+from statsmodels.tsa.stattools import adfuller
 import geopandas as gpd
 from shapely.geometry import LineString, MultiLineString
 import warnings
+from scipy import stats
 
 warnings.filterwarnings("ignore")
 
@@ -217,6 +221,30 @@ st.markdown("""
         margin-bottom: 1rem;
     }
     
+    /* TREND ANALİZİ STYLING */
+    .trend-card {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .positive-trend {
+        color: #10B981 !important;
+        font-weight: 600;
+    }
+    
+    .negative-trend {
+        color: #EF4444 !important;
+        font-weight: 600;
+    }
+    
+    .neutral-trend {
+        color: #94A3B8 !important;
+        font-weight: 600;
+    }
+    
 </style>
 """, unsafe_allow_html=True)
 
@@ -253,6 +281,16 @@ PERFORMANCE_COLORS = {
     "danger": "#991B1B"      # Koyu Kırmızı – Risk / Tehlike
 }
 
+# TREND ANALİZİ RENKLERİ
+TREND_COLORS = {
+    "strong_up": "#10B981",      # Güçlü artış
+    "up": "#34D399",            # Artış
+    "flat": "#FBBF24",          # Sabit
+    "down": "#F87171",          # Düşüş
+    "strong_down": "#DC2626",    # Güçlü düşüş
+    "seasonal": "#8B5CF6",      # Mevsimsel
+    "cyclic": "#3B82F6"         # Döngüsel
+}
 
 # BCG MATRIX RENKLERİ
 BCG_COLORS = {
@@ -276,7 +314,8 @@ GRADIENT_SCALES = {
     "blue_green": ["#3B82F6", "#06B6D4", "#10B981"],
     "sequential_blue": ["#DBEAFE", "#BFDBFE", "#93C5FD", "#60A5FA", "#3B82F6"],
     "diverging": ["#EF4444", "#F59E0B", "#10B981", "#3B82F6", "#8B5CF6"],
-    "temperature": ["#3B82F6", "#60A5FA", "#93C5FD", "#BFDBFE", "#DBEAFE"]
+    "temperature": ["#3B82F6", "#60A5FA", "#93C5FD", "#BFDBFE", "#DBEAFE"],
+    "trend": ["#DC2626", "#F87171", "#FBBF24", "#34D399", "#10B981"]
 }
 
 # =============================================================================
@@ -557,6 +596,297 @@ def format_percentage(num):
         return f"{float(num):.1f}%"
     except:
         return str(num)
+
+def calculate_trend_slope(y_values):
+    """Trend eğimini hesapla"""
+    if len(y_values) < 2:
+        return 0
+    
+    x = np.arange(len(y_values))
+    slope, intercept, r_value, p_value, std_err = stats.linregress(x, y_values)
+    return slope
+
+def classify_trend(slope, y_values):
+    """Trendi sınıflandır"""
+    if len(y_values) < 5:
+        return "Yetersiz Veri"
+    
+    mean_value = np.mean(y_values)
+    if mean_value == 0:
+        return "Nötr"
+    
+    percent_slope = (slope / mean_value) * 100 if mean_value != 0 else 0
+    
+    if percent_slope > 10:
+        return "📈 Güçlü Artış"
+    elif percent_slope > 5:
+        return "📈 Artış"
+    elif percent_slope > -5:
+        return "📊 Sabit"
+    elif percent_slope > -10:
+        return "📉 Düşüş"
+    else:
+        return "📉 Güçlü Düşüş"
+
+def calculate_seasonality(y_values, period=12):
+    """Mevsimsellik analizi"""
+    if len(y_values) < period * 2:
+        return None, "Yetersiz veri"
+    
+    try:
+        from scipy.signal import periodogram
+        f, Pxx = periodogram(y_values, fs=1)
+        
+        if len(f) > 0 and len(Pxx) > 0:
+            # En yüksek mevsimsel frekans
+            idx = np.argmax(Pxx[1:]) + 1
+            dominant_period = 1 / f[idx] if f[idx] > 0 else 0
+            
+            if dominant_period >= period - 2 and dominant_period <= period + 2:
+                return "Güçlü Mevsimsellik", round(dominant_period, 1)
+            elif dominant_period >= 3 and dominant_period <= 24:
+                return "Zayıf Mevsimsellik", round(dominant_period, 1)
+            else:
+                return "Mevsimsellik Yok", None
+    except:
+        return "Analiz Edilemedi", None
+    
+    return "Bilinmiyor", None
+
+# =============================================================================
+# GELİŞTİRİLMİŞ ZAMAN SERİSİ ANALİZ FONKSİYONLARI
+# =============================================================================
+
+def calculate_advanced_time_series(df, product, territory=None, date_filter=None):
+    """GELİŞTİRİLMİŞ Zaman serisi analizi"""
+    cols = get_product_columns(product)
+    
+    df_filtered = df.copy()
+    if territory and territory != "TÜMÜ":
+        df_filtered = df_filtered[df_filtered['TERRITORIES'] == territory]
+    
+    if date_filter:
+        df_filtered = df_filtered[(df_filtered['DATE'] >= date_filter[0]) & 
+                                   (df_filtered['DATE'] <= date_filter[1])]
+    
+    # Aylık gruplama
+    monthly = df_filtered.groupby('YIL_AY').agg({
+        cols['pf']: 'sum',
+        cols['rakip']: 'sum',
+        'DATE': 'first'
+    }).reset_index().sort_values('YIL_AY')
+    
+    monthly.columns = ['YIL_AY', 'PF_Satis', 'Rakip_Satis', 'DATE']
+    monthly['Toplam_Pazar'] = monthly['PF_Satis'] + monthly['Rakip_Satis']
+    monthly['Pazar_Payi_%'] = safe_divide(monthly['PF_Satis'], monthly['Toplam_Pazar']) * 100
+    
+    # Temel büyüme oranları
+    monthly['PF_Buyume_%'] = monthly['PF_Satis'].pct_change() * 100
+    monthly['Rakip_Buyume_%'] = monthly['Rakip_Satis'].pct_change() * 100
+    monthly['Goreceli_Buyume_%'] = monthly['PF_Buyume_%'] - monthly['Rakip_Buyume_%']
+    
+    # GELİŞTİRİLMİŞ Hareketli Ortalamalar
+    monthly['MA_3'] = monthly['PF_Satis'].rolling(window=3, min_periods=1).mean()
+    monthly['MA_6'] = monthly['PF_Satis'].rolling(window=6, min_periods=1).mean()
+    monthly['MA_12'] = monthly['PF_Satis'].rolling(window=12, min_periods=1).mean()
+    
+    # GELİŞTİRİLMİŞ Hareketli Ortalama Büyüme
+    monthly['MA_3_Growth'] = monthly['MA_3'].pct_change() * 100
+    monthly['MA_6_Growth'] = monthly['MA_6'].pct_change() * 100
+    monthly['MA_12_Growth'] = monthly['MA_12'].pct_change() * 100
+    
+    # Pazar Payı Hareketli Ortalamaları
+    monthly['PP_MA_3'] = monthly['Pazar_Payi_%'].rolling(window=3, min_periods=1).mean()
+    monthly['PP_MA_6'] = monthly['Pazar_Payi_%'].rolling(window=6, min_periods=1).mean()
+    
+    # Yıllık Büyüme (YoY)
+    monthly['DATE_DT'] = pd.to_datetime(monthly['YIL_AY'] + '-01')
+    monthly['Year'] = monthly['DATE_DT'].dt.year
+    monthly['Month'] = monthly['DATE_DT'].dt.month
+    
+    # YoY büyümesini hesapla
+    for idx, row in monthly.iterrows():
+        if idx >= 12:
+            same_month_last_year = monthly[(monthly['Year'] == row['Year'] - 1) & 
+                                          (monthly['Month'] == row['Month'])]
+            if not same_month_last_year.empty:
+                monthly.loc[idx, 'YoY_PF_Growth'] = ((row['PF_Satis'] / same_month_last_year['PF_Satis'].values[0]) - 1) * 100
+                monthly.loc[idx, 'YoY_Rakip_Growth'] = ((row['Rakip_Satis'] / same_month_last_year['Rakip_Satis'].values[0]) - 1) * 100
+    
+    # Mevsimsellik indeksi (basitleştirilmiş)
+    if len(monthly) >= 12:
+        monthly_grouped = monthly.groupby('Month')['PF_Satis'].mean()
+        seasonality_base = monthly_grouped.mean()
+        if seasonality_base > 0:
+            monthly['Seasonality_Index'] = monthly.apply(
+                lambda x: (monthly_grouped[x['Month']] / seasonality_base * 100) if x['Month'] in monthly_grouped.index else 100,
+                axis=1
+            )
+    
+    # Trend analizi
+    if len(monthly) >= 3:
+        # Son 3 ay vs Önceki 3 ay
+        if len(monthly) >= 6:
+            recent_3m = monthly.tail(3)['PF_Satis'].mean()
+            previous_3m = monthly.tail(6).head(3)['PF_Satis'].mean()
+            if previous_3m > 0:
+                monthly.loc[monthly.index[-1], 'QoQ_Growth_3M'] = ((recent_3m / previous_3m) - 1) * 100
+        
+        # Son 6 ay vs Önceki 6 ay
+        if len(monthly) >= 12:
+            recent_6m = monthly.tail(6)['PF_Satis'].mean()
+            previous_6m = monthly.tail(12).head(6)['PF_Satis'].mean()
+            if previous_6m > 0:
+                monthly.loc[monthly.index[-1], 'QoQ_Growth_6M'] = ((recent_6m / previous_6m) - 1) * 100
+    
+    # Volatilite hesaplama
+    monthly['PF_Volatility'] = monthly['PF_Satis'].rolling(window=6, min_periods=3).std()
+    monthly['PF_CV'] = safe_divide(monthly['PF_Volatility'], monthly['PF_Satis']) * 100
+    
+    # Momentum indikatörleri
+    if len(monthly) >= 3:
+        monthly['Momentum_3M'] = monthly['PF_Satis'] - monthly['PF_Satis'].shift(3)
+        monthly['Momentum_6M'] = monthly['PF_Satis'] - monthly['PF_Satis'].shift(6)
+    
+    # Performans skoru (basitleştirilmiş)
+    monthly['Performance_Score'] = (
+        (monthly['Pazar_Payi_%'] / 100) * 0.4 +
+        (np.minimum(monthly['PF_Buyume_%'].fillna(0), 50) / 50) * 0.3 +
+        (1 - np.minimum(monthly['PF_CV'].fillna(50), 100) / 100) * 0.3
+    ) * 100
+    
+    return monthly
+
+def perform_trend_analysis(monthly_df):
+    """Detaylı trend analizi"""
+    if len(monthly_df) < 6:
+        return {"error": "Yetersiz veri"}
+    
+    analysis = {}
+    
+    # 1. Temel trend analizi
+    pf_values = monthly_df['PF_Satis'].values
+    pf_slope = calculate_trend_slope(pf_values)
+    pf_trend = classify_trend(pf_slope, pf_values)
+    
+    # 2. Hareketli ortalamalara göre trend
+    if 'MA_3' in monthly_df.columns:
+        ma3_slope = calculate_trend_slope(monthly_df['MA_3'].dropna().values)
+        ma3_trend = classify_trend(ma3_slope, monthly_df['MA_3'].dropna().values)
+        ma6_slope = calculate_trend_slope(monthly_df['MA_6'].dropna().values)
+        ma6_trend = classify_trend(ma6_slope, monthly_df['MA_6'].dropna().values)
+    else:
+        ma3_trend = "Hesaplanamadı"
+        ma6_trend = "Hesaplanamadı"
+    
+    # 3. Mevsimsellik analizi
+    seasonality_type, period = calculate_seasonality(pf_values)
+    
+    # 4. Dönemsel büyüme analizi
+    growth_metrics = {}
+    
+    if len(monthly_df) >= 4:
+        # Son 1 ay vs Önceki 1 ay
+        if len(monthly_df) >= 2:
+            last_month = monthly_df['PF_Satis'].iloc[-1]
+            prev_month = monthly_df['PF_Satis'].iloc[-2] if len(monthly_df) >= 2 else 0
+            if prev_month > 0:
+                growth_metrics['MoM_Growth'] = ((last_month / prev_month) - 1) * 100
+        
+        # Son 3 ay vs Önceki 3 ay
+        if len(monthly_df) >= 6:
+            recent_3m = monthly_df['PF_Satis'].tail(3).mean()
+            previous_3m = monthly_df['PF_Satis'].tail(6).head(3).mean()
+            if previous_3m > 0:
+                growth_metrics['QoQ_3M_Growth'] = ((recent_3m / previous_3m) - 1) * 100
+        
+        # Son 6 ay vs Önceki 6 ay
+        if len(monthly_df) >= 12:
+            recent_6m = monthly_df['PF_Satis'].tail(6).mean()
+            previous_6m = monthly_df['PF_Satis'].tail(12).head(6).mean()
+            if previous_6m > 0:
+                growth_metrics['QoQ_6M_Growth'] = ((recent_6m / previous_6m) - 1) * 100
+    
+    # 5. Pazar payı trendi
+    if 'Pazar_Payi_%' in monthly_df.columns:
+        pp_slope = calculate_trend_slope(monthly_df['Pazar_Payi_%'].values)
+        pp_trend = classify_trend(pp_slope, monthly_df['Pazar_Payi_%'].values)
+    else:
+        pp_trend = "Hesaplanamadı"
+    
+    # 6. Volatilite analizi
+    volatility = monthly_df['PF_Satis'].std() if len(monthly_df) > 1 else 0
+    mean_value = monthly_df['PF_Satis'].mean() if len(monthly_df) > 0 else 0
+    cv = (volatility / mean_value * 100) if mean_value > 0 else 0
+    
+    if cv < 20:
+        volatility_class = "Düşük"
+    elif cv < 50:
+        volatility_class = "Orta"
+    else:
+        volatility_class = "Yüksek"
+    
+    # 7. Momentum analizi
+    if len(monthly_df) >= 3:
+        momentum_3m = monthly_df['PF_Satis'].iloc[-1] - monthly_df['PF_Satis'].iloc[-4] if len(monthly_df) >= 4 else 0
+        momentum_6m = monthly_df['PF_Satis'].iloc[-1] - monthly_df['PF_Satis'].iloc[-7] if len(monthly_df) >= 7 else 0
+    else:
+        momentum_3m = 0
+        momentum_6m = 0
+    
+    analysis = {
+        "temel_trend": pf_trend,
+        "hareketli_ortalama_3m_trend": ma3_trend,
+        "hareketli_ortalama_6m_trend": ma6_trend,
+        "mevsimsellik": seasonality_type,
+        "mevsimsel_periyot": period,
+        "pazar_payi_trendi": pp_trend,
+        "volatilite": volatility_class,
+        "volatilite_degeri": round(cv, 1),
+        "momentum_3m": round(momentum_3m, 0),
+        "momentum_6m": round(momentum_6m, 0),
+        "buyume_metrikleri": growth_metrics,
+        "trend_egimi": round(pf_slope, 2)
+    }
+    
+    return analysis
+
+def create_comparative_analysis(monthly_df, periods=[3, 6, 12]):
+    """Karşılaştırmalı dönem analizi"""
+    if len(monthly_df) < max(periods):
+        return None
+    
+    comparisons = []
+    
+    for period in periods:
+        if len(monthly_df) >= period:
+            recent_data = monthly_df.tail(period)
+            previous_data = monthly_df.tail(period*2).head(period)
+            
+            recent_avg = recent_data['PF_Satis'].mean()
+            previous_avg = previous_data['PF_Satis'].mean()
+            
+            recent_share = recent_data['Pazar_Payi_%'].mean()
+            previous_share = previous_data['Pazar_Payi_%'].mean()
+            
+            growth_rate = ((recent_avg / previous_avg) - 1) * 100 if previous_avg > 0 else 0
+            share_change = recent_share - previous_share
+            
+            comparisons.append({
+                'period': f'Son {period} ay',
+                'ortalama_satis': recent_avg,
+                'onceki_ortalama': previous_avg,
+                'buyume_orani': growth_rate,
+                'pazar_payi': recent_share,
+                'pay_degisimi': share_change,
+                'volatilite': recent_data['PF_Satis'].std(),
+                'trend': classify_trend(
+                    calculate_trend_slope(recent_data['PF_Satis'].values),
+                    recent_data['PF_Satis'].values
+                )
+            })
+    
+    return pd.DataFrame(comparisons)
 
 # =============================================================================
 # DATA LOADING
@@ -852,80 +1182,149 @@ def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası",
     return fig
 
 # =============================================================================
-# ML FEATURE ENGINEERING
+# ML FEATURE ENGINEERING - GELİŞTİRİLMİŞ
 # =============================================================================
 
-def create_ml_features(df):
-    """ML için feature oluştur"""
+def create_advanced_ml_features(df):
+    """GELİŞTİRİLMİŞ ML için feature oluştur"""
     df = df.copy()
     df = df.sort_values('DATE').reset_index(drop=True)
     
-    # Lag features
-    df['lag_1'] = df['PF_Satis'].shift(1)
-    df['lag_2'] = df['PF_Satis'].shift(2)
-    df['lag_3'] = df['PF_Satis'].shift(3)
+    # Lag features (3, 6, 12 ay)
+    for lag in [1, 2, 3, 4, 5, 6, 12]:
+        if lag <= len(df):
+            df[f'lag_{lag}'] = df['PF_Satis'].shift(lag)
     
-    # Rolling features
-    df['rolling_mean_3'] = df['PF_Satis'].rolling(window=3, min_periods=1).mean()
-    df['rolling_mean_6'] = df['PF_Satis'].rolling(window=6, min_periods=1).mean()
-    df['rolling_std_3'] = df['PF_Satis'].rolling(window=3, min_periods=1).std()
+    # Rolling statistics
+    windows = [3, 6, 12]
+    for window in windows:
+        if window <= len(df):
+            df[f'rolling_mean_{window}'] = df['PF_Satis'].rolling(window=window, min_periods=1).mean()
+            df[f'rolling_std_{window}'] = df['PF_Satis'].rolling(window=window, min_periods=1).std()
+            df[f'rolling_min_{window}'] = df['PF_Satis'].rolling(window=window, min_periods=1).min()
+            df[f'rolling_max_{window}'] = df['PF_Satis'].rolling(window=window, min_periods=1).max()
+    
+    # Exponential moving averages
+    for span in [3, 6, 12]:
+        if span <= len(df):
+            df[f'ema_{span}'] = df['PF_Satis'].ewm(span=span, adjust=False).mean()
     
     # Date features
     df['month'] = df['DATE'].dt.month
     df['quarter'] = df['DATE'].dt.quarter
+    df['year'] = df['DATE'].dt.year
     df['month_sin'] = np.sin(2 * np.pi * df['month'] / 12)
     df['month_cos'] = np.cos(2 * np.pi * df['month'] / 12)
+    df['quarter_sin'] = np.sin(2 * np.pi * df['quarter'] / 4)
+    df['quarter_cos'] = np.cos(2 * np.pi * df['quarter'] / 4)
     df['trend_index'] = range(len(df))
     
+    # Seasonal features
+    df['is_q1'] = (df['quarter'] == 1).astype(int)
+    df['is_q2'] = (df['quarter'] == 2).astype(int)
+    df['is_q3'] = (df['quarter'] == 3).astype(int)
+    df['is_q4'] = (df['quarter'] == 4).astype(int)
+    
+    # Interaction features
+    if 'Pazar_Payi_%' in df.columns:
+        df['share_trend'] = df['Pazar_Payi_%'].rolling(window=3, min_periods=1).mean()
+    
+    # Growth features
+    df['growth_1m'] = df['PF_Satis'].pct_change(periods=1) * 100
+    df['growth_3m'] = df['PF_Satis'].pct_change(periods=3) * 100
+    df['growth_6m'] = df['PF_Satis'].pct_change(periods=6) * 100
+    
+    # Momentum features
+    if len(df) >= 3:
+        df['momentum_3m'] = df['PF_Satis'] - df['PF_Satis'].shift(3)
+        df['momentum_6m'] = df['PF_Satis'] - df['PF_Satis'].shift(6)
+    
+    # Volatility features
+    df['volatility_3m'] = df['PF_Satis'].rolling(window=3, min_periods=1).std()
+    df['volatility_6m'] = df['PF_Satis'].rolling(window=6, min_periods=1).std()
+    
     # Fill NaN
-    df = df.fillna(method='bfill').fillna(0)
+    df = df.fillna(method='bfill').fillna(method='ffill').fillna(0)
     
     return df
 
-def train_ml_models(df, forecast_periods=3):
-    """GERÇEK ML modelleri ile tahmin"""
-    df_features = create_ml_features(df)
+def train_advanced_ml_models(df, forecast_periods=3):
+    """GELİŞTİRİLMİŞ ML modelleri ile tahmin"""
+    df_features = create_advanced_ml_features(df)
     
-    if len(df_features) < 10:
+    if len(df_features) < 24:  # En az 2 yıllık veri
         return None, None, None
     
-    feature_cols = ['lag_1', 'lag_2', 'lag_3', 'rolling_mean_3', 'rolling_mean_6',
-                    'rolling_std_3', 'month', 'quarter', 'month_sin', 'month_cos', 'trend_index']
+    # Feature selection
+    feature_cols = [
+        'lag_1', 'lag_2', 'lag_3', 'lag_6', 'lag_12',
+        'rolling_mean_3', 'rolling_mean_6', 'rolling_mean_12',
+        'rolling_std_3', 'rolling_std_6',
+        'ema_3', 'ema_6',
+        'month', 'quarter', 'year',
+        'month_sin', 'month_cos',
+        'trend_index',
+        'growth_1m', 'growth_3m',
+        'momentum_3m', 'momentum_6m',
+        'volatility_3m'
+    ]
     
-    # Train/Test split (zaman bazlı)
+    # Sadece mevcut kolonları kullan
+    available_cols = [col for col in feature_cols if col in df_features.columns]
+    
+    # Train/Test split (zaman bazlı - son %20 test)
     split_idx = int(len(df_features) * 0.8)
     
     train_df = df_features.iloc[:split_idx]
     test_df = df_features.iloc[split_idx:]
     
-    X_train = train_df[feature_cols]
+    X_train = train_df[available_cols]
     y_train = train_df['PF_Satis']
-    X_test = test_df[feature_cols]
+    X_test = test_df[available_cols]
     y_test = test_df['PF_Satis']
     
-    # Modeller
+    # Gelişmiş modeller
     models = {
         'Linear Regression': LinearRegression(),
         'Ridge Regression': Ridge(alpha=1.0),
-        'Random Forest': RandomForestRegressor(n_estimators=100, random_state=42, max_depth=5)
+        'Random Forest': RandomForestRegressor(
+            n_estimators=200,
+            random_state=42,
+            max_depth=10,
+            min_samples_split=5,
+            n_jobs=-1
+        )
     }
     
     results = {}
     
     for name, model in models.items():
-        model.fit(X_train, y_train)
-        y_pred = model.predict(X_test)
-        
-        mae = mean_absolute_error(y_test, y_pred)
-        rmse = np.sqrt(mean_squared_error(y_test, y_pred))
-        mape = np.mean(np.abs((y_test - y_pred) / y_test)) * 100
-        
-        results[name] = {
-            'model': model,
-            'MAE': mae,
-            'RMSE': rmse,
-            'MAPE': mape
-        }
+        try:
+            model.fit(X_train, y_train)
+            y_pred = model.predict(X_test)
+            
+            # Negatif tahminleri 0 yap
+            y_pred = np.maximum(y_pred, 0)
+            
+            mae = mean_absolute_error(y_test, y_pred)
+            rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+            mape = np.mean(np.abs((y_test - y_pred) / np.maximum(y_test, 1))) * 100
+            r2 = r2_score(y_test, y_pred)
+            
+            results[name] = {
+                'model': model,
+                'MAE': mae,
+                'RMSE': rmse,
+                'MAPE': mape,
+                'R2': r2,
+                'y_pred': y_pred
+            }
+        except Exception as e:
+            st.warning(f"{name} modeli eğitilemedi: {str(e)}")
+            continue
+    
+    if not results:
+        return None, None, None
     
     # En iyi model (MAPE'e göre)
     best_model_name = min(results.keys(), key=lambda x: results[x]['MAPE'])
@@ -937,26 +1336,53 @@ def train_ml_models(df, forecast_periods=3):
     
     for i in range(forecast_periods):
         next_date = last_row['DATE'].values[0] + pd.DateOffset(months=1)
-        X_future = last_row[feature_cols]
-        next_pred = best_model.predict(X_future)[0]
+        
+        # Feature'ları güncelle
+        X_future = last_row[available_cols]
+        
+        try:
+            next_pred = best_model.predict(X_future)[0]
+            next_pred = max(0, next_pred)  # Negatif olmamasını sağla
+        except:
+            # Model tahmini başarısız olursa, son değeri kullan
+            next_pred = last_row['PF_Satis'].values[0]
         
         forecast_data.append({
             'DATE': next_date,
             'YIL_AY': pd.to_datetime(next_date).strftime('%Y-%m'),
-            'PF_Satis': max(0, next_pred),
-            'Model': best_model_name
+            'PF_Satis': next_pred,
+            'Model': best_model_name,
+            'Tahmin_Tipi': 'ML Tahmin'
         })
         
-        # Güncelle
+        # Bir sonraki tahmin için veriyi güncelle
         new_row = last_row.copy()
         new_row['DATE'] = next_date
         new_row['PF_Satis'] = next_pred
-        new_row['lag_1'] = last_row['PF_Satis'].values[0]
-        new_row['lag_2'] = last_row['lag_1'].values[0]
-        new_row['lag_3'] = last_row['lag_2'].values[0]
-        new_row['rolling_mean_3'] = (new_row['lag_1'] + new_row['lag_2'] + new_row['lag_3']) / 3
+        
+        # Lag feature'larını güncelle
+        for lag in range(12, 0, -1):
+            if f'lag_{lag}' in new_row.columns:
+                if lag == 1:
+                    new_row[f'lag_{lag}'] = last_row['PF_Satis'].values[0]
+                else:
+                    new_row[f'lag_{lag}'] = last_row[f'lag_{lag-1}'].values[0]
+        
+        # Rolling statistics güncelle
+        for window in [3, 6, 12]:
+            if f'rolling_mean_{window}' in new_row.columns:
+                # Basitleştirilmiş güncelleme
+                recent_values = [last_row['PF_Satis'].values[0]]
+                if window > 1:
+                    for i in range(1, min(window, 13)):
+                        if f'lag_{i}' in last_row.columns:
+                            recent_values.append(last_row[f'lag_{i}'].values[0])
+                new_row[f'rolling_mean_{window}'] = np.mean(recent_values[:window])
+        
+        # Date features güncelle
         new_row['month'] = pd.to_datetime(next_date).month
         new_row['quarter'] = pd.to_datetime(next_date).quarter
+        new_row['year'] = pd.to_datetime(next_date).year
         new_row['month_sin'] = np.sin(2 * np.pi * new_row['month'] / 12)
         new_row['month_cos'] = np.cos(2 * np.pi * new_row['month'] / 12)
         new_row['trend_index'] = last_row['trend_index'].values[0] + 1
@@ -965,7 +1391,37 @@ def train_ml_models(df, forecast_periods=3):
     
     forecast_df = pd.DataFrame(forecast_data)
     
-    return results, best_model_name, forecast_df
+    # Basit tahmin metodları ekle (benchmark)
+    simple_forecasts = []
+    
+    # 1. Son değer yöntemi
+    last_value = df_features['PF_Satis'].iloc[-1]
+    for i in range(forecast_periods):
+        simple_forecasts.append({
+            'DATE': df_features['DATE'].iloc[-1] + pd.DateOffset(months=i+1),
+            'YIL_AY': (df_features['DATE'].iloc[-1] + pd.DateOffset(months=i+1)).strftime('%Y-%m'),
+            'PF_Satis': last_value,
+            'Model': 'Son Değer',
+            'Tahmin_Tipi': 'Basit Tahmin'
+        })
+    
+    # 2. Hareketli ortalama yöntemi
+    ma_value = df_features['PF_Satis'].tail(6).mean()
+    for i in range(forecast_periods):
+        simple_forecasts.append({
+            'DATE': df_features['DATE'].iloc[-1] + pd.DateOffset(months=i+1),
+            'YIL_AY': (df_features['DATE'].iloc[-1] + pd.DateOffset(months=i+1)).strftime('%Y-%m'),
+            'PF_Satis': ma_value,
+            'Model': '6 Aylık Ortalama',
+            'Tahmin_Tipi': 'Basit Tahmin'
+        })
+    
+    simple_forecast_df = pd.DataFrame(simple_forecasts)
+    
+    # Tüm tahminleri birleştir
+    all_forecasts = pd.concat([forecast_df, simple_forecast_df], ignore_index=True)
+    
+    return results, best_model_name, all_forecasts
 
 # =============================================================================
 # ANALYSIS FUNCTIONS
@@ -1013,35 +1469,6 @@ def calculate_territory_performance(df, product, date_filter=None):
     terr_perf['Goreceli_Pazar_Payi'] = safe_divide(terr_perf['PF_Satis'], terr_perf['Rakip_Satis'])
     
     return terr_perf.sort_values('PF_Satis', ascending=False)
-
-def calculate_time_series(df, product, territory=None, date_filter=None):
-    """Zaman serisi"""
-    cols = get_product_columns(product)
-    
-    df_filtered = df.copy()
-    if territory and territory != "TÜMÜ":
-        df_filtered = df_filtered[df_filtered['TERRITORIES'] == territory]
-    
-    if date_filter:
-        df_filtered = df_filtered[(df_filtered['DATE'] >= date_filter[0]) & 
-                                   (df_filtered['DATE'] <= date_filter[1])]
-    
-    monthly = df_filtered.groupby('YIL_AY').agg({
-        cols['pf']: 'sum',
-        cols['rakip']: 'sum',
-        'DATE': 'first'
-    }).reset_index().sort_values('YIL_AY')
-    
-    monthly.columns = ['YIL_AY', 'PF_Satis', 'Rakip_Satis', 'DATE']
-    monthly['Toplam_Pazar'] = monthly['PF_Satis'] + monthly['Rakip_Satis']
-    monthly['Pazar_Payi_%'] = safe_divide(monthly['PF_Satis'], monthly['Toplam_Pazar']) * 100
-    monthly['PF_Buyume_%'] = monthly['PF_Satis'].pct_change() * 100
-    monthly['Rakip_Buyume_%'] = monthly['Rakip_Satis'].pct_change() * 100
-    monthly['Goreceli_Buyume_%'] = monthly['PF_Buyume_%'] - monthly['Rakip_Buyume_%']
-    monthly['MA_3'] = monthly['PF_Satis'].rolling(window=3, min_periods=1).mean()
-    monthly['MA_6'] = monthly['PF_Satis'].rolling(window=6, min_periods=1).mean()
-    
-    return monthly
 
 def calculate_competitor_analysis(df, product, date_filter=None):
     """Rakip analizi"""
@@ -1203,16 +1630,16 @@ def calculate_investment_strategy(city_perf):
 # VISUALIZATION FUNCTIONS - MODERN & MCKINSEY STYLE
 # =============================================================================
 
-def create_modern_forecast_chart(historical_df, forecast_df):
-    """Modern tahmin grafiği - McKinsey tarzı"""
+def create_advanced_time_series_chart(monthly_df, forecast_df=None):
+    """GELİŞTİRİLMİŞ zaman serisi grafiği"""
     fig = go.Figure()
     
     # Gerçek veri
     fig.add_trace(go.Scatter(
-        x=historical_df['DATE'],
-        y=historical_df['PF_Satis'],
+        x=monthly_df['DATE'],
+        y=monthly_df['PF_Satis'],
         mode='lines+markers',
-        name='Gerçek Satış',
+        name='Gerçek PF Satış',
         line=dict(
             color=PERFORMANCE_COLORS['success'],
             width=3,
@@ -1223,42 +1650,88 @@ def create_modern_forecast_chart(historical_df, forecast_df):
             color='white',
             line=dict(width=2, color=PERFORMANCE_COLORS['success'])
         ),
-        fill='tozeroy',
-        fillcolor='rgba(16, 185, 129, 0.1)'
+        fillcolor='rgba(16, 185, 129, 0.1)',
+        fill='tozeroy'
     ))
     
-    # Tahmin
-    if forecast_df is not None and len(forecast_df) > 0:
+    # Hareketli ortalamalar
+    if 'MA_3' in monthly_df.columns:
         fig.add_trace(go.Scatter(
-            x=forecast_df['DATE'],
-            y=forecast_df['PF_Satis'],
-            mode='lines+markers',
-            name='Tahmin',
+            x=monthly_df['DATE'],
+            y=monthly_df['MA_3'],
+            mode='lines',
+            name='3 Aylık Ortalama',
             line=dict(
-                color=PERFORMANCE_COLORS['info'],
-                width=3,
-                dash='dash',
-                shape='spline'
+                color=TREND_COLORS['cyclic'],
+                width=2,
+                dash='dash'
             ),
-            marker=dict(
-                size=10,
-                symbol='diamond',
-                color='white',
-                line=dict(width=2, color=PERFORMANCE_COLORS['info'])
-            ),
-            fill='tozeroy',
-            fillcolor='rgba(59, 130, 246, 0.1)'
+            opacity=0.7
         ))
     
-    # McKinsey tarzı layout
+    if 'MA_6' in monthly_df.columns:
+        fig.add_trace(go.Scatter(
+            x=monthly_df['DATE'],
+            y=monthly_df['MA_6'],
+            mode='lines',
+            name='6 Aylık Ortalama',
+            line=dict(
+                color=TREND_COLORS['seasonal'],
+                width=2,
+                dash='dot'
+            ),
+            opacity=0.7
+        ))
+    
+    # Tahminler
+    if forecast_df is not None and len(forecast_df) > 0:
+        # ML tahminleri
+        ml_forecast = forecast_df[forecast_df['Tahmin_Tipi'] == 'ML Tahmin']
+        if len(ml_forecast) > 0:
+            fig.add_trace(go.Scatter(
+                x=ml_forecast['DATE'],
+                y=ml_forecast['PF_Satis'],
+                mode='lines+markers',
+                name='ML Tahmini',
+                line=dict(
+                    color=PERFORMANCE_COLORS['info'],
+                    width=3,
+                    dash='dash',
+                    shape='spline'
+                ),
+                marker=dict(
+                    size=10,
+                    symbol='diamond',
+                    color='white',
+                    line=dict(width=2, color=PERFORMANCE_COLORS['info'])
+                )
+            ))
+        
+        # Basit tahminler
+        simple_forecast = forecast_df[forecast_df['Tahmin_Tipi'] == 'Basit Tahmin']
+        for model in simple_forecast['Model'].unique():
+            model_data = simple_forecast[simple_forecast['Model'] == model]
+            fig.add_trace(go.Scatter(
+                x=model_data['DATE'],
+                y=model_data['PF_Satis'],
+                mode='lines',
+                name=f'{model}',
+                line=dict(
+                    color='rgba(255, 255, 255, 0.3)',
+                    width=1,
+                    dash='dash'
+                ),
+                opacity=0.5
+            ))
+    
     fig.update_layout(
         title=dict(
-            text='<b>Satış Trendi ve ML Tahmin</b>',
-            font=dict(size=20, color='white', family='Inter')
+            text='<b>Gelişmiş Zaman Serisi Analizi</b>',
+            font=dict(size=22, color='white', family='Inter')
         ),
         xaxis_title='<b>Tarih</b>',
         yaxis_title='<b>PF Satış</b>',
-        height=500,
+        height=600,
         hovermode='x unified',
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)',
@@ -1282,7 +1755,267 @@ def create_modern_forecast_chart(historical_df, forecast_df):
             gridcolor='rgba(59, 130, 246, 0.1)',
             linecolor='rgba(59, 130, 246, 0.3)',
             showgrid=True,
-            tickformat=',.0f'  # Binlik ayırıcı
+            tickformat=',.0f'
+        )
+    )
+    
+    return fig
+
+def create_trend_analysis_chart(monthly_df):
+    """Trend analizi grafiği"""
+    fig = go.Figure()
+    
+    # PF Satış
+    fig.add_trace(go.Scatter(
+        x=monthly_df['DATE'],
+        y=monthly_df['PF_Satis'],
+        mode='lines+markers',
+        name='PF Satış',
+        line=dict(
+            color=PERFORMANCE_COLORS['success'],
+            width=3,
+            shape='spline'
+        ),
+        marker=dict(size=6)
+    ))
+    
+    # Trend çizgisi
+    if len(monthly_df) >= 3:
+        x = np.arange(len(monthly_df))
+        y = monthly_df['PF_Satis'].values
+        z = np.polyfit(x, y, 1)
+        p = np.poly1d(z)
+        
+        fig.add_trace(go.Scatter(
+            x=monthly_df['DATE'],
+            y=p(x),
+            mode='lines',
+            name='Trend Çizgisi',
+            line=dict(
+                color=TREND_COLORS['strong_up'],
+                width=2,
+                dash='dash'
+            )
+        ))
+    
+    # Büyüme oranları (ikinci eksen)
+    if 'PF_Buyume_%' in monthly_df.columns:
+        fig.add_trace(go.Scatter(
+            x=monthly_df['DATE'],
+            y=monthly_df['PF_Buyume_%'],
+            mode='lines',
+            name='Büyüme %',
+            line=dict(
+                color=PERFORMANCE_COLORS['info'],
+                width=2,
+                dash='dot'
+            ),
+            yaxis="y2"
+        ))
+    
+    fig.update_layout(
+        title=dict(
+            text='<b>Trend ve Büyüme Analizi</b>',
+            font=dict(size=22, color='white', family='Inter')
+        ),
+        xaxis_title='<b>Tarih</b>',
+        yaxis_title='<b>PF Satış</b>',
+        yaxis2=dict(
+            title='<b>Büyüme %</b>',
+            overlaying='y',
+            side='right',
+            showgrid=False,
+            ticksuffix='%'
+        ),
+        height=500,
+        hovermode='x unified',
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='#e2e8f0', family='Inter'),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        )
+    )
+    
+    return fig
+
+def create_comparative_period_chart(comparisons_df):
+    """Karşılaştırmalı dönem analizi grafiği"""
+    if comparisons_df is None or len(comparisons_df) == 0:
+        return None
+    
+    fig = go.Figure()
+    
+    # Ortalama satışlar
+    fig.add_trace(go.Bar(
+        x=comparisons_df['period'],
+        y=comparisons_df['ortalama_satis'],
+        name='Ortalama Satış',
+        marker_color=PERFORMANCE_COLORS['success'],
+        text=[format_number(x) for x in comparisons_df['ortalama_satis']],
+        textposition='auto',
+    ))
+    
+    # Önceki ortalama
+    fig.add_trace(go.Bar(
+        x=comparisons_df['period'],
+        y=comparisons_df['onceki_ortalama'],
+        name='Önceki Ortalama',
+        marker_color='rgba(239, 68, 68, 0.6)',
+        text=[format_number(x) for x in comparisons_df['onceki_ortalama']],
+        textposition='auto',
+    ))
+    
+    # Büyüme oranları (ikinci eksen)
+    fig.add_trace(go.Scatter(
+        x=comparisons_df['period'],
+        y=comparisons_df['buyume_orani'],
+        mode='lines+markers+text',
+        name='Büyüme %',
+        line=dict(color=PERFORMANCE_COLORS['warning'], width=3),
+        marker=dict(size=10, color='white', line=dict(width=2, color=PERFORMANCE_COLORS['warning'])),
+        text=[f"{x:.1f}%" for x in comparisons_df['buyume_orani']],
+        textposition='top center',
+        yaxis="y2"
+    ))
+    
+    fig.update_layout(
+        title=dict(
+            text='<b>Dönemsel Karşılaştırma Analizi</b>',
+            font=dict(size=22, color='white', family='Inter')
+        ),
+        xaxis_title='<b>Dönem</b>',
+        yaxis_title='<b>Ortalama Satış</b>',
+        yaxis2=dict(
+            title='<b>Büyüme %</b>',
+            overlaying='y',
+            side='right',
+            showgrid=False,
+            ticksuffix='%'
+        ),
+        barmode='group',
+        height=500,
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='#e2e8f0', family='Inter'),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        )
+    )
+    
+    return fig
+
+def create_seasonality_chart(monthly_df):
+    """Mevsimsellik analizi grafiği"""
+    if 'Month' not in monthly_df.columns or len(monthly_df) < 12:
+        return None
+    
+    monthly_avg = monthly_df.groupby('Month').agg({
+        'PF_Satis': 'mean',
+        'Pazar_Payi_%': 'mean'
+    }).reset_index()
+    
+    fig = go.Figure()
+    
+    fig.add_trace(go.Scatterpolar(
+        r=monthly_avg['PF_Satis'],
+        theta=['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 
+               'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'],
+        fill='toself',
+        name='Aylık Ortalama Satış',
+        line=dict(color=PERFORMANCE_COLORS['success'], width=2),
+        fillcolor='rgba(16, 185, 129, 0.3)'
+    ))
+    
+    fig.update_layout(
+        title=dict(
+            text='<b>Mevsimsellik Analizi (Radar Grafiği)</b>',
+            font=dict(size=22, color='white', family='Inter')
+        ),
+        polar=dict(
+            radialaxis=dict(
+                visible=True,
+                tickformat=',.0f'
+            )
+        ),
+        showlegend=True,
+        height=500,
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='#e2e8f0', family='Inter')
+    )
+    
+    return fig
+
+def create_volatility_chart(monthly_df):
+    """Volatilite analizi grafiği"""
+    if 'PF_Volatility' not in monthly_df.columns:
+        return None
+    
+    fig = go.Figure()
+    
+    # Satışlar
+    fig.add_trace(go.Scatter(
+        x=monthly_df['DATE'],
+        y=monthly_df['PF_Satis'],
+        mode='lines',
+        name='PF Satış',
+        line=dict(color=PERFORMANCE_COLORS['success'], width=2),
+        fillcolor='rgba(16, 185, 129, 0.1)',
+        fill='tozeroy'
+    ))
+    
+    # Volatilite bandı
+    if 'MA_6' in monthly_df.columns and 'PF_Volatility' in monthly_df.columns:
+        upper_band = monthly_df['MA_6'] + monthly_df['PF_Volatility']
+        lower_band = monthly_df['MA_6'] - monthly_df['PF_Volatility']
+        
+        fig.add_trace(go.Scatter(
+            x=monthly_df['DATE'],
+            y=upper_band,
+            mode='lines',
+            name='+1 Std',
+            line=dict(color='rgba(239, 68, 68, 0.5)', width=1, dash='dash'),
+            showlegend=False
+        ))
+        
+        fig.add_trace(go.Scatter(
+            x=monthly_df['DATE'],
+            y=lower_band,
+            mode='lines',
+            name='-1 Std',
+            line=dict(color='rgba(239, 68, 68, 0.5)', width=1, dash='dash'),
+            fill='tonexty',
+            fillcolor='rgba(239, 68, 68, 0.1)',
+            showlegend=False
+        ))
+    
+    fig.update_layout(
+        title=dict(
+            text='<b>Volatilite Analizi</b>',
+            font=dict(size=22, color='white', family='Inter')
+        ),
+        xaxis_title='<b>Tarih</b>',
+        yaxis_title='<b>PF Satış</b>',
+        height=500,
+        hovermode='x unified',
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='#e2e8f0', family='Inter'),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
         )
     )
     
@@ -1343,7 +2076,7 @@ def create_modern_competitor_chart(comp_data):
         ),
         yaxis=dict(
             gridcolor='rgba(59, 130, 246, 0.1)',
-            tickformat=',.0f'  # Binlik ayırıcı
+            tickformat=',.0f'
         )
     )
     
@@ -1425,7 +2158,7 @@ def create_modern_growth_chart(comp_data):
         ),
         yaxis=dict(
             gridcolor='rgba(59, 130, 246, 0.1)',
-            ticksuffix='%'  # Yüzdelik işareti
+            ticksuffix='%'
         )
     )
     
@@ -1502,11 +2235,11 @@ def create_modern_bcg_chart(bcg_df):
     return fig
 
 # =============================================================================
-# MODERN DATA TABLE STYLING - DÜZELTİLMİŞ VERSİYON
+# MODERN DATA TABLE STYLING
 # =============================================================================
 
 def style_dataframe(df, color_column=None, gradient_columns=None):
-    """Modern dataframe stilini uygula - DÜZELTİLMİŞ VERSİYON"""
+    """Modern dataframe stilini uygula"""
     if gradient_columns is None:
         gradient_columns = []
     
@@ -1537,7 +2270,7 @@ def style_dataframe(df, color_column=None, gradient_columns=None):
         'text-align': 'center'
     })
     
-    # Başlık satırı - McKinsey tarzı
+    # Başlık satırı
     styled_df = styled_df.set_table_styles([{
         'selector': 'thead th',
         'props': [
@@ -1559,16 +2292,15 @@ def style_dataframe(df, color_column=None, gradient_columns=None):
         ]
     }])
     
-    # Gradient uygula - ORIJINAL sayısal veri ile
+    # Gradient uygula
     for col in gradient_columns:
         if col in numeric_data.columns and numeric_data[col].dtype in ['int64', 'float64', 'int32', 'float32']:
-            # Gradient için sadece sayısal sütunları kullan
             try:
                 col_data = numeric_data[col].astype(float)
                 min_val = col_data.min()
                 max_val = col_data.max()
                 
-                if min_val != max_val:  # Sadece farklı değerler varsa gradient uygula
+                if min_val != max_val:
                     styled_df = styled_df.background_gradient(
                         subset=[col], 
                         cmap='RdYlGn',
@@ -1577,7 +2309,6 @@ def style_dataframe(df, color_column=None, gradient_columns=None):
                         gmap=col_data
                     )
             except:
-                # Gradient uygulanamazsa atla
                 pass
     
     # Renk sütunu
@@ -1594,10 +2325,9 @@ def style_dataframe(df, color_column=None, gradient_columns=None):
             except:
                 return ''
         
-        # Renk için orijinal sayısal değerleri kullan
         styled_df = styled_df.applymap(color_cells, subset=[color_column])
     
-    # Alternatif satır renkleri - McKinsey tarzı
+    # Alternatif satır renkleri
     styled_df = styled_df.set_table_styles([{
         'selector': 'tbody tr:nth-child(even)',
         'props': [('background-color', 'rgba(30, 41, 59, 0.5)')]
@@ -1609,14 +2339,14 @@ def style_dataframe(df, color_column=None, gradient_columns=None):
     return styled_df
 
 # =============================================================================
-# MAIN APP - DÜZELTİLMİŞ VERSİYON
+# MAIN APP - GELİŞTİRİLMİŞ VERSİYON
 # =============================================================================
 
 def main():
     # Başlık ve açıklama
-    st.markdown('<h1 class="main-header">🎯 TİCARİ PORTFÖY ANALİZ SİSTEMİ</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-header">🎯 GELİŞMİŞ TİCARİ PORTFÖY ANALİZ SİSTEMİ</h1>', unsafe_allow_html=True)
     st.markdown('<div style="text-align: center; font-size: 1.2rem; color: #94a3b8; margin-bottom: 3rem;">'
-                'ML Tahminleme • Modern Harita Görselleştirme • Rakip Analizi • BCG Matrix'
+                'GERÇEK ML Tahminleme • Gelişmiş Zaman Serisi Analizi • Modern Harita • Rakip Analizi'
                 '</div>', unsafe_allow_html=True)
     
     # SIDEBAR
@@ -1743,13 +2473,13 @@ def main():
         "📊 Genel Bakış",
         "🗺️ Modern Harita",
         "🏢 Territory Analizi",
-        "📈 Zaman Serisi & ML",
+        "📈 Gelişmiş Zaman Serisi",
         "🎯 Rakip Analizi",
         "⭐ BCG & Strateji",
         "📥 Raporlar"
     ])
     
-    # TAB 1: GENEL BAKIŞ - DÜZELTİLMİŞ
+    # TAB 1: GENEL BAKIŞ
     with tab1:
         st.header("📊 Genel Performans Özeti")
         
@@ -1760,7 +2490,7 @@ def main():
         else:
             df_period = df_filtered
         
-        # Metrikler - Formatlanmış
+        # Metrikler
         total_pf = df_period[cols['pf']].sum()
         total_rakip = df_period[cols['rakip']].sum()
         total_market = total_pf + total_rakip
@@ -1797,7 +2527,6 @@ def main():
         with col_chart1:
             fig_top10 = go.Figure()
             
-            # Formatlanmış metinler
             pf_texts = [format_number(x) for x in top10['PF_Satis']]
             rakip_texts = [format_number(x) for x in top10['Rakip_Satis']]
             
@@ -1846,14 +2575,13 @@ def main():
                     x=1
                 ),
                 yaxis=dict(
-                    tickformat=',.0f'  # Binlik ayırıcı
+                    tickformat=',.0f'
                 )
             )
             
             st.plotly_chart(fig_top10, use_container_width=True)
         
         with col_chart2:
-            # Top 5 Territory için pasta grafiği
             top5 = top10.head(5)
             fig_pie = px.pie(
                 top5,
@@ -1886,7 +2614,7 @@ def main():
             
             st.plotly_chart(fig_pie, use_container_width=True)
         
-        # Detaylı Tablo - DÜZELTİLMİŞ
+        # Detaylı Tablo
         st.markdown("---")
         st.subheader("📋 Top 10 Territory Detayları")
         
@@ -1896,7 +2624,6 @@ def main():
         top10_display.columns = ['Territory', 'Region', 'City', 'Manager', 'PF Satış', 'Toplam Pazar', 'Toplam Pazar %', 'Pazar Payı %', 'Ağırlık %']
         top10_display.index = range(1, len(top10_display) + 1)
         
-        # Modern tablo stilini uygula - Orijinal sayısal verileri koru
         styled_df = style_dataframe(
             top10_display,
             color_column='Pazar Payı %',
@@ -1909,7 +2636,7 @@ def main():
             height=400
         )
     
-    # TAB 2: MODERN HARİTA - GELİŞTİRİLMİŞ
+    # TAB 2: MODERN HARİTA
     with tab2:
         st.header("🗺️ Modern Türkiye Haritası")
         
@@ -1921,7 +2648,7 @@ def main():
         # Filtrelenmiş PF toplam
         filtered_pf_toplam = city_data['PF_Satis'].sum()
         
-        # Quick Stats - Formatlanmış
+        # Quick Stats
         col1, col2, col3, col4, col5 = st.columns(5)
         
         total_pf = city_data['PF_Satis'].sum()
@@ -1943,7 +2670,7 @@ def main():
         
         st.markdown("---")
         
-        # Modern Harita - Tüm şehirlerle
+        # Modern Harita
         if gdf is not None:
             st.subheader("📍 İl Bazlı Dağılım (Tüm Şehirler)")
             
@@ -1971,7 +2698,6 @@ def main():
             st.subheader("🏆 Top 10 Şehir")
             top_cities = city_data.nlargest(10, 'PF_Satis')
             
-            # Formatlanmış metinler
             bar_texts = [format_number(x) for x in top_cities['PF_Satis']]
             
             fig_bar = px.bar(
@@ -1994,7 +2720,7 @@ def main():
                 yaxis_title='<b>PF Satış</b>',
                 xaxis_title='<b>Şehir</b>',
                 yaxis=dict(
-                    tickformat=',.0f'  # Binlik ayırıcı
+                    tickformat=',.0f'
                 )
             )
             
@@ -2053,7 +2779,6 @@ def main():
         st.subheader("🎯 Yatırım Stratejisi Analizi")
         
         if len(investment_df) > 0:
-            # Strateji istatistikleri
             strategy_counts = investment_df['Yatırım_Stratejisi'].value_counts()
             
             cols_strategy = st.columns(5)
@@ -2080,7 +2805,6 @@ def main():
             # Detaylı tablo
             st.subheader("📋 Detaylı Şehir Listesi")
             
-            # Strateji filtresini uygula
             investment_display = investment_df.copy()
             if selected_strateji != "Tümü":
                 investment_display = investment_display[investment_display['Yatırım_Stratejisi'] == selected_strateji]
@@ -2092,7 +2816,6 @@ def main():
             city_display_formatted.columns = ['Şehir', 'Bölge', 'PF Satış', 'Toplam Pazar', 'Pazar Payı %', 'Strateji']
             city_display_formatted.index = range(1, len(city_display_formatted) + 1)
             
-            # Modern tablo stilini uygula
             styled_cities = style_dataframe(
                 city_display_formatted,
                 color_column='Pazar Payı %',
@@ -2105,7 +2828,7 @@ def main():
                 height=400
             )
     
-    # TAB 3: TERRITORY ANALİZİ - GÜNCELLENMİŞ
+    # TAB 3: TERRITORY ANALİZİ
     with tab3:
         st.header("🏢 Territory Bazlı Detaylı Analiz")
         
@@ -2143,13 +2866,11 @@ def main():
         with col_viz1:
             st.subheader("📊 PF vs Rakip Satış")
             
-            # Formatlanmış metinler
             pf_texts = [format_number(x) for x in terr_sorted['PF_Satis']]
             rakip_texts = [format_number(x) for x in terr_sorted['Rakip_Satis']]
             
             fig_bar = go.Figure()
             
-            # Her territory için çubuk grafik
             fig_bar.add_trace(go.Bar(
                 x=terr_sorted['Territory'],
                 y=terr_sorted['PF_Satis'],
@@ -2195,7 +2916,7 @@ def main():
                     x=1
                 ),
                 yaxis=dict(
-                    tickformat=',.0f'  # Binlik ayırıcı
+                    tickformat=',.0f'
                 )
             )
             
@@ -2204,7 +2925,6 @@ def main():
         with col_viz2:
             st.subheader("🎯 Pazar Payı Dağılımı")
             
-            # Heatmap style scatter plot
             fig_scatter = px.scatter(
                 terr_sorted,
                 x='PF_Satis',
@@ -2236,10 +2956,10 @@ def main():
                     bgcolor='rgba(30, 41, 59, 0.8)'
                 ),
                 xaxis=dict(
-                    tickformat=',.0f'  # Binlik ayırıcı
+                    tickformat=',.0f'
                 ),
                 yaxis=dict(
-                    ticksuffix='%'  # Yüzdelik işareti
+                    ticksuffix='%'
                 )
             )
             
@@ -2264,7 +2984,6 @@ def main():
         ]
         terr_display.index = range(1, len(terr_display) + 1)
         
-        # Modern tablo stilini uygula
         styled_territory = style_dataframe(
             terr_display,
             color_column='Pazar Payı %',
@@ -2304,22 +3023,32 @@ def main():
                 unsafe_allow_html=True
             )
     
-    # TAB 4: ZAMAN SERİSİ & ML
+    # TAB 4: GELİŞTİRİLMİŞ ZAMAN SERİSİ ANALİZİ
     with tab4:
-        st.header("📈 Zaman Serisi Analizi & GERÇEK ML Tahminleme")
+        st.header("📈 Gelişmiş Zaman Serisi Analizi & ML Tahminleme")
         
-        territory_for_ts = st.selectbox(
-            "Territory Seçin",
-            ["TÜMÜ"] + sorted(df_filtered['TERRITORIES'].unique()),
-            key='ts_territory'
-        )
+        col_ts1, col_ts2 = st.columns(2)
         
-        monthly_df = calculate_time_series(df_filtered, selected_product, territory_for_ts, date_filter)
+        with col_ts1:
+            territory_for_ts = st.selectbox(
+                "Territory Seçin",
+                ["TÜMÜ"] + sorted(df_filtered['TERRITORIES'].unique()),
+                key='ts_territory'
+            )
+        
+        with col_ts2:
+            analysis_type = st.selectbox(
+                "Analiz Türü",
+                ["Temel Zaman Serisi", "Trend Analizi", "Karşılaştırmalı Analiz", "Mevsimsellik Analizi", "Volatilite Analizi"]
+            )
+        
+        # Gelişmiş zaman serisi hesapla
+        monthly_df = calculate_advanced_time_series(df_filtered, selected_product, territory_for_ts, date_filter)
         
         if len(monthly_df) == 0:
             st.warning("⚠️ Seçilen filtrelerde veri bulunamadı")
         else:
-            # Özet Metrikler - Formatlanmış
+            # Özet Metrikler
             col_ts1, col_ts2, col_ts3, col_ts4 = st.columns(4)
             
             with col_ts1:
@@ -2327,11 +3056,11 @@ def main():
                 st.metric("📊 Ort. Aylık PF", format_number(avg_pf))
             
             with col_ts2:
-                avg_growth = monthly_df['PF_Buyume_%'].mean()
+                avg_growth = monthly_df['PF_Buyume_%'].mean() if 'PF_Buyume_%' in monthly_df.columns else 0
                 st.metric("📈 Ort. Büyüme", format_percentage(avg_growth))
             
             with col_ts3:
-                avg_share = monthly_df['Pazar_Payi_%'].mean()
+                avg_share = monthly_df['Pazar_Payi_%'].mean() if 'Pazar_Payi_%' in monthly_df.columns else 0
                 st.metric("🎯 Ort. Pazar Payı", format_percentage(avg_share))
             
             with col_ts4:
@@ -2340,175 +3069,263 @@ def main():
             
             st.markdown("---")
             
-            # Grafikler
-            col_chart1, col_chart2 = st.columns(2)
+            # Trend analizi yap
+            trend_analysis = perform_trend_analysis(monthly_df)
             
-            with col_chart1:
-                st.subheader("📊 Satış Trendi")
-                fig_ts = go.Figure()
+            # Trend bilgilerini göster
+            if 'error' not in trend_analysis:
+                col_trend1, col_trend2, col_trend3, col_trend4 = st.columns(4)
                 
-                fig_ts.add_trace(go.Scatter(
-                    x=monthly_df['DATE'],
-                    y=monthly_df['PF_Satis'],
-                    mode='lines+markers',
-                    name='PF Satış',
-                    line=dict(color=PERFORMANCE_COLORS['success'], width=3, shape='spline'),
-                    marker=dict(size=8, color='white', line=dict(width=2, color=PERFORMANCE_COLORS['success'])),
-                    fill='tozeroy',
-                    fillcolor='rgba(16, 185, 129, 0.1)'
-                ))
+                with col_trend1:
+                    st.metric("📈 Temel Trend", trend_analysis.get('temel_trend', 'Bilinmiyor'))
                 
-                fig_ts.add_trace(go.Scatter(
-                    x=monthly_df['DATE'],
-                    y=monthly_df['Rakip_Satis'],
-                    mode='lines+markers',
-                    name='Rakip Satış',
-                    line=dict(color=PERFORMANCE_COLORS['danger'], width=3, shape='spline'),
-                    marker=dict(size=8, color='white', line=dict(width=2, color=PERFORMANCE_COLORS['danger'])),
-                    fill='tozeroy',
-                    fillcolor='rgba(239, 68, 68, 0.1)'
-                ))
+                with col_trend2:
+                    st.metric("🔄 Mevsimsellik", trend_analysis.get('mevsimsellik', 'Bilinmiyor'))
                 
-                fig_ts.update_layout(
-                    height=500,
-                    xaxis_title='<b>Tarih</b>',
-                    yaxis_title='<b>Satış</b>',
-                    hovermode='x unified',
-                    plot_bgcolor='rgba(0,0,0,0)',
-                    paper_bgcolor='rgba(0,0,0,0)',
-                    font=dict(color='#e2e8f0'),
-                    legend=dict(
-                        orientation="h",
-                        yanchor="bottom",
-                        y=1.02,
-                        xanchor="right",
-                        x=1
-                    ),
-                    yaxis=dict(
-                        tickformat=',.0f'  # Binlik ayırıcı
-                    )
-                )
+                with col_trend3:
+                    volatility = trend_analysis.get('volatilite', 'Bilinmiyor')
+                    volatility_val = trend_analysis.get('volatilite_degeri', 0)
+                    st.metric("📉 Volatilite", volatility, f"{volatility_val:.1f}%")
                 
-                st.plotly_chart(fig_ts, use_container_width=True)
+                with col_trend4:
+                    momentum = trend_analysis.get('momentum_3m', 0)
+                    st.metric("⚡ 3 Aylık Momentum", format_number(momentum))
             
-            with col_chart2:
-                st.subheader("🎯 Pazar Payı Trendi")
-                fig_share = go.Figure()
-                
-                fig_share.add_trace(go.Scatter(
-                    x=monthly_df['DATE'],
-                    y=monthly_df['Pazar_Payi_%'],
-                    mode='lines+markers',
-                    name='Pazar Payı %',
-                    line=dict(color=PERFORMANCE_COLORS['info'], width=3, shape='spline'),
-                    marker=dict(size=8, color='white', line=dict(width=2, color=PERFORMANCE_COLORS['info'])),
-                    fill='tozeroy',
-                    fillcolor='rgba(59, 130, 246, 0.1)'
-                ))
-                
-                fig_share.add_hline(
-                    y=50,
-                    line_dash="dash",
-                    line_color=PERFORMANCE_COLORS['warning'],
-                    opacity=0.5,
-                    line_width=2,
-                    annotation_text="50% Eşik"
-                )
-                
-                fig_share.update_layout(
-                    height=500,
-                    xaxis_title='<b>Tarih</b>',
-                    yaxis_title='<b>Pazar Payı (%)</b>',
-                    yaxis=dict(range=[0, 100]),
-                    plot_bgcolor='rgba(0,0,0,0)',
-                    paper_bgcolor='rgba(0,0,0,0)',
-                    font=dict(color='#e2e8f0'),
-                    yaxis_ticksuffix='%'  # Yüzdelik işareti
-                )
-                
-                st.plotly_chart(fig_share, use_container_width=True)
-            
-            # ML Tahminleme
             st.markdown("---")
-            st.header("🤖 Machine Learning Satış Tahmini")
             
-            forecast_months = st.slider("Tahmin Periyodu (Ay)", 1, 6, 3)
-            
-            if len(monthly_df) < 10:
-                st.warning("⚠️ Tahmin için yeterli veri yok (en az 10 ay gerekli)")
-            else:
-                with st.spinner("ML modelleri eğitiliyor..."):
-                    ml_results, best_model_name, forecast_df = train_ml_models(monthly_df, forecast_months)
+            # Analiz türüne göre grafik göster
+            if analysis_type == "Temel Zaman Serisi":
+                st.subheader("📊 Temel Zaman Serisi Analizi")
                 
-                if ml_results is None:
-                    st.error("❌ Model eğitimi başarısız")
-                else:
-                    # Model Performansı
-                    st.subheader("📊 Model Performans Karşılaştırması")
+                # ML tahmini
+                forecast_months = st.slider("Tahmin Periyodu (Ay)", 1, 12, 6)
+                
+                if len(monthly_df) >= 24:
+                    with st.spinner("ML modelleri eğitiliyor..."):
+                        ml_results, best_model_name, forecast_df = train_advanced_ml_models(monthly_df, forecast_months)
                     
-                    perf_data = []
-                    for name, metrics in ml_results.items():
-                        perf_data.append({
-                            'Model': name,
-                            'MAE': metrics['MAE'],
-                            'RMSE': metrics['RMSE'],
-                            'MAPE (%)': metrics['MAPE']
-                        })
-                    
-                    perf_df = pd.DataFrame(perf_data)
-                    perf_df = perf_df.sort_values('MAPE (%)')
-                    
-                    col_ml1, col_ml2 = st.columns([2, 1])
-                    
-                    with col_ml1:
-                        styled_perf = style_dataframe(
-                            perf_df,
-                            color_column='MAPE (%)',
-                            gradient_columns=['MAE', 'RMSE']
+                    if ml_results is not None:
+                        # Model Performansı
+                        st.subheader("🤖 Model Performans Karşılaştırması")
+                        
+                        perf_data = []
+                        for name, metrics in ml_results.items():
+                            perf_data.append({
+                                'Model': name,
+                                'MAE': metrics['MAE'],
+                                'RMSE': metrics['RMSE'],
+                                'MAPE (%)': metrics['MAPE'],
+                                'R²': metrics['R2']
+                            })
+                        
+                        perf_df = pd.DataFrame(perf_data)
+                        perf_df = perf_df.sort_values('MAPE (%)')
+                        
+                        col_ml1, col_ml2 = st.columns([2, 1])
+                        
+                        with col_ml1:
+                            styled_perf = style_dataframe(
+                                perf_df,
+                                color_column='MAPE (%)',
+                                gradient_columns=['MAE', 'RMSE', 'R²']
+                            )
+                            st.dataframe(styled_perf, use_container_width=True)
+                        
+                        with col_ml2:
+                            best_mape = ml_results[best_model_name]['MAPE']
+                            
+                            if best_mape < 10:
+                                confidence_level = "🟢 YÜKSEK"
+                                confidence_color = "#10B981"
+                            elif best_mape < 20:
+                                confidence_level = "🟡 ORTA"
+                                confidence_color = "#F59E0B"
+                            else:
+                                confidence_level = "🔴 DÜŞÜK"
+                                confidence_color = "#EF4444"
+                            
+                            st.markdown(f'<div style="background: rgba(30, 41, 59, 0.8); padding: 1.5rem; border-radius: 12px; border: 2px solid {confidence_color}; margin-top: 1rem;">'
+                                       f'<h3 style="color: white; margin: 0 0 1rem 0;">🏆 En İyi Model</h3>'
+                                       f'<p style="color: {confidence_color}; font-size: 1.5rem; font-weight: 700; margin: 0 0 0.5rem 0;">{best_model_name}</p>'
+                                       f'<p style="color: #94a3b8; margin: 0 0 1rem 0;">MAPE: <span style="color: {confidence_color}; font-weight: 700;">{best_mape:.2f}%</span></p>'
+                                       f'<p style="color: #e2e8f0; font-weight: 600; margin: 0;">Güven Seviyesi: <span style="color: {confidence_color};">{confidence_level}</span></p>'
+                                       '</div>', unsafe_allow_html=True)
+                        
+                        st.markdown("---")
+                        
+                        # Gelişmiş zaman serisi grafiği
+                        st.subheader("📈 Gelişmiş Zaman Serisi ve Tahminler")
+                        ts_chart = create_advanced_time_series_chart(monthly_df, forecast_df)
+                        st.plotly_chart(ts_chart, use_container_width=True)
+                        
+                        # Tahmin detayları
+                        st.markdown("---")
+                        st.subheader("📋 Tahmin Detayları")
+                        
+                        forecast_summary = forecast_df.groupby(['Model', 'Tahmin_Tipi']).agg({
+                            'PF_Satis': ['mean', 'sum']
+                        }).reset_index()
+                        
+                        forecast_summary.columns = ['Model', 'Tahmin Tipi', 'Ortalama Tahmin', 'Toplam Tahmin']
+                        forecast_summary.index = range(1, len(forecast_summary) + 1)
+                        
+                        styled_forecast = style_dataframe(
+                            forecast_summary,
+                            gradient_columns=['Ortalama Tahmin', 'Toplam Tahmin']
                         )
-                        st.dataframe(styled_perf, use_container_width=True)
-                    
-                    with col_ml2:
-                        best_mape = ml_results[best_model_name]['MAPE']
                         
-                        if best_mape < 10:
-                            confidence_level = "🟢 YÜKSEK"
-                            confidence_color = "#10B981"
-                        elif best_mape < 20:
-                            confidence_level = "🟡 ORTA"
-                            confidence_color = "#F59E0B"
-                        else:
-                            confidence_level = "🔴 DÜŞÜK"
-                            confidence_color = "#EF4444"
+                        st.dataframe(styled_forecast, use_container_width=True)
+                    else:
+                        st.warning("ML modeli eğitilemedi. Yeterli veri yok olabilir.")
+                        ts_chart = create_advanced_time_series_chart(monthly_df)
+                        st.plotly_chart(ts_chart, use_container_width=True)
+                else:
+                    st.warning("ML tahmini için en az 24 ay veri gereklidir.")
+                    ts_chart = create_advanced_time_series_chart(monthly_df)
+                    st.plotly_chart(ts_chart, use_container_width=True)
+            
+            elif analysis_type == "Trend Analizi":
+                st.subheader("📈 Trend Analizi")
+                trend_chart = create_trend_analysis_chart(monthly_df)
+                st.plotly_chart(trend_chart, use_container_width=True)
+                
+                # Dönemsel büyüme metrikleri
+                if 'buyume_metrikleri' in trend_analysis:
+                    st.subheader("📊 Dönemsel Büyüme Oranları")
+                    
+                    growth_metrics = trend_analysis['buyume_metrikleri']
+                    if growth_metrics:
+                        col_growth1, col_growth2, col_growth3 = st.columns(3)
                         
-                        st.markdown(f'<div style="background: rgba(30, 41, 59, 0.8); padding: 1.5rem; border-radius: 12px; border: 2px solid {confidence_color}; margin-top: 1rem;">'
-                                   f'<h3 style="color: white; margin: 0 0 1rem 0;">🏆 En İyi Model</h3>'
-                                   f'<p style="color: {confidence_color}; font-size: 1.5rem; font-weight: 700; margin: 0 0 0.5rem 0;">{best_model_name}</p>'
-                                   f'<p style="color: #94a3b8; margin: 0 0 1rem 0;">MAPE: <span style="color: {confidence_color}; font-weight: 700;">{best_mape:.2f}%</span></p>'
-                                   f'<p style="color: #e2e8f0; font-weight: 600; margin: 0;">Güven Seviyesi: <span style="color: {confidence_color};">{confidence_level}</span></p>'
-                                   '</div>', unsafe_allow_html=True)
+                        if 'MoM_Growth' in growth_metrics:
+                            with col_growth1:
+                                st.metric("📈 Aylık Büyüme (MoM)", format_percentage(growth_metrics['MoM_Growth']))
+                        
+                        if 'QoQ_3M_Growth' in growth_metrics:
+                            with col_growth2:
+                                st.metric("📊 3 Aylık Büyüme (QoQ)", format_percentage(growth_metrics['QoQ_3M_Growth']))
+                        
+                        if 'QoQ_6M_Growth' in growth_metrics:
+                            with col_growth3:
+                                st.metric("📈 6 Aylık Büyüme (QoQ)", format_percentage(growth_metrics['QoQ_6M_Growth']))
+            
+            elif analysis_type == "Karşılaştırmalı Analiz":
+                st.subheader("📊 Karşılaştırmalı Dönem Analizi")
+                
+                comparisons_df = create_comparative_analysis(monthly_df, periods=[3, 6, 12])
+                
+                if comparisons_df is not None and len(comparisons_df) > 0:
+                    comp_chart = create_comparative_period_chart(comparisons_df)
+                    if comp_chart:
+                        st.plotly_chart(comp_chart, use_container_width=True)
                     
-                    # Tahmin Grafiği
-                    st.markdown("---")
-                    st.subheader("📈 Gerçek vs ML Tahmini")
+                    # Detaylı tablo
+                    st.subheader("📋 Dönemsel Performans Detayları")
                     
-                    forecast_chart = create_modern_forecast_chart(monthly_df, forecast_df)
-                    st.plotly_chart(forecast_chart, use_container_width=True)
+                    comp_display = comparisons_df.copy()
+                    comp_display.columns = ['Dönem', 'Ortalama Satış', 'Önceki Ortalama', 'Büyüme %', 
+                                          'Pazar Payı %', 'Pay Değişimi', 'Volatilite', 'Trend']
+                    comp_display.index = range(1, len(comp_display) + 1)
                     
-                    # Tahmin Detayları
-                    st.markdown("---")
-                    st.subheader("📋 Tahmin Detayları")
-                    
-                    forecast_display = forecast_df[['YIL_AY', 'PF_Satis', 'Model']].copy()
-                    forecast_display.columns = ['Ay', 'Tahmin Edilen Satış', 'Kullanılan Model']
-                    forecast_display.index = range(1, len(forecast_display) + 1)
-                    
-                    styled_forecast = style_dataframe(
-                        forecast_display,
-                        gradient_columns=['Tahmin Edilen Satış']
+                    styled_comp = style_dataframe(
+                        comp_display,
+                        color_column='Büyüme %',
+                        gradient_columns=['Ortalama Satış', 'Pazar Payı %', 'Volatilite']
                     )
                     
-                    st.dataframe(styled_forecast, use_container_width=True)
+                    st.dataframe(styled_comp, use_container_width=True)
+                else:
+                    st.warning("Karşılaştırmalı analiz için yeterli veri yok.")
+            
+            elif analysis_type == "Mevsimsellik Analizi":
+                st.subheader("🔄 Mevsimsellik Analizi")
+                
+                seasonality_chart = create_seasonality_chart(monthly_df)
+                if seasonality_chart:
+                    st.plotly_chart(seasonality_chart, use_container_width=True)
+                    
+                    # Mevsimsellik istatistikleri
+                    if 'Month' in monthly_df.columns:
+                        monthly_avg = monthly_df.groupby('Month').agg({
+                            'PF_Satis': ['mean', 'std', 'min', 'max']
+                        }).reset_index()
+                        
+                        monthly_avg.columns = ['Ay', 'Ortalama', 'Std Sapma', 'Minimum', 'Maksimum']
+                        monthly_avg['Ay'] = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 
+                                            'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara']
+                        
+                        st.subheader("📊 Aylık Performans İstatistikleri")
+                        
+                        styled_season = style_dataframe(
+                            monthly_avg,
+                            gradient_columns=['Ortalama', 'Std Sapma', 'Minimum', 'Maksimum']
+                        )
+                        
+                        st.dataframe(styled_season, use_container_width=True)
+                else:
+                    st.warning("Mevsimsellik analizi için yeterli veri yok (en az 12 ay).")
+            
+            elif analysis_type == "Volatilite Analizi":
+                st.subheader("📉 Volatilite Analizi")
+                
+                volatility_chart = create_volatility_chart(monthly_df)
+                if volatility_chart:
+                    st.plotly_chart(volatility_chart, use_container_width=True)
+                    
+                    # Volatilite istatistikleri
+                    if 'PF_CV' in monthly_df.columns:
+                        st.subheader("📊 Volatilite İstatistikleri")
+                        
+                        col_vol1, col_vol2, col_vol3 = st.columns(3)
+                        
+                        with col_vol1:
+                            avg_vol = monthly_df['PF_CV'].mean()
+                            st.metric("📊 Ortalama CV", f"{avg_vol:.1f}%")
+                        
+                        with col_vol2:
+                            max_vol = monthly_df['PF_CV'].max()
+                            st.metric("📈 Maksimum CV", f"{max_vol:.1f}%")
+                        
+                        with col_vol3:
+                            min_vol = monthly_df['PF_CV'].min()
+                            st.metric("📉 Minimum CV", f"{min_vol:.1f}%")
+            
+            # Detaylı zaman serisi tablosu
+            st.markdown("---")
+            st.subheader("📋 Detaylı Zaman Serisi Verisi")
+            
+            display_cols = ['YIL_AY', 'PF_Satis', 'Rakip_Satis', 'Pazar_Payi_%', 
+                          'PF_Buyume_%', 'Rakip_Buyume_%', 'Goreceli_Buyume_%']
+            
+            # Sadece mevcut kolonları göster
+            available_cols = [col for col in display_cols if col in monthly_df.columns]
+            monthly_display = monthly_df[available_cols].copy()
+            
+            # Kolon isimlerini düzenle
+            col_names = {
+                'YIL_AY': 'Ay',
+                'PF_Satis': 'PF Satış',
+                'Rakip_Satis': 'Rakip Satış',
+                'Pazar_Payi_%': 'Pazar Payı %',
+                'PF_Buyume_%': 'PF Büyüme %',
+                'Rakip_Buyume_%': 'Rakip Büyüme %',
+                'Goreceli_Buyume_%': 'Göreceli Büyüme %'
+            }
+            
+            monthly_display = monthly_display.rename(columns=col_names)
+            monthly_display.index = range(1, len(monthly_display) + 1)
+            
+            styled_monthly = style_dataframe(
+                monthly_display,
+                color_column='Göreceli Büyüme %',
+                gradient_columns=['PF Satış', 'Pazar Payı %', 'PF Büyüme %']
+            )
+            
+            st.dataframe(
+                styled_monthly,
+                use_container_width=True,
+                height=400
+            )
     
     # TAB 5: RAKİP ANALİZİ
     with tab5:
@@ -2519,7 +3336,7 @@ def main():
         if len(comp_data) == 0:
             st.warning("⚠️ Seçilen filtrelerde veri bulunamadı")
         else:
-            # Özet Metrikler - Formatlanmış
+            # Özet Metrikler
             col1, col2, col3, col4 = st.columns(4)
             
             avg_pf_share = comp_data['PF_Pay_%'].mean()
@@ -2577,7 +3394,7 @@ def main():
         
         bcg_df = calculate_bcg_matrix(df_filtered, selected_product, date_filter)
         
-        # BCG Dağılımı - Formatlanmış
+        # BCG Dağılımı
         st.subheader("📊 Portföy Dağılımı")
         
         bcg_counts = bcg_df['BCG_Kategori'].value_counts()
@@ -2648,11 +3465,12 @@ def main():
             </p>
             <ul style="color: #cbd5e1; margin-left: 1.5rem;">
                 <li>Territory Performans (Toplam Pazar % ile)</li>
-                <li>Zaman Serisi Analizi</li>
+                <li>Gelişmiş Zaman Serisi Analizi</li>
+                <li>Trend Analizi Sonuçları</li>
+                <li>ML Tahmin Sonuçları</li>
                 <li>BCG Matrix</li>
                 <li>Şehir Bazlı Analiz</li>
                 <li>Rakip Analizi</li>
-                <li>ML Tahmin Sonuçları</li>
             </ul>
         </div>
         """, unsafe_allow_html=True)
@@ -2664,35 +3482,65 @@ def main():
                 total_market_all = terr_perf['Toplam_Pazar'].sum()
                 terr_perf['Toplam_Pazar_%'] = safe_divide(terr_perf['Toplam_Pazar'], total_market_all) * 100
                 
-                monthly_df = calculate_time_series(df_filtered, selected_product, None, date_filter)
+                monthly_df = calculate_advanced_time_series(df_filtered, selected_product, None, date_filter)
+                trend_analysis = perform_trend_analysis(monthly_df)
                 bcg_df = calculate_bcg_matrix(df_filtered, selected_product, date_filter)
                 city_data = calculate_city_performance(df_filtered, selected_product, date_filter)
                 comp_data = calculate_competitor_analysis(df_filtered, selected_product, date_filter)
                 
                 # ML tahmini
-                ml_results, best_model_name, forecast_df = train_ml_models(monthly_df, 3)
+                if len(monthly_df) >= 24:
+                    ml_results, best_model_name, forecast_df = train_advanced_ml_models(monthly_df, 6)
+                else:
+                    ml_results, best_model_name, forecast_df = None, None, None
                 
                 output = BytesIO()
                 with pd.ExcelWriter(output, engine='openpyxl') as writer:
                     terr_perf.to_excel(writer, sheet_name='Territory Performans', index=False)
                     monthly_df.to_excel(writer, sheet_name='Zaman Serisi', index=False)
-                    bcg_df.to_excel(writer, sheet_name='BCG Matrix', index=False)
+                    
+                    # Trend analizi sonuçları
+                    if 'error' not in trend_analysis:
+                        trend_df = pd.DataFrame([trend_analysis])
+                        trend_df.to_excel(writer, sheet_name='Trend Analizi', index=False)
+                    
+                    if bcg_df is not None:
+                        bcg_df.to_excel(writer, sheet_name='BCG Matrix', index=False)
+                    
                     city_data.to_excel(writer, sheet_name='Şehir Analizi', index=False)
                     comp_data.to_excel(writer, sheet_name='Rakip Analizi', index=False)
                     
                     if forecast_df is not None:
                         forecast_df.to_excel(writer, sheet_name='ML Tahminler', index=False)
                     
+                    # ML model performansları
+                    if ml_results is not None:
+                        perf_data = []
+                        for name, metrics in ml_results.items():
+                            perf_data.append({
+                                'Model': name,
+                                'MAE': metrics['MAE'],
+                                'RMSE': metrics['RMSE'],
+                                'MAPE': metrics['MAPE'],
+                                'R2': metrics['R2']
+                            })
+                        perf_df = pd.DataFrame(perf_data)
+                        perf_df.to_excel(writer, sheet_name='ML Performans', index=False)
+                    
                     # Özet sayfası
                     summary_data = {
-                        'Metrik': ['Ürün', 'Dönem', 'Toplam PF Satış', 'Toplam Pazar', 'Pazar Payı', 'Territory Sayısı'],
+                        'Metrik': ['Ürün', 'Dönem', 'Toplam PF Satış', 'Toplam Pazar', 'Pazar Payı', 
+                                  'Territory Sayısı', 'Trend Durumu', 'Mevsimsellik', 'Volatilite'],
                         'Değer': [
                             selected_product,
                             date_option,
                             f"{terr_perf['PF_Satis'].sum():,.0f}",
                             f"{terr_perf['Toplam_Pazar'].sum():,.0f}",
                             f"{(terr_perf['PF_Satis'].sum() / terr_perf['Toplam_Pazar'].sum() * 100):.1f}%" if terr_perf['Toplam_Pazar'].sum() > 0 else "0%",
-                            len(terr_perf)
+                            len(terr_perf),
+                            trend_analysis.get('temel_trend', 'Bilinmiyor'),
+                            trend_analysis.get('mevsimsellik', 'Bilinmiyor'),
+                            trend_analysis.get('volatilite', 'Bilinmiyor')
                         ]
                     }
                     summary_df = pd.DataFrame(summary_data)
@@ -2711,4 +3559,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
