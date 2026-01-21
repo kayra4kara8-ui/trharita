@@ -269,35 +269,22 @@ REGION_COLORS = {
 
 
 PERFORMANCE_COLORS = {
-    # --- Performans Seviyeleri ---
-    # McKinsey stilinde "Yüksek" genellikle standart yeşil değil, 
-    # sofistike bir Teal (Çam Yeşili/Turkuaz) tonudur.
-    "high": "#00788C",       # McKinsey Teal – Yüksek Performans
-    
-    # "Orta" için parlak sarı yerine, okunabilirliği yüksek 
-    # Bronz veya Toprak Turuncusu (Ochre) tercih edilir.
-    "medium": "#D48318",     # Bronz Turuncu – Orta Performans
-    
-    # "Düşük" için cırtlak kırmızı yerine, ciddi bir 
-    # Berry (Böğürtlen) veya Kiremit kırmızısı kullanılır.
-    "low": "#C22F36",        # Kiremit Kırmızısı – Düşük Performans
+    # PERFORMANS (McKinsey Scale)
+    # McKinsey "High" genellikle parlak yeşil değil, otoriter bir Turkuaz/Teal tonudur.
+    "high": "#007A7C",       # McKinsey Teal – Yüksek Performans / Büyüme
+    "medium": "#D4A017",     # Ocre (Kirli Altın) – Orta Performans / Stabil
+    "low": "#A63434",        # Kiremit Kırmızısı – Düşük Performans / Düşüş
 
-    # --- Durumlar (Sentiment) ---
-    "positive": "#00788C",   # McKinsey Teal – Pozitif
-    "negative": "#C22F36",   # Kiremit Kırmızısı – Negatif
-    
-    # Nötr renkler metalik ve soğuk gri tonlarıdır.
-    "neutral": "#8A96A0",    # Soğuk Çelik Grisi – Nötr
+    # DURUM (Sentiment)
+    "positive": "#007A7C",   # McKinsey Teal – Pozitif
+    "negative": "#A63434",   # Kiremit Kırmızısı – Negatif
+    "neutral": "#8C96A6",    # Soğuk Gri – Nötr (Veri odaklı gri)
 
-    # --- Bildirim ve Uyarılar ---
-    "warning": "#D48318",    # Bronz – Uyarı
-    
-    # "Info" rengi, markanın imzası olan o çok koyu, 
-    # otoriter lacivert olmalıdır.
-    "info": "#051C2C",       # McKinsey Deep Blue – Bilgi (İmza Renk)
-    
-    "success": "#2E8B57",    # Deniz Yeşili (SeaGreen) – Başarı (Alternatif Ton)
-    "danger": "#8B0000"      # Koyu Bordo – Kritik Risk
+    # UYARI VE BİLGİ
+    "warning": "#E69F00",    # Amber – Dikkat çekici ama göz yormayan sarı
+    "info": "#051C2C",       # McKinsey Midnight Blue – Markanın ana laciverti
+    "success": "#2D6A4F",    # Orman Yeşili – Onaylanmış / Başarılı (Teal'den daha koyu)
+    "danger": "#8B0000"      # Derin Bordo – Kritik Hata / Risk
 }
 
 # TREND ANALİZİ RENKLERİ
@@ -3583,6 +3570,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
