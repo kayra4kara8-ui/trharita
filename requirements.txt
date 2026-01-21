@@ -10,5 +10,7 @@ matplotlib==3.8.2
 scipy
 numpy
 seaborn==0.13.0
+statsmodels
+
 
 
