@@ -613,7 +613,7 @@ CITY_NORMALIZE_CLEAN = {
     'VAN': 'Van',
     'YALOVA': 'Yalova',
     'YOZGAT': 'Yozgat',
-    'ZONGULDAK': 'Zonguldak",
+    'ZONGULDAK': 'Zonguldak',
     "ZONGULDAK": "Zonguldak",
     'ARDAHAN': 'Ardahan',
     'AKSARAY': 'Aksaray',
@@ -3390,3 +3390,4 @@ if __name__ == "__main__":
         st.session_state.map_level = "BÖLGE"
     
     main()
+
