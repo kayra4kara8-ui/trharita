@@ -352,6 +352,7 @@ FIX_CITY_MAP = {
     "KIRSEHIR": "KIRŞEHİR",
     "KIRŞEHİR": "KIRŞEHİR",
     "KÃ1⁄4TAHYA": "KÜTAHYA",
+    "KÃ¼TAHYA": "KÜTAHYA"
     "KÜTAHYA": "KÜTAHYA",
     "MUGLA": "MUĞLA",
     "MUĞLA": "MUĞLA",
@@ -3559,3 +3560,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
