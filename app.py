@@ -1888,7 +1888,7 @@ def style_dataframe(df, color_column=None, gradient_columns=None):
 
 def main():
     # Başlık ve açıklama
-    st.markdown('<h1 class="main-header">🎯 GELİŞMİŞ TİCARİ PORTFÖY ANALİZ SİSTEMİ - MCKINSEY EDITION</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-header">🎯 TİCARİ PORTFÖY ANALİZ SİSTEMİ</h1>', unsafe_allow_html=True)
     st.markdown('<div style="text-align: center; font-size: 1.2rem; color: #94a3b8; margin-bottom: 3rem;">'
                 'GERÇEK ML Tahminleme • Hiyerarşik Harita • Otomatik Analitik Yorumlar • McKinsey-Stratejik Analiz'
                 '</div>', unsafe_allow_html=True)
@@ -3262,5 +3262,6 @@ if __name__ == "__main__":
         st.session_state.map_level = "BÖLGE"
     
     main()
+
 
 
