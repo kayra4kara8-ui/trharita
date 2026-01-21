@@ -339,6 +339,7 @@ FIX_CITY_MAP = {
     "GÃ¼MÃ¼SHANE": "GÜMÜŞHANE",
     "GÜMÜŞHANE": "GÜMÜŞHANE",
     "HAKKARI": "HAKKARİ",
+    "HAKKARI": "HAKKARİ",
     "HAKKARİ": "HAKKARİ",
     "ISTANBUL": "İSTANBUL",
     "İSTANBUL": "İSTANBUL",
@@ -3562,6 +3563,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
