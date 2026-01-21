@@ -1,5 +1,5 @@
 """
-🎯 GELİŞMİŞ TİCARİ PORTFÖY ANALİZ SİSTEMİ - MCKINSEY EDITION
+🎯 GELİŞMİŞ TİCARİ PORTFÖY ANALİZ SİSTEMİ
 Territory Bazlı Performans, ML Tahminleme, Türkiye Haritası ve Rekabet Analizi
 
 Özellikler:
@@ -44,310 +44,182 @@ st.set_page_config(
 # =============================================================================
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+    /* Fontu McKinsey'in modern raporlarında kullandığına benzer temiz bir sans-serif yapalım */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
     
     * {
         font-family: 'Inter', sans-serif;
     }
     
+    /* 1. ARKA PLAN: Derin, Ciddi Lacivert (McKinsey Blue) */
     .stApp {
-        background: linear-gradient(135deg, #0f1729 0%, #1a1f2e 50%, #242837 100%);
+        background-color: #051c2c; /* McKinsey Deep Navy */
+        background-image: linear-gradient(180deg, #051c2c 0%, #03121d 100%);
         background-attachment: fixed;
     }
     
+    /* 2. BAŞLIKLAR: Gradyan yok, sadece keskin beyaz ve otoriter */
     .main-header {
-        font-size: 3.5rem;
-        font-weight: 900;
-        text-align: center;
-        padding: 2rem 0;
-        background: linear-gradient(135deg, #3B82F6 0%, #10B981 50%, #F59E0B 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        text-shadow: 0 0 50px rgba(59, 130, 246, 0.2);
-        letter-spacing: -0.5px;
-        margin-bottom: 1rem;
-    }
-    
-    div[data-testid="stMetricValue"] {
-        font-size: 2.8rem;
-        font-weight: 800;
-        background: linear-gradient(135deg, #3B82F6 0%, #10B981 50%, #F59E0B 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-    
-    div[data-testid="metric-container"] {
-        background: rgba(30, 41, 59, 0.85);
-        padding: 1.5rem;
-        border-radius: 16px;
-        border: 1px solid rgba(59, 130, 246, 0.2);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
-        backdrop-filter: blur(12px);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    
-    div[data-testid="metric-container"]:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 16px 48px rgba(59, 130, 246, 0.25);
-        border-color: rgba(59, 130, 246, 0.4);
-    }
-    
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 0.5rem;
-        padding: 0.5rem;
-        background: rgba(30, 41, 59, 0.7);
-        border-radius: 12px;
-    }
-    
-    .stTabs [data-baseweb="tab"] {
-        color: #94a3b8;
-        font-weight: 600;
-        padding: 1rem 2rem;
-        background: rgba(30, 41, 59, 0.5);
-        border-radius: 10px;
-        margin: 0;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        border: 1px solid transparent;
-    }
-    
-    .stTabs [data-baseweb="tab"]:hover {
-        background: rgba(59, 130, 246, 0.15);
-        color: #e0e7ff;
-        border-color: rgba(59, 130, 246, 0.3);
-    }
-    
-    .stTabs [data-baseweb="tab"][aria-selected="true"] {
-        background: linear-gradient(135deg, #3B82F6 0%, #10B981 50%, #F59E0B 100%);
-        color: white;
-        box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        transform: scale(1.02);
-    }
-    
-    h1, h2, h3 {
-        color: #f8fafc !important;
+        font-size: 3rem;
         font-weight: 700;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        text-align: left; /* Kurumsal raporlar genelde sola yaslıdır */
+        padding: 2rem 0 1rem 0;
+        color: #ffffff;
+        letter-spacing: -0.5px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        margin-bottom: 2rem;
     }
     
-    h1 {
+    /* 3. METRİK DEĞERLERİ: Vurgu rengi (McKinsey Teal) */
+    div[data-testid="stMetricValue"] {
         font-size: 2.5rem;
-        margin-top: 0;
-    }
-    
-    h2 {
-        font-size: 2rem;
-        margin-top: 0;
-    }
-    
-    h3 {
-        font-size: 1.5rem;
-    }
-    
-    p, span, div, label {
-        color: #cbd5e1;
-    }
-    
-    .stButton>button {
-        background: linear-gradient(135deg, #3B82F6 0%, #10B981 100%);
-        color: white;
-        border: none;
-        padding: 0.75rem 2rem;
-        border-radius: 12px;
         font-weight: 600;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
-        position: relative;
-        overflow: hidden;
+        color: #00A9BD; /* McKinsey Cyan/Teal */
     }
     
-    .stButton>button:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 28px rgba(59, 130, 246, 0.4);
+    div[data-testid="stMetricLabel"] {
+        color: #b0b8c1;
+        font-weight: 400;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 1px;
     }
     
-    .stButton>button:active {
-        transform: translateY(-1px);
-    }
-    
-    .stButton>button::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-        transition: left 0.7s;
-    }
-    
-    .stButton>button:hover::after {
-        left: 100%;
-    }
-    
-    .dataframe {
-        border-radius: 12px;
-        overflow: hidden;
-    }
-    
-    .stDataFrame {
-        border-radius: 12px;
-    }
-    
-    /* Scrollbar styling */
-    ::-webkit-scrollbar {
-        width: 10px;
-        height: 10px;
-    }
-    
-    ::-webkit-scrollbar-track {
-        background: rgba(30, 41, 59, 0.5);
-        border-radius: 5px;
-    }
-    
-    ::-webkit-scrollbar-thumb {
-        background: linear-gradient(135deg, #3B82F6 0%, #10B981 100%);
-        border-radius: 5px;
-    }
-    
-    ::-webkit-scrollbar-thumb:hover {
-        background: linear-gradient(135deg, #10B981 0%, #F59E0B 100%);
-    }
-    
-    /* Card styling for visualizations */
-    .plotly-graph-div {
-        border-radius: 16px;
-        overflow: hidden;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-    }
-    
-    /* Sidebar improvements */
-    [data-testid="stSidebar"] {
-        background: rgba(15, 23, 41, 0.95);
-        backdrop-filter: blur(20px);
-        border-right: 1px solid rgba(59, 130, 246, 0.1);
-    }
-    
-    /* Input field styling */
-    .stSelectbox, .stSlider, .stRadio {
-        background: rgba(30, 41, 59, 0.7);
-        padding: 8px;
-        border-radius: 10px;
-        border: 1px solid rgba(59, 130, 246, 0.2);
-    }
-    
-    /* Progress bar */
-    .stProgress > div > div > div > div {
-        background: linear-gradient(135deg, #3B82F6 0%, #10B981 50%, #F59E0B 100%);
-    }
-    
-    /* McKinsey Style Cards */
-    .mckinsey-card {
-        background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 41, 0.9) 100%);
-        border-radius: 16px;
+    /* 4. KARTLAR: Glassmorphism yerine temiz, net çizgiler */
+    div[data-testid="metric-container"] {
+        background: rgba(255, 255, 255, 0.03);
         padding: 1.5rem;
-        border: 1px solid rgba(59, 130, 246, 0.2);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
-        backdrop-filter: blur(12px);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        height: 100%;
-    }
-    
-    .mckinsey-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 48px rgba(59, 130, 246, 0.15);
-        border-color: rgba(59, 130, 246, 0.4);
-    }
-    
-    /* Insight Cards */
-    .insight-success {
-        border-left: 4px solid #10B981;
-        background: rgba(16, 185, 129, 0.05);
-    }
-    
-    .insight-warning {
-        border-left: 4px solid #F59E0B;
-        background: rgba(245, 158, 11, 0.05);
-    }
-    
-    .insight-danger {
-        border-left: 4px solid #EF4444;
-        background: rgba(239, 68, 68, 0.05);
-    }
-    
-    .insight-info {
-        border-left: 4px solid #3B82F6;
-        background: rgba(59, 130, 246, 0.05);
-    }
-    
-    /* Professional Tooltips */
-    .plotly-notifier {
-        font-family: 'Inter', sans-serif !important;
-    }
-    
-    /* Improved Data Table */
-    .dataframe thead th {
-        background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%) !important;
-        color: white !important;
-        font-weight: 700 !important;
-        border: none !important;
-    }
-    
-    /* Subtle Animations */
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    
-    .stPlotlyChart {
-        animation: fadeIn 0.5s ease-out;
-    }
-    
-    /* McKinsey Color Scheme for Charts */
-    .js-plotly-plot .plotly .modebar {
-        background: rgba(30, 41, 59, 0.8) !important;
-    }
-    
-    /* Professional Scrollbar */
-    ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-    }
-    
-    ::-webkit-scrollbar-track {
-        background: rgba(30, 41, 59, 0.5);
-        border-radius: 4px;
-    }
-    
-    ::-webkit-scrollbar-thumb {
-        background: linear-gradient(135deg, #1E40AF 0%, #10B981 100%);
-        border-radius: 4px;
-    }
-    
-    ::-webkit-scrollbar-thumb:hover {
-        background: linear-gradient(135deg, #10B981 0%, #F59E0B 100%);
-    }
-    
-    /* Drill-down buttons */
-    .drill-btn {
-        background: rgba(30, 41, 59, 0.8);
-        border: 1px solid rgba(59, 130, 246, 0.3);
-        color: #e2e8f0;
-        padding: 0.5rem 1rem;
-        border-radius: 8px;
-        font-size: 0.9rem;
-        font-weight: 600;
+        border-radius: 4px; /* Köşeler daha az yuvarlak, daha ciddi */
+        border-left: 4px solid #00A9BD; /* Sol tarafta ince bir vurgu çizgisi */
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         transition: all 0.2s ease;
     }
     
-    .drill-btn:hover {
-        background: rgba(59, 130, 246, 0.2);
-        border-color: rgba(59, 130, 246, 0.5);
-        transform: translateY(-1px);
+    div[data-testid="metric-container"]:hover {
+        background: rgba(255, 255, 255, 0.06);
+        transform: translateY(-2px);
     }
+    
+    /* 5. SEKMELER (TABS): Minimalist */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 2rem;
+        background: transparent;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 0;
+        padding: 0;
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        color: #8fa6b9;
+        font-weight: 400;
+        padding: 1rem 0;
+        background: transparent;
+        border: none;
+        border-radius: 0;
+    }
+    
+    .stTabs [data-baseweb="tab"]:hover {
+        color: #ffffff;
+        background: transparent;
+    }
+    
+    .stTabs [data-baseweb="tab"][aria-selected="true"] {
+        background: transparent;
+        color: #00A9BD;
+        border-bottom: 3px solid #00A9BD; /* Sadece alt çizgi */
+        font-weight: 600;
+    }
+    
+    /* HEADERS */
+    h1, h2, h3 {
+        color: #ffffff !important;
+        font-weight: 600;
+    }
+    
+    p, span, div, label {
+        color: #e0e6ed; /* Okunabilirlik için çok açık gri */
+        line-height: 1.6;
+    }
+    
+    /* 6. BUTONLAR: Sade ve Net */
+    .stButton>button {
+        background: #2B59C3; /* Kurumsal Mavi */
+        color: white;
+        border: none;
+        padding: 0.6rem 1.5rem;
+        border-radius: 4px;
+        font-weight: 500;
+        transition: all 0.2s;
+        box-shadow: none;
+        text-transform: uppercase;
+        font-size: 0.9rem;
+        letter-spacing: 0.5px;
+    }
+    
+    .stButton>button:hover {
+        background: #1e45a0;
+        transform: none;
+    }
+    
+    /* 7. TABLOLAR: Veri Odaklı, Temiz */
+    .dataframe {
+        font-size: 0.9rem;
+        border: none !important;
+    }
+    
+    .stDataFrame {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    /* Tablo Başlıkları */
+    .dataframe thead th {
+        background-color: #021019 !important;
+        color: #ffffff !important;
+        font-weight: 600 !important;
+        text-align: left !important;
+        padding: 10px !important;
+    }
+    
+    /* SCROLLBAR: Görünmez denecek kadar ince */
+    ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+        background: #051c2c;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: #3e5060;
+        border-radius: 3px;
+    }
+    
+    /* SIDEBAR */
+    [data-testid="stSidebar"] {
+        background-color: #03121d;
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    /* INPUT ALANLARI */
+    .stSelectbox, .stSlider, .stRadio {
+        color: white;
+    }
+    div[data-baseweb="select"] > div {
+        background-color: #0e2a3f;
+        border-color: #3e5060;
+        color: white;
+    }
+    
+    /* BİLGİ KARTLARI (INSIGHT CARDS) */
+    .insight-card {
+        background: #0e2a3f;
+        padding: 1.5rem;
+        border-radius: 4px;
+        border-top: 3px solid #00A9BD;
+        margin-bottom: 1rem;
+    }
+    
 </style>
 """, unsafe_allow_html=True)
-
 # =============================================================================
 # MCKINSEY COLOR PALETTE
 # =============================================================================
@@ -3390,4 +3262,5 @@ if __name__ == "__main__":
         st.session_state.map_level = "BÖLGE"
     
     main()
+
 
