@@ -328,6 +328,7 @@ FIX_CITY_MAP = {
     "BARTIN": "BARTIN",
     "BINGÃ¶L": "BİNGÖL",
     "BINGOL": "BİNGÖL",
+    "DÃ¼ZCE": "DÜZCE",
     "DÃ1⁄4ZCE": "DÜZCE",
     "DUZCE": "DÜZCE",
     "DÜZCE": "DÜZCE",
@@ -3563,6 +3564,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
