@@ -1,14 +1,12 @@
 """
-🎯 GELİŞMİŞ TİCARİ PORTFÖY ANALİZ SİSTEMİ
-Territory Bazlı Performans, ML Tahminleme, Türkiye Haritası ve Rekabet Analizi
+🎯 STRATEJİK TİCARİ PORTFÖY ANALİZ SİSTEMİ - YÖNETİCİ KARAR DESTEK SİSTEMİ
+McKinsey/BCG Tarzı, Kurumsal Seviye, Nesne Yönelimli Tasarım
 
-Özellikler:
-- 🗺️ Hiyerarşik Türkiye haritası (Bölge → Şehir drill-down)
-- 🧠 Otomatik McKinsey-style analitik yorumlar
-- 🤖 GERÇEK Machine Learning (Linear Regression, Ridge, Random Forest)
-- 📊 Performans Matrisi & BCG Matrix
-- 📈 Gelişmiş trend analizi ve rakip karşılaştırması
-- 🎯 Dinamik zaman aralığı filtreleme
+Tasarım Felsefesi:
+- Profesyonel renk paleti (Lacivert, Zümrüt Yeşili, Arduvaz Grisi)
+- Modüler OOP Mimarisi
+- Defansif Programlama
+- Tam kapsamlı dokümantasyon
 """
 
 import streamlit as st
@@ -22,3246 +20,3479 @@ from io import BytesIO
 import json
 from sklearn.linear_model import LinearRegression, Ridge
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_absolute_error, mean_squared_error
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 import geopandas as gpd
 from shapely.geometry import LineString, MultiLineString
-import warnings
-
-warnings.filterwarnings("ignore")
-
-# =============================================================================
-# PAGE CONFIG
-# =============================================================================
-st.set_page_config(
-    page_title="Ticari Portföy Analizi - McKinsey Edition",
-    page_icon="🎯",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+from typing import Dict, List, Optional, Tuple, Any
+import logging
+from dataclasses import dataclass
+from abc import ABC, abstractmethod
 
 # =============================================================================
-# MCKINSEY CSS STYLING
-# =============================================================================
-st.markdown("""
-<style>
-    /* Fontu McKinsey'in modern raporlarında kullandığına benzer temiz bir sans-serif yapalım */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
-    
-    * {
-        font-family: 'Inter', sans-serif;
-    }
-    
-    /* 1. ARKA PLAN: Derin, Ciddi Lacivert (McKinsey Blue) */
-    .stApp {
-        background-color: #051c2c; /* McKinsey Deep Navy */
-        background-image: linear-gradient(180deg, #051c2c 0%, #03121d 100%);
-        background-attachment: fixed;
-    }
-    
-    /* 2. BAŞLIKLAR: Gradyan yok, sadece keskin beyaz ve otoriter */
-    .main-header {
-        font-size: 3rem;
-        font-weight: 700;
-        text-align: left; /* Kurumsal raporlar genelde sola yaslıdır */
-        padding: 2rem 0 1rem 0;
-        color: #ffffff;
-        letter-spacing: -0.5px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        margin-bottom: 2rem;
-    }
-    
-    /* 3. METRİK DEĞERLERİ: Vurgu rengi (McKinsey Teal) */
-    div[data-testid="stMetricValue"] {
-        font-size: 2.5rem;
-        font-weight: 600;
-        color: #00A9BD; /* McKinsey Cyan/Teal */
-    }
-    
-    div[data-testid="stMetricLabel"] {
-        color: #b0b8c1;
-        font-weight: 400;
-        text-transform: uppercase;
-        font-size: 0.85rem;
-        letter-spacing: 1px;
-    }
-    
-    /* 4. KARTLAR: Glassmorphism yerine temiz, net çizgiler */
-    div[data-testid="metric-container"] {
-        background: rgba(255, 255, 255, 0.03);
-        padding: 1.5rem;
-        border-radius: 4px; /* Köşeler daha az yuvarlak, daha ciddi */
-        border-left: 4px solid #00A9BD; /* Sol tarafta ince bir vurgu çizgisi */
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        transition: all 0.2s ease;
-    }
-    
-    div[data-testid="metric-container"]:hover {
-        background: rgba(255, 255, 255, 0.06);
-        transform: translateY(-2px);
-    }
-    
-    /* 5. SEKMELER (TABS): Minimalist */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 2rem;
-        background: transparent;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 0;
-        padding: 0;
-    }
-    
-    .stTabs [data-baseweb="tab"] {
-        color: #8fa6b9;
-        font-weight: 400;
-        padding: 1rem 0;
-        background: transparent;
-        border: none;
-        border-radius: 0;
-    }
-    
-    .stTabs [data-baseweb="tab"]:hover {
-        color: #ffffff;
-        background: transparent;
-    }
-    
-    .stTabs [data-baseweb="tab"][aria-selected="true"] {
-        background: transparent;
-        color: #00A9BD;
-        border-bottom: 3px solid #00A9BD; /* Sadece alt çizgi */
-        font-weight: 600;
-    }
-    
-    /* HEADERS */
-    h1, h2, h3 {
-        color: #ffffff !important;
-        font-weight: 600;
-    }
-    
-    p, span, div, label {
-        color: #e0e6ed; /* Okunabilirlik için çok açık gri */
-        line-height: 1.6;
-    }
-    
-    /* 6. BUTONLAR: Sade ve Net */
-    .stButton>button {
-        background: #2B59C3; /* Kurumsal Mavi */
-        color: white;
-        border: none;
-        padding: 0.6rem 1.5rem;
-        border-radius: 4px;
-        font-weight: 500;
-        transition: all 0.2s;
-        box-shadow: none;
-        text-transform: uppercase;
-        font-size: 0.9rem;
-        letter-spacing: 0.5px;
-    }
-    
-    .stButton>button:hover {
-        background: #1e45a0;
-        transform: none;
-    }
-    
-    /* 7. TABLOLAR: Veri Odaklı, Temiz */
-    .dataframe {
-        font-size: 0.9rem;
-        border: none !important;
-    }
-    
-    .stDataFrame {
-        border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    
-    /* Tablo Başlıkları */
-    .dataframe thead th {
-        background-color: #021019 !important;
-        color: #ffffff !important;
-        font-weight: 600 !important;
-        text-align: left !important;
-        padding: 10px !important;
-    }
-    
-    /* SCROLLBAR: Görünmez denecek kadar ince */
-    ::-webkit-scrollbar {
-        width: 6px;
-        height: 6px;
-    }
-    ::-webkit-scrollbar-track {
-        background: #051c2c;
-    }
-    ::-webkit-scrollbar-thumb {
-        background: #3e5060;
-        border-radius: 3px;
-    }
-    
-    /* SIDEBAR */
-    [data-testid="stSidebar"] {
-        background-color: #03121d;
-        border-right: 1px solid rgba(255, 255, 255, 0.05);
-    }
-    
-    /* INPUT ALANLARI */
-    .stSelectbox, .stSlider, .stRadio {
-        color: white;
-    }
-    div[data-baseweb="select"] > div {
-        background-color: #0e2a3f;
-        border-color: #3e5060;
-        color: white;
-    }
-    
-    /* BİLGİ KARTLARI (INSIGHT CARDS) */
-    .insight-card {
-        background: #0e2a3f;
-        padding: 1.5rem;
-        border-radius: 4px;
-        border-top: 3px solid #00A9BD;
-        margin-bottom: 1rem;
-    }
-    
-</style>
-""", unsafe_allow_html=True)
-# =============================================================================
-# MCKINSEY COLOR PALETTE
-# =============================================================================
-# Sade ve profesyonel bölge renkleri
-REGION_COLORS = {
-    "MARMARA": "#0EA5E9",              # Sky Blue - Deniz ve boğazlar
-    "BATI ANADOLU": "#14B8A6",         # Turkuaz-yeşil arası
-    "EGE": "#FCD34D",                  # BAL SARI
-    "İÇ ANADOLU": "#F59E0B",           # Amber - Kuru bozkır
-    "GÜNEY DOĞU ANADOLU": "#E07A5F",   # Terracotta 
-    "KUZEY ANADOLU": "#059669",        # Emerald - Yemyeşil ormanlar
-    "KARADENİZ": "#059669",            # Emerald
-    "AKDENİZ": "#8B5CF6",              # Violet - Akdeniz
-    "DOĞU ANADOLU": "#7C3AED",         # Purple - Yüksek dağlar
-    "DİĞER": "#64748B"                 # Slate Gray
-}
-
-# PERFORMANS RENKLERİ - Profesyonel / Kurumsal (MCKINSEY STANDARD)
-PERFORMANCE_COLORS = {
-    "high": "#1F7A5A",       # Koyu Yeşil – Yüksek Performans
-    "medium": "#C48A2A",     # Altın Sarısı – Orta Performans
-    "low": "#B23A3A",        # Bordo – Düşük Performans
-    "positive": "#1F7A5A",   # Koyu Yeşil – Pozitif
-    "negative": "#B23A3A",   # Bordo – Negatif
-    "neutral": "#6B7280",    # Kurumsal Gri – Nötr
-    "warning": "#C48A2A",    # Altın – Uyarı
-    "info": "#1E40AF",       # Lacivert – Bilgi
-    "success": "#166534",    # Koyu Yeşil – Başarı
-    "danger": "#991B1B"      # Koyu Kırmızı – Risk / Tehlike
-}
-
-# BCG MATRIX RENKLERİ
-BCG_COLORS = {
-    "⭐ Star": "#F59E0B",      # Turuncu
-    "🐄 Cash Cow": "#10B981",  # Yeşil
-    "❓ Question Mark": "#3B82F6",  # Mavi
-    "🐶 Dog": "#64748B"        # Gri
-}
-
-# YATIRIM STRATEJİSİ RENKLERİ
-STRATEGY_COLORS = {
-    "🚀 Agresif": "#EF4444",      # Kırmızı
-    "⚡ Hızlandırılmış": "#F59E0B",  # Turuncu
-    "🛡️ Koruma": "#10B981",        # Yeşil
-    "💎 Potansiyel": "#3B82F6",     # Mavi
-    "👁️ İzleme": "#64748B"         # Gri
-}
-
-# PERFORMANS MATRİSİ RENKLERİ
-PERFORMANCE_MATRIX_COLORS = {
-    "🚀 Yüksek Potansiyel": "#10B981",    # Green
-    "🎯 Büyüme Hedefi": "#F59E0B",        # Amber
-    "🛡️ Koruma Alanı": "#3B82F6",        # Blue
-    "👁️ İzleme Alanı": "#64748B"         # Gray
-}
-
-# GRADIENT SCALES for Visualizations
-GRADIENT_SCALES = {
-    "blue_green": ["#3B82F6", "#06B6D4", "#10B981"],
-    "sequential_blue": ["#DBEAFE", "#BFDBFE", "#93C5FD", "#60A5FA", "#3B82F6"],
-    "diverging": ["#EF4444", "#F59E0B", "#10B981", "#3B82F6", "#8B5CF6"],
-    "temperature": ["#3B82F6", "#60A5FA", "#93C5FD", "#BFDBFE", "#DBEAFE"]
-}
-
-# =============================================================================
-# CONSTANTS
+# KONFİGÜRASYON SINIFI
 # =============================================================================
 
-FIX_CITY_MAP = {
-    "AGRI": "AĞRI",
-    "BARTÄ±N": "BARTIN",
-    "BARTIN": "BARTIN",
-    "BINGÃ¶L": "BİNGÖL",
-    "BINGOL": "BİNGÖL",
-    "DÃ1⁄4ZCE": "DÜZCE",
-    "DUZCE": "DÜZCE",
-    "DÜZCE": "DÜZCE",
-    "ELAZIG": "ELAZIĞ",
-    "ELAZIĞ": "ELAZIĞ",
-    "ESKISEHIR": "ESKİŞEHİR",
-    "ESKİŞEHİR": "ESKİŞEHİR",
-    "GÃ1⁄4MÃ1⁄4SHANE": "GÜMÜŞHANE",
-    "GÜMÜŞHANE": "GÜMÜŞHANE",
-    "HAKKARI": "HAKKARİ",
-    "HAKKARİ": "HAKKARİ",
-    "ISTANBUL": "İSTANBUL",
-    "İSTANBUL": "İSTANBUL",
-    "IZMIR": "İZMİR",
-    "İZMİR": "İZMİR",
-    "IÄ\x9fDIR": "IĞDIR",
-    "IĞDIR": "IĞDIR",
-    "KARABÃ1⁄4K": "KARABÜK",
-    "KARABÜK": "KARABÜK",
-    "KINKKALE": "KIRIKKALE",
-    "KIRIKKALE": "KIRIKKALE",
-    "KIRSEHIR": "KIRŞEHİR",
-    "KIRŞEHİR": "KIRŞEHİR",
-    "KÃ1⁄4TAHYA": "KÜTAHYA",
-    "KÜTAHYA": "KÜTAHYA",
-    "MUGLA": "MUĞLA",
-    "MUĞLA": "MUĞLA",
-    "MUS": "MUŞ",
-    "MUŞ": "MUŞ",
-    "NEVSEHIR": "NEVŞEHİR",
-    "NEVŞEHİR": "NEVŞEHİR",
-    "NIGDE": "NİĞDE",
-    "NİĞDE": "NİĞDE",
-    "SANLIURFA": "ŞANLIURFA",
-    "ŞANLIURFA": "ŞANLIURFA",
-    "SIRNAK": "ŞIRNAK",
-    "ŞIRNAK": "ŞIRNAK",
-    "TEKIRDAG": "TEKİRDAĞ",
-    "TEKİRDAĞ": "TEKİRDAĞ",
-    "USAK": "UŞAK",
-    "UŞAK": "UŞAK",
-    "ZINGULDAK": "ZONGULDAK",
-    "ZONGULDAK": "ZONGULDAK",
-    "Ã\x87ANAKKALE": "ÇANAKKALE",
-    "ÇANAKKALE": "ÇANAKKALE",
-    "Ã\x87ANKIRI": "ÇANKIRI",
-    "ÇANKIRI": "ÇANKIRI",
-    "Ã\x87ORUM": "ÇORUM",
-    "ÇORUM": "ÇORUM",
-    "K. MARAS": "KAHRAMANMARAŞ",
-    "KAHRAMANMARAŞ": "KAHRAMANMARAŞ",
-    "CORUM": "ÇORUM",
-    "CANKIRI": "ÇANKIRI",
-    "KARABUK": "KARABÜK",
-    "GUMUSHANE": "GÜMÜŞHANE",
-    "KUTAHYA": "KÜTAHYA",
-    "CANAKKALE": "ÇANAKKALE",
-    "TUNCELİ": "TUNCELİ",
-    "TUNCELI": "TUNCELİ",
-    "OSMANİYE": "OSMANİYE",
-    "OSMANIYE": "OSMANİYE",
-    "KİLİS": "KİLİS",
-    "KILIS": "KİLİS",
-    "ŞIRNAK": "ŞIRNAK",
-    "SİİRT": "SİİRT",
-    "SIIRT": "SİİRT",
-    "BATMAN": "BATMAN",
-    "BİTLİS": "BİTLİS",
-    "BITLIS": "BİTLİS",
-    "BİNGÖL": "BİNGÖL",
-    "IĞDIR": "IĞDIR",
-    "ARDAHAN": "ARDAHAN"
-}
-
-CITY_NORMALIZE_CLEAN = {
-    'ADANA': 'Adana',
-    'ADIYAMAN': 'Adiyaman',
-    'AFYONKARAHISAR': 'Afyonkarahisar',
-    'AFYON': 'Afyonkarahisar',
-    'AGRI': 'Agri',
-    'AĞRI': 'Agri',
-    'AKSARAY': 'Aksaray',
-    'ANKARA': 'Ankara',
-    'ANTALYA': 'Antalya',
-    'AYDIN': 'Aydin',
-    'BALIKESIR': 'Balikesir',
-    'BARTIN': 'Bartin',
-    'BATMAN': 'Batman',
-    'BILECIK': 'Bilecik',
-    'BINGOL': 'Bingol',
-    'BITLIS': 'Bitlis',
-    'BOLU': 'Bolu',
-    'BURDUR': 'Burdur',
-    'BURSA': 'Bursa',
-    'CANAKKALE': 'Canakkale',
-    'ÇANAKKALE': 'Canakkale',
-    'CANKIRI': 'Cankiri',
-    'ÇANKIRI': 'Cankiri',
-    'CORUM': 'Corum',
-    'ÇORUM': 'Corum',
-    'DENIZLI': 'Denizli',
-    'DIYARBAKIR': 'Diyarbakir',
-    'DUZCE': 'Duzce',
-    'DÜZCE': 'Duzce',
-    'EDIRNE': 'Edirne',
-    'ELAZIG': 'Elazig',
-    'ELAZĞ': 'Elazig',
-    'ELAZIĞ': 'Elazig',
-    'ERZINCAN': 'Erzincan',
-    'ERZURUM': 'Erzurum',
-    'ESKISEHIR': 'Eskisehir',
-    'ESKİŞEHİR': 'Eskisehir',
-    'GAZIANTEP': 'Gaziantep',
-    'GIRESUN': 'Giresun',
-    'GİRESUN': 'Giresun',
-    'GUMUSHANE': 'Gumushane',
-    'GÜMÜŞHANE': 'Gumushane',
-    'HAKKARI': 'Hakkari',
-    'HAKKARİ': 'Hakkari',
-    'HATAY': 'Hatay',
-    'IGDIR': 'Igdir',
-    'IĞDIR': 'Igdir',
-    'ISPARTA': 'Isparta',
-    'ISTANBUL': 'Istanbul',
-    'İSTANBUL': 'Istanbul',
-    'IZMIR': 'Izmir',
-    'İZMİR': 'Izmir',
-    'KAHRAMANMARAS': 'K. Maras',
-    'KAHRAMANMARAŞ': 'K. Maras',
-    'K.MARAS': 'K. Maras',
-    'KMARAS': 'K. Maras',
-    'KARABUK': 'Karabuk',
-    'KARABÜK': 'Karabuk',
-    'KARAMAN': 'Karaman',
-    'KARS': 'Kars',
-    'KASTAMONU': 'Kastamonu',
-    'KAYSERI': 'Kayseri',
-    'KIRIKKALE': 'Kinkkale',
-    'KIRKLARELI': 'Kirklareli',
-    'KIRKLARELİ': 'Kirklareli',
-    'KIRSEHIR': 'Kirsehir',
-    'KIRŞEHİR': 'Kirsehir',
-    'KILIS': 'Kilis',
-    'KİLİS': 'Kilis',
-    'KOCAELI': 'Kocaeli',
-    'KONYA': 'Konya',
-    'KUTAHYA': 'Kutahya',
-    'KÜTAHYA': 'Kutahya',
-    'MALATYA': 'Malatya',
-    'MANISA': 'Manisa',
-    'MANİSA': 'Manisa',
-    'MARDIN': 'Mardin',
-    'MARDİN': 'Mardin',
-    'MERSIN': 'Mersin',
-    'MERSİN': 'Mersin',
-    'MUGLA': 'Mugla',
-    'MUĞLA': 'Mugla',
-    'MUS': 'Mus',
-    'MUŞ': 'Mus',
-    'NEVSEHIR': 'Nevsehir',
-    'NEVŞEHİR': 'Nevsehir',
-    'NIGDE': 'Nigde',
-    'NİĞDE': 'Nigde',
-    'ORDU': 'Ordu',
-    'OSMANIYE': 'Osmaniye',
-    'OSMANİYE': 'Osmaniye',
-    'RIZE': 'Rize',
-    'RİZE': 'Rize',
-    'SAKARYA': 'Sakarya',
-    'SAMSUN': 'Samsun',
-    'SIIRT': 'Siirt',
-    'SİİRT': 'Siirt',
-    'SINOP': 'Sinop',
-    'SİNOP': 'Sinop',
-    'SIVAS': 'Sivas',
-    'SİVAS': 'Sivas',
-    'SANLIURFA': 'Sanliurfa',
-    'ŞANLIURFA': 'Sanliurfa',
-    'SIRNAK': 'Sirnak',
-    'ŞIRNAK': 'Sirnak',
-    'TEKIRDAG': 'Tekirdag',
-    'TEKİRDAĞ': 'Tekirdag',
-    'TOKAT': 'Tokat',
-    'TRABZON': 'Trabzon',
-    'TUNCELI': 'Tunceli',
-    'TUNCELİ': 'Tunceli',
-    'USAK': 'Usak',
-    'UŞAK': 'Usak',
-    'VAN': 'Van',
-    'YALOVA': 'Yalova',
-    'YOZGAT': 'Yozgat',
-    'ZONGULDAK': 'Zonguldak',
-    "ZONGULDAK": "Zonguldak",
-    'ARDAHAN': 'Ardahan',
-    'AKSARAY': 'Aksaray',
-    'KIRIKKALE': 'Kirikkale'
-}
-
-# =============================================================================
-# HELPER FUNCTIONS
-# =============================================================================
-
-def safe_divide(a, b):
-    """Güvenli bölme işlemi"""
-    return np.where(b != 0, a / b, 0)
-
-def get_product_columns(product):
-    """Ürün kolonlarını döndür"""
-    if product == "TROCMETAM":
-        return {"pf": "TROCMETAM", "rakip": "DIGER TROCMETAM"}
-    elif product == "CORTIPOL":
-        return {"pf": "CORTIPOL", "rakip": "DIGER CORTIPOL"}
-    elif product == "DEKSAMETAZON":
-        return {"pf": "DEKSAMETAZON", "rakip": "DIGER DEKSAMETAZON"}
-    else:
-        return {"pf": "PF IZOTONIK", "rakip": "DIGER IZOTONIK"}
-
-def normalize_city_name_fixed(city_name):
-    """Düzeltilmiş şehir normalizasyon"""
-    if pd.isna(city_name):
-        return None
+@dataclass
+class AppConfig:
+    """Uygulama sabitlerini ve konfigürasyonlarını yönetir"""
     
-    city_upper = str(city_name).strip().upper()
-    
-    # Fix known encoding issues
-    if city_upper in FIX_CITY_MAP:
-        return FIX_CITY_MAP[city_upper]
-    
-    # Turkish character mapping
-    tr_map = {
-        "İ": "I", "Ğ": "G", "Ü": "U",
-        "Ş": "S", "Ö": "O", "Ç": "C",
-        "Â": "A", "Î": "I", "Û": "U"
+    # Renk Paleti - McKinsey/BCG Tarzı
+    COLOR_PALETTE = {
+        "primary_dark": "#0F1729",        # Lacivert
+        "primary_medium": "#1E293B",      # Orta Lacivert
+        "primary_light": "#334155",       # Açık Lacivert
+        "success_dark": "#065F46",        # Zümrüt Yeşili - Koyu
+        "success_medium": "#059669",      # Zümrüt Yeşili
+        "success_light": "#10B981",       # Zümrüt Yeşili - Açık
+        "warning_dark": "#92400E",        # Amber - Koyu
+        "warning_medium": "#D97706",      # Amber
+        "warning_light": "#F59E0B",       # Amber - Açık
+        "danger_dark": "#7F1D1D",         # Bordo
+        "danger_medium": "#DC2626",       # Kırmızı
+        "danger_light": "#EF4444",        # Kırmızı - Açık
+        "neutral_dark": "#374151",        # Arduvaz Grisi - Koyu
+        "neutral_medium": "#6B7280",      # Arduvaz Grisi
+        "neutral_light": "#9CA3AF",       # Arduvaz Grisi - Açık
+        "background_dark": "#0F1729",     # Arkaplan - Koyu
+        "background_medium": "#1E293B",   # Arkaplan - Orta
+        "background_light": "#334155",    # Arkaplan - Açık
+        "text_primary": "#F8FAFC",        # Ana Metin
+        "text_secondary": "#CBD5E1",      # İkincil Metin
+        "text_muted": "#94A3B8",          # Soluk Metin
+        "white": "#FFFFFF",               # Beyaz
+        "black": "#000000"                # Siyah
     }
     
-    for k, v in tr_map.items():
-        city_upper = city_upper.replace(k, v)
+    # Bölge Renkleri
+    REGION_COLORS = {
+        "MARMARA": "#3B82F6",        # Lacivert Mavi
+        "BATI ANADOLU": "#10B981",   # Zümrüt Yeşili
+        "EGE": "#F59E0B",           # Amber
+        "İÇ ANADOLU": "#8B5CF6",    # Mor
+        "GÜNEY DOĞU ANADOLU": "#EF4444",  # Kırmızı
+        "KUZEY ANADOLU": "#06B6D4", # Turkuaz
+        "KARADENİZ": "#06B6D4",     # Turkuaz
+        "AKDENİZ": "#8B5CF6",       # Mor
+        "DOĞU ANADOLU": "#7C3AED",  # Koyu Mor
+        "DİĞER": "#64748B"          # Gri
+    }
     
-    return CITY_NORMALIZE_CLEAN.get(city_upper, city_name)
-
-def format_number(num):
-    """Sayıları binlik ayırıcılı ve sadeleştirilmiş formatta göster"""
-    if pd.isna(num):
-        return "0"
+    # BCG Matrix Renkleri
+    BCG_COLORS = {
+        "⭐ Star": "#F59E0B",        # Turuncu - Yüksek Büyüme, Yüksek Pay
+        "🐄 Cash Cow": "#10B981",    # Yeşil - Düşük Büyüme, Yüksek Pay
+        "❓ Question Mark": "#3B82F6", # Mavi - Yüksek Büyüme, Düşük Pay
+        "🐶 Dog": "#64748B"          # Gri - Düşük Büyüme, Düşük Pay
+    }
     
-    try:
-        num = float(num)
-        if num == 0:
-            return "0"
-        elif abs(num) >= 1_000_000_000:
-            return f"{num/1_000_000_000:,.1f}B"
-        elif abs(num) >= 1_000_000:
-            return f"{num/1_000_000:,.1f}M"
-        elif abs(num) >= 1_000:
-            return f"{num/1_000:,.1f}K"
-        else:
-            return f"{num:,.0f}"
-    except:
-        return str(num)
-
-def format_percentage(num):
-    """Yüzdelikleri formatla"""
-    if pd.isna(num):
-        return "0%"
-    try:
-        return f"{float(num):.1f}%"
-    except:
-        return str(num)
-
-def create_mckinsey_metric_card(value, label, previous_value=None, format_func=format_number, icon="📊"):
-    """
-    McKinsey-style metric card with trend indicator
-    """
-    if previous_value is not None and previous_value != 0:
-        change_pct = ((value - previous_value) / abs(previous_value)) * 100
-        trend_color = "#10B981" if change_pct >= 0 else "#EF4444"
-        trend_icon = "↗️" if change_pct >= 0 else "↘️"
-        trend_text = f"{trend_icon} {abs(change_pct):.1f}%"
-    else:
-        trend_text = ""
-        trend_color = "#64748B"
+    # Yatırım Stratejisi Renkleri
+    STRATEGY_COLORS = {
+        "🚀 Agresif": "#EF4444",      # Kırmızı
+        "⚡ Hızlandırılmış": "#F59E0B", # Turuncu
+        "🛡️ Koruma": "#10B981",       # Yeşil
+        "💎 Potansiyel": "#3B82F6",    # Mavi
+        "👁️ İzleme": "#64748B"        # Gri
+    }
     
-    html = f"""
-    <div class="mckinsey-card">
-        <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
-            <div style="font-size: 1.5rem; margin-right: 0.5rem;">{icon}</div>
-            <div style="color: #94a3b8; font-size: 0.9rem; font-weight: 600;">{label}</div>
-        </div>
-        <div style="font-size: 2.2rem; font-weight: 800; 
-                    background: linear-gradient(135deg, #3B82F6 0%, #10B981 100%);
-                    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-                    margin-bottom: 0.5rem;">
-            {format_func(value)}
-        </div>
-        <div style="color: {trend_color}; font-size: 0.9rem; font-weight: 600;">
-            {trend_text}
-        </div>
-    </div>
-    """
-    return html
-
-# =============================================================================
-# ENHANCED ANALYTICS ENGINE - MCKINSEY STYLE INSIGHTS
-# =============================================================================
-
-def generate_executive_insights(df, product, date_filter=None, geography_level="BÖLGE"):
-    """
-    McKinsey-style otomatik yorum üretme motoru
-    """
-    cols = get_product_columns(product)
+    # Gradyan Skalaları
+    GRADIENT_SCALES = {
+        "sequential_blue": ["#DBEAFE", "#BFDBFE", "#93C5FD", "#60A5FA", "#3B82F6"],
+        "sequential_green": ["#D1FAE5", "#A7F3D0", "#6EE7B7", "#34D399", "#10B981"],
+        "diverging_red_blue": ["#EF4444", "#F59E0B", "#10B981", "#3B82F6", "#8B5CF6"],
+        "temperature": ["#3B82F6", "#60A5FA", "#93C5FD", "#BFDBFE", "#DBEAFE"]
+    }
     
-    if date_filter:
-        df_filtered = df[(df['DATE'] >= date_filter[0]) & (df['DATE'] <= date_filter[1])]
-    else:
-        df_filtered = df.copy()
+    # Performans Eşikleri
+    PERFORMANCE_THRESHOLDS = {
+        "market_share_low": 20,      # Düşük pazar payı eşiği (%)
+        "market_share_high": 50,     # Yüksek pazar payı eşiği (%)
+        "growth_low": 5,             # Düşük büyüme eşiği (%)
+        "growth_high": 15,           # Yüksek büyüme eşiği (%)
+        "performance_score_low": 40, # Düşük performans skoru
+        "performance_score_medium": 60, # Orta performans skoru
+        "performance_score_high": 80  # Yüksek performans skoru
+    }
     
-    insights = []
+    # Şehir Normalizasyon Haritası
+    CITY_NORMALIZATION_MAP = {
+        'ADANA': 'Adana',
+        'ADIYAMAN': 'Adiyaman',
+        'AFYONKARAHISAR': 'Afyonkarahisar',
+        'AFYON': 'Afyonkarahisar',
+        'AGRI': 'Agri',
+        'AĞRI': 'Agri',
+        'AKSARAY': 'Aksaray',
+        'ANKARA': 'Ankara',
+        'ANTALYA': 'Antalya',
+        'AYDIN': 'Aydin',
+        'BALIKESIR': 'Balikesir',
+        'BARTIN': 'Bartin',
+        'BATMAN': 'Batman',
+        'BILECIK': 'Bilecik',
+        'BINGOL': 'Bingol',
+        'BITLIS': 'Bitlis',
+        'BOLU': 'Bolu',
+        'BURDUR': 'Burdur',
+        'BURSA': 'Bursa',
+        'CANAKKALE': 'Canakkale',
+        'ÇANAKKALE': 'Canakkale',
+        'CANKIRI': 'Cankiri',
+        'ÇANKIRI': 'Cankiri',
+        'CORUM': 'Corum',
+        'ÇORUM': 'Corum',
+        'DENIZLI': 'Denizli',
+        'DIYARBAKIR': 'Diyarbakir',
+        'DUZCE': 'Duzce',
+        'DÜZCE': 'Duzce',
+        'EDIRNE': 'Edirne',
+        'ELAZIG': 'Elazig',
+        'ELAZIĞ': 'Elazig',
+        'ERZINCAN': 'Erzincan',
+        'ERZURUM': 'Erzurum',
+        'ESKISEHIR': 'Eskisehir',
+        'ESKİŞEHİR': 'Eskisehir',
+        'GAZIANTEP': 'Gaziantep',
+        'GIRESUN': 'Giresun',
+        'GİRESUN': 'Giresun',
+        'GUMUSHANE': 'Gumushane',
+        'GÜMÜŞHANE': 'Gumushane',
+        'HAKKARI': 'Hakkari',
+        'HAKKARİ': 'Hakkari',
+        'HATAY': 'Hatay',
+        'IGDIR': 'Igdir',
+        'IĞDIR': 'Igdir',
+        'ISPARTA': 'Isparta',
+        'ISTANBUL': 'Istanbul',
+        'İSTANBUL': 'Istanbul',
+        'IZMIR': 'Izmir',
+        'İZMİR': 'Izmir',
+        'KAHRAMANMARAS': 'K. Maras',
+        'KAHRAMANMARAŞ': 'K. Maras',
+        'K.MARAS': 'K. Maras',
+        'KMARAS': 'K. Maras',
+        'KARABUK': 'Karabuk',
+        'KARABÜK': 'Karabuk',
+        'KARAMAN': 'Karaman',
+        'KARS': 'Kars',
+        'KASTAMONU': 'Kastamonu',
+        'KAYSERI': 'Kayseri',
+        'KIRIKKALE': 'Kinkkale',
+        'KIRKLARELI': 'Kirklareli',
+        'KIRKLARELİ': 'Kirklareli',
+        'KIRSEHIR': 'Kirsehir',
+        'KIRŞEHİR': 'Kirsehir',
+        'KILIS': 'Kilis',
+        'KİLİS': 'Kilis',
+        'KOCAELI': 'Kocaeli',
+        'KONYA': 'Konya',
+        'KUTAHYA': 'Kutahya',
+        'KÜTAHYA': 'Kutahya',
+        'MALATYA': 'Malatya',
+        'MANISA': 'Manisa',
+        'MANİSA': 'Manisa',
+        'MARDIN': 'Mardin',
+        'MARDİN': 'Mardin',
+        'MERSIN': 'Mersin',
+        'MERSİN': 'Mersin',
+        'MUGLA': 'Mugla',
+        'MUĞLA': 'Mugla',
+        'MUS': 'Mus',
+        'MUŞ': 'Mus',
+        'NEVSEHIR': 'Nevsehir',
+        'NEVŞEHİR': 'Nevsehir',
+        'NIGDE': 'Nigde',
+        'NİĞDE': 'Nigde',
+        'ORDU': 'Ordu',
+        'OSMANIYE': 'Osmaniye',
+        'OSMANİYE': 'Osmaniye',
+        'RIZE': 'Rize',
+        'RİZE': 'Rize',
+        'SAKARYA': 'Sakarya',
+        'SAMSUN': 'Samsun',
+        'SIIRT': 'Siirt',
+        'SİİRT': 'Siirt',
+        'SINOP': 'Sinop',
+        'SİNOP': 'Sinop',
+        'SIVAS': 'Sivas',
+        'SİVAS': 'Sivas',
+        'SANLIURFA': 'Sanliurfa',
+        'ŞANLIURFA': 'Sanliurfa',
+        'SIRNAK': 'Sirnak',
+        'ŞIRNAK': 'Sirnak',
+        'TEKIRDAG': 'Tekirdag',
+        'TEKİRDAĞ': 'Tekirdag',
+        'TOKAT': 'Tokat',
+        'TRABZON': 'Trabzon',
+        'TUNCELI': 'Tunceli',
+        'TUNCELİ': 'Tunceli',
+        'USAK': 'Usak',
+        'UŞAK': 'Usak',
+        'VAN': 'Van',
+        'YALOVA': 'Yalova',
+        'YOZGAT': 'Yozgat',
+        'ZONGULDAK': 'Zonguldak',
+        'ARDAHAN': 'Ardahan',
+        'AKSARAY': 'Aksaray',
+        'KIRIKKALE': 'Kirikkale'
+    }
     
-    # 1. TOP-LEVEL PERFORMANCE INSIGHT
-    total_pf = df_filtered[cols['pf']].sum()
-    total_rakip = df_filtered[cols['rakip']].sum()
-    total_market = total_pf + total_rakip
-    market_share = (total_pf / total_market * 100) if total_market > 0 else 0
+    # Ürün Kolon Haritası
+    PRODUCT_COLUMN_MAP = {
+        "TROCMETAM": {"pf": "TROCMETAM", "rakip": "DIGER TROCMETAM"},
+        "CORTIPOL": {"pf": "CORTIPOL", "rakip": "DIGER CORTIPOL"},
+        "DEKSAMETAZON": {"pf": "DEKSAMETAZON", "rakip": "DIGER DEKSAMETAZON"},
+        "PF IZOTONIK": {"pf": "PF IZOTONIK", "rakip": "DIGER IZOTONIK"}
+    }
     
-    if market_share > 50:
-        insights.append({
-            "type": "success",
-            "title": "🏆 Liderlik Konumu Korunuyor",
-            "content": f"Toplam pazar payı %{market_share:.1f} ile rakiplerin önünde. Pazar liderliği devam ediyor."
-        })
-    elif market_share > 30:
-        insights.append({
-            "type": "warning",
-            "title": "📊 Güçlü İkinci Sıra",
-            "content": f"%{market_share:.1f} pazar payı ile güçlü konumda, ancak liderlik için ek yatırım gerekli."
-        })
-    else:
-        insights.append({
-            "type": "danger",
-            "title": "⚠️ Pazar Payı Artırılmalı",
-            "content": f"%{market_share:.1f} pazar payı ile gelişim potansiyeli yüksek. Agresif büyüme stratejisi önerilir."
-        })
-    
-    # 2. REGIONAL CONCENTRATION ANALYSIS
-    regional_data = df_filtered.groupby('REGION').agg({
-        cols['pf']: 'sum',
-        cols['rakip']: 'sum'
-    }).reset_index()
-    
-    regional_data['Total_Market'] = regional_data[cols['pf']] + regional_data[cols['rakip']]
-    regional_data['Share'] = regional_data[cols['pf']] / regional_data['Total_Market'] * 100
-    
-    top_region = regional_data.loc[regional_data[cols['pf']].idxmax()]
-    concentration_ratio = top_region[cols['pf']] / total_pf * 100
-    
-    if concentration_ratio > 40:
-        insights.append({
-            "type": "warning",
-            "title": "🎯 Yüksek Bölgesel Konsantrasyon",
-            "content": f"{top_region['REGION']} bölgesi toplam satışın %{concentration_ratio:.1f}'ini oluşturuyor. Risk dağılımı için diğer bölgeler geliştirilmeli."
-        })
-    
-    # 3. GROWTH VS COMPETITION INSIGHT
-    if len(df_filtered) > 6:  # En az 6 ay veri varsa
-        df_sorted = df_filtered.sort_values('DATE')
-        half_point = len(df_sorted) // 2
-        
-        first_half = df_sorted.iloc[:half_point][cols['pf']].sum()
-        second_half = df_sorted.iloc[half_point:][cols['pf']].sum()
-        
-        comp_first = df_sorted.iloc[:half_point][cols['rakip']].sum()
-        comp_second = df_sorted.iloc[half_point:][cols['rakip']].sum()
-        
-        pf_growth = ((second_half - first_half) / first_half * 100) if first_half > 0 else 0
-        comp_growth = ((comp_second - comp_first) / comp_first * 100) if comp_first > 0 else 0
-        
-        if pf_growth > comp_growth:
-            insights.append({
-                "type": "success",
-                "title": "📈 Rekabet Üstünlüğü",
-                "content": f"PF büyümesi (%{pf_growth:.1f}) rakip büyümesini (%{comp_growth:.1f}) geride bırakıyor. Strateji etkili."
-            })
-        else:
-            insights.append({
-                "type": "danger",
-                "title": "⚠️ Büyüme Açığı",
-                "content": f"Rakip büyümesi (%{comp_growth:.1f}) PF'den (%{pf_growth:.1f}) yüksek. Strateji gözden geçirilmeli."
-            })
-    
-    # 4. TERRITORY PERFORMANCE DISTRIBUTION
-    territory_counts = df_filtered['TERRITORIES'].nunique()
-    top_10_territories = df_filtered.groupby('TERRITORIES')[cols['pf']].sum().nlargest(10).sum()
-    top_10_share = (top_10_territories / total_pf * 100) if total_pf > 0 else 0
-    
-    if top_10_share > 80:
-        insights.append({
-            "type": "info",
-            "title": "🎯 Yoğunlaşmış Portföy",
-            "content": f"Top 10 territory toplam satışın %{top_10_share:.1f}'ini oluşturuyor. Yeni territory geliştirme potansiyeli mevcut."
-        })
-    
-    # 5. SEASONALITY CHECK
-    if len(df_filtered) >= 12:
-        monthly_avg = df_filtered.groupby(df_filtered['DATE'].dt.month)[cols['pf']].mean()
-        peak_month = monthly_avg.idxmax()
-        low_month = monthly_avg.idxmin()
-        seasonality_ratio = monthly_avg.max() / monthly_avg.min() if monthly_avg.min() > 0 else 0
-        
-        if seasonality_ratio > 2:
-            insights.append({
-                "type": "info",
-                "title": "📅 Güçlü Sezonallik",
-                "content": f"Sezonallik oranı {seasonality_ratio:.1f}x. En yüksek satış {peak_month}. ay, en düşük {low_month}. ay."
-            })
-    
-    return insights
-
-# =============================================================================
-# DATA LOADING
-# =============================================================================
-
-@st.cache_data
-def load_excel_data(file):
-    """Excel dosyasını yükle"""
-    df = pd.read_excel(file)
-    df['DATE'] = pd.to_datetime(df['DATE'])
-    df['YIL_AY'] = df['DATE'].dt.strftime('%Y-%m')
-    df['AY'] = df['DATE'].dt.month
-    df['YIL'] = df['DATE'].dt.year
-    
-    df['TERRITORIES'] = df['TERRITORIES'].str.upper().str.strip()
-    df['CITY'] = df['CITY'].str.strip()
-    df['CITY_NORMALIZED'] = df['CITY'].apply(normalize_city_name_fixed)
-    df['REGION'] = df['REGION'].str.upper().str.strip()
-    df['MANAGER'] = df['MANAGER'].str.upper().str.strip()
-    
-    return df
-
-@st.cache_resource
-def load_geojson_gpd():
-    """GeoPandas ile GeoJSON yükle"""
-    try:
-        gdf = gpd.read_file("turkey.geojson")
-        return gdf
-    except:
-        try:
-            gdf = gpd.read_file("turkey.geojson", encoding='utf-8')
-            return gdf
-        except Exception as e:
-            st.error(f"❌ GeoJSON yüklenemedi: {e}")
-            return None
-
-@st.cache_resource
-def load_geojson_json():
-    """JSON formatında GeoJSON yükle"""
-    try:
-        with open('turkey.geojson', 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except:
-        try:
-            with open('./turkey.geojson', 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except Exception as e:
-            st.error(f"❌ JSON GeoJSON yüklenemedi: {e}")
-            return None
-
-# =============================================================================
-# GEOMETRY HELPERS
-# =============================================================================
-
-def lines_to_lonlat(geom):
-    """LineString veya MultiLineString'den koordinatları al"""
-    lons, lats = [], []
-    if isinstance(geom, LineString):
-        xs, ys = geom.xy
-        lons += list(xs) + [None]
-        lats += list(ys) + [None]
-    elif isinstance(geom, MultiLineString):
-        for line in geom.geoms:
-            xs, ys = line.xy
-            lons += list(xs) + [None]
-            lats += list(ys) + [None]
-    return lons, lats
-
-def get_region_center(gdf_region):
-    """Bölgenin merkez koordinatlarını hesapla"""
-    if len(gdf_region) == 0:
-        return 35.0, 39.0
-    centroid = gdf_region.geometry.unary_union.centroid
-    return centroid.x, centroid.y
-
-# =============================================================================
-# ENHANCED MAP WITH DRILL-DOWN CAPABILITY
-# =============================================================================
-
-def create_hierarchical_turkey_map(city_data, gdf, current_level="BÖLGE", selected_region=None, title="Türkiye Haritası"):
-    """
-    Hiyerarşik harita sistemi: Bölge → Şehir drill-down
-    """
-    if gdf is None:
-        return None
-    
-    city_data = city_data.copy()
-    city_data['City_Fixed'] = city_data['City'].apply(normalize_city_name_fixed)
-    city_data['City_Fixed'] = city_data['City_Fixed'].str.upper()
-    
-    # GeoJSON hazırlığı
-    gdf = gdf.copy()
-    gdf['name_upper'] = gdf['name'].str.upper()
-    gdf['name_fixed'] = gdf['name_upper'].apply(lambda x: FIX_CITY_MAP.get(x, x))
-    
-    # Seviyeye göre filtrele
-    if current_level == "ŞEHİR" and selected_region:
-        # Sadece seçili bölgenin şehirlerini göster
-        region_cities = city_data[city_data['Region'] == selected_region]
-        gdf = gdf[gdf['name_fixed'].isin(region_cities['City_Fixed'])]
-        city_data = city_data[city_data['Region'] == selected_region]
-    else:
-        # Bölge bazında topla
-        city_data = city_data.groupby('Region').agg({
-            'PF_Satis': 'sum',
-            'Toplam_Pazar': 'sum',
-            'Pazar_Payi_%': 'mean'
-        }).reset_index()
-        city_data['City_Fixed'] = city_data['Region']
-    
-    # Birleştir
-    merged = gdf.merge(city_data, left_on='name_fixed', right_on='City_Fixed', how='left')
-    merged['PF_Satis'] = merged['PF_Satis'].fillna(0)
-    merged['Pazar_Payi_%'] = merged['Pazar_Payi_%'].fillna(0)
-    merged['Region'] = merged['Region'].fillna('DİĞER')
-    
-    # Renk skalası
-    max_sales = merged['PF_Satis'].max() if len(merged) > 0 else 1
-    merged['Color_Intensity'] = merged['PF_Satis'] / max_sales if max_sales > 0 else 0
-    
-    # McKinsey-style sequential color scale
-    def get_mckinsey_color(intensity):
-        if intensity > 0.7:
-            return "#166534"  # Dark Green
-        elif intensity > 0.4:
-            return "#C48A2A"  # Amber
-        elif intensity > 0.1:
-            return "#991B1B"  # Dark Red
-        else:
-            return "#475569"  # Slate
-    
-    merged['Color'] = merged['Color_Intensity'].apply(get_mckinsey_color)
-    
-    # Harita oluştur
-    fig = go.Figure()
-    
-    fig.add_trace(go.Choroplethmapbox(
-        geojson=json.loads(merged.to_json()),
-        locations=merged.index,
-        z=[1] * len(merged),
-        colorscale=[[0, '#64748B'], [1, '#64748B']],
-        marker_opacity=0.7,
-        marker_line_width=1.5,
-        marker_line_color='rgba(255, 255, 255, 0.9)',
-        showscale=False,
-        customdata=list(zip(
-            merged['name'],
-            merged['Region'],
-            merged['PF_Satis'],
-            merged['Pazar_Payi_%']
-        )),
-        hovertemplate=(
-            "<b>%{customdata[0]}</b><br>"
-            "Bölge: %{customdata[1]}<br>"
-            "PF Satış: %{customdata[2]:,.0f}<br>"
-            "Pazar Payı: %{customdata[3]:.1f}%"
-            "<extra></extra>"
-        )
-    ))
-    
-    # Layout
-    fig.update_layout(
-        mapbox_style="carto-darkmatter",
-        mapbox=dict(
-            center=dict(lat=39.0, lon=35.0),
-            zoom=4.5 if current_level == "BÖLGE" else 6,
-            bearing=0,
-            pitch=0
-        ),
-        height=650,
-        margin=dict(l=0, r=0, t=100, b=0),
-        title=dict(
-            text=f"<b>{title}</b><br><span style='font-size:14px; color:#94a3b8'>{current_level} Bazlı Görünüm" + 
-                 (f" - {selected_region}" if selected_region else "") + "</span>",
-            x=0.5,
-            font=dict(
-                size=24, 
-                color='white',
-                family='Inter, sans-serif'
-            ),
-            y=0.95
-        ),
-        plot_bgcolor='rgba(0,0,0,0)',
-        paper_bgcolor='rgba(0,0,0,0)',
-        showlegend=False,
-        hoverlabel=dict(
-            bgcolor="rgba(15, 23, 41, 0.95)",
-            font_size=12,
-            font_family="Inter, sans-serif",
-            bordercolor="rgba(59, 130, 246, 0.3)"
-        )
-    )
-    
-    return fig
-
-# =============================================================================
-# ENHANCED VISUALIZATION ENGINE - MCKINSEY STYLE
-# =============================================================================
-
-def create_mckinsey_performance_matrix(city_perf, title="Performans Matrisi"):
-    """
-    McKinsey-style 2x2 Performance Matrix
-    X: Pazar Büyüklüğü, Y: Pazar Payı
-    """
-    df = city_perf.copy()
-    df = df[df['PF_Satis'] > 0]
-    
-    if len(df) == 0:
-        return None
-    
-    # Normalize metrics for matrix positioning
-    df['Size_Normalized'] = (df['Toplam_Pazar'] - df['Toplam_Pazar'].min()) / (df['Toplam_Pazar'].max() - df['Toplam_Pazar'].min())
-    df['Share_Normalized'] = df['Pazar_Payi_%'] / 100
-    
-    # Assign quadrants
-    def assign_quadrant(row):
-        if row['Size_Normalized'] >= 0.5 and row['Share_Normalized'] >= 0.5:
-            return "🚀 Yüksek Potansiyel"
-        elif row['Size_Normalized'] >= 0.5 and row['Share_Normalized'] < 0.5:
-            return "🎯 Büyüme Hedefi"
-        elif row['Size_Normalized'] < 0.5 and row['Share_Normalized'] >= 0.5:
-            return "🛡️ Koruma Alanı"
-        else:
-            return "👁️ İzleme Alanı"
-    
-    df['Quadrant'] = df.apply(assign_quadrant, axis=1)
-    
-    fig = px.scatter(
-        df,
-        x='Size_Normalized',
-        y='Share_Normalized',
-        size='PF_Satis',
-        color='Quadrant',
-        color_discrete_map=PERFORMANCE_MATRIX_COLORS,
-        hover_name='City',
-        hover_data={
-            'Region': True,
-            'PF_Satis': ':,.0f',
-            'Toplam_Pazar': ':,.0f',
-            'Pazar_Payi_%': ':.1f',
-            'Size_Normalized': False,
-            'Share_Normalized': False
-        },
-        labels={
-            'Size_Normalized': 'Pazar Büyüklüğü (Normalize)',
-            'Share_Normalized': 'Pazar Payı (Normalize)'
-        },
-        title=f'<b>{title}</b>',
-        size_max=60
-    )
-    
-    # Add quadrant lines
-    fig.add_hline(y=0.5, line_dash="dash", line_color=PERFORMANCE_COLORS['neutral'], opacity=0.5)
-    fig.add_vline(x=0.5, line_dash="dash", line_color=PERFORMANCE_COLORS['neutral'], opacity=0.5)
-    
-    # Add quadrant labels
-    quadrant_labels = [
-        dict(x=0.75, y=0.75, text="🚀 Yüksek Potansiyel", showarrow=False, font=dict(size=12, color="#10B981")),
-        dict(x=0.75, y=0.25, text="🎯 Büyüme Hedefi", showarrow=False, font=dict(size=12, color="#F59E0B")),
-        dict(x=0.25, y=0.75, text="🛡️ Koruma Alanı", showarrow=False, font=dict(size=12, color="#3B82F6")),
-        dict(x=0.25, y=0.25, text="👁️ İzleme Alanı", showarrow=False, font=dict(size=12, color="#64748B"))
+    # Tarih Seçenekleri
+    DATE_OPTIONS = [
+        "Tüm Veriler",
+        "Son 3 Ay",
+        "Son 6 Ay",
+        "Son 1 Yıl",
+        "2025",
+        "2024",
+        "Özel Aralık"
     ]
     
-    fig.update_layout(
-        height=600,
-        plot_bgcolor='rgba(15, 23, 41, 0.9)',
-        paper_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='#e2e8f0', family='Inter'),
-        title=dict(
-            text=f'<b>{title}</b>',
-            font=dict(size=22, color='white'),
-            x=0.5
-        ),
-        xaxis=dict(
-            title='<b>Pazar Büyüklüğü →</b>',
-            gridcolor='rgba(59, 130, 246, 0.1)',
-            zeroline=False,
-            tickformat=',.0%'
-        ),
-        yaxis=dict(
-            title='<b>Pazar Payı ↑</b>',
-            gridcolor='rgba(59, 130, 246, 0.1)',
-            zeroline=False,
-            tickformat=',.0%'
-        ),
-        legend=dict(
-            title='<b>Quadrant</b>',
-            bgcolor='rgba(30, 41, 59, 0.8)',
-            bordercolor='rgba(59, 130, 246, 0.3)',
-            borderwidth=1
-        ),
-        annotations=quadrant_labels
-    )
-    
-    return fig
-
-def create_mckinsey_trend_analysis(monthly_df, window=3):
-    """
-    McKinsey-style trend analysis with moving average and confidence bands
-    """
-    df = monthly_df.copy()
-    
-    # Calculate moving averages
-    df[f'MA_{window}'] = df['PF_Satis'].rolling(window=window, min_periods=1).mean()
-    df[f'MA_Std_{window}'] = df['PF_Satis'].rolling(window=window, min_periods=1).std()
-    
-    fig = go.Figure()
-    
-    # Confidence band
-    fig.add_trace(go.Scatter(
-        x=df['DATE'],
-        y=df[f'MA_{window}'] + df[f'MA_Std_{window}'],
-        mode='lines',
-        line=dict(width=0),
-        showlegend=False,
-        name='Upper Bound'
-    ))
-    
-    fig.add_trace(go.Scatter(
-        x=df['DATE'],
-        y=df[f'MA_{window}'] - df[f'MA_Std_{window}'],
-        mode='lines',
-        line=dict(width=0),
-        fill='tonexty',
-        fillcolor='rgba(59, 130, 246, 0.1)',
-        showlegend=False,
-        name='Lower Bound'
-    ))
-    
-    # Actual data
-    fig.add_trace(go.Scatter(
-        x=df['DATE'],
-        y=df['PF_Satis'],
-        mode='lines+markers',
-        name='Gerçek Satış',
-        line=dict(
-            color=PERFORMANCE_COLORS['success'],
-            width=2,
-            dash='solid'
-        ),
-        marker=dict(
-            size=6,
-            color='white',
-            line=dict(width=1, color=PERFORMANCE_COLORS['success'])
-        )
-    ))
-    
-    # Moving average
-    fig.add_trace(go.Scatter(
-        x=df['DATE'],
-        y=df[f'MA_{window}'],
-        mode='lines',
-        name=f'{window}-Aylık Hareketli Ortalama',
-        line=dict(
-            color=PERFORMANCE_COLORS['warning'],
-            width=3,
-            dash='dash'
-        )
-    ))
-    
-    # Trend line (linear regression)
-    if len(df) >= 3:
-        x_numeric = np.arange(len(df))
-        trend_coef = np.polyfit(x_numeric, df['PF_Satis'], 1)
-        trend_line = np.poly1d(trend_coef)(x_numeric)
-        
-        fig.add_trace(go.Scatter(
-            x=df['DATE'],
-            y=trend_line,
-            mode='lines',
-            name='Trend Çizgisi',
-            line=dict(
-                color=PERFORMANCE_COLORS['danger'],
-                width=2,
-                dash='dot'
-            )
-        ))
-    
-    fig.update_layout(
-        title=dict(
-            text='<b>Trend Analizi & Hareketli Ortalamalar</b>',
-            font=dict(size=20, color='white'),
-            x=0.5
-        ),
-        xaxis_title='<b>Tarih</b>',
-        yaxis_title='<b>PF Satış</b>',
-        height=500,
-        hovermode='x unified',
-        plot_bgcolor='rgba(0,0,0,0)',
-        paper_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='#e2e8f0', family='Inter'),
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="right",
-            x=1,
-            bgcolor='rgba(30, 41, 59, 0.8)',
-            bordercolor='rgba(59, 130, 246, 0.3)',
-            borderwidth=1
-        ),
-        xaxis=dict(
-            gridcolor='rgba(59, 130, 246, 0.1)',
-            linecolor='rgba(59, 130, 246, 0.3)'
-        ),
-        yaxis=dict(
-            gridcolor='rgba(59, 130, 246, 0.1)',
-            linecolor='rgba(59, 130, 246, 0.3)',
-            tickformat=',.0f'
-        )
-    )
-    
-    return fig
-
-def create_modern_forecast_chart(historical_df, forecast_df):
-    """Modern tahmin grafiği - McKinsey tarzı"""
-    fig = go.Figure()
-    
-    # Gerçek veri
-    fig.add_trace(go.Scatter(
-        x=historical_df['DATE'],
-        y=historical_df['PF_Satis'],
-        mode='lines+markers',
-        name='Gerçek Satış',
-        line=dict(
-            color=PERFORMANCE_COLORS['success'],
-            width=3,
-            shape='spline'
-        ),
-        marker=dict(
-            size=8,
-            color='white',
-            line=dict(width=2, color=PERFORMANCE_COLORS['success'])
-        ),
-        fill='tozeroy',
-        fillcolor='rgba(16, 185, 129, 0.1)'
-    ))
-    
-    # Tahmin
-    if forecast_df is not None and len(forecast_df) > 0:
-        fig.add_trace(go.Scatter(
-            x=forecast_df['DATE'],
-            y=forecast_df['PF_Satis'],
-            mode='lines+markers',
-            name='Tahmin',
-            line=dict(
-                color=PERFORMANCE_COLORS['info'],
-                width=3,
-                dash='dash',
-                shape='spline'
-            ),
-            marker=dict(
-                size=10,
-                symbol='diamond',
-                color='white',
-                line=dict(width=2, color=PERFORMANCE_COLORS['info'])
-            ),
-            fill='tozeroy',
-            fillcolor='rgba(59, 130, 246, 0.1)'
-        ))
-    
-    # McKinsey tarzı layout
-    fig.update_layout(
-        title=dict(
-            text='<b>Satış Trendi ve ML Tahmin</b>',
-            font=dict(size=20, color='white', family='Inter')
-        ),
-        xaxis_title='<b>Tarih</b>',
-        yaxis_title='<b>PF Satış</b>',
-        height=500,
-        hovermode='x unified',
-        plot_bgcolor='rgba(0,0,0,0)',
-        paper_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='#e2e8f0', family='Inter'),
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="right",
-            x=1,
-            bgcolor='rgba(30, 41, 59, 0.8)',
-            bordercolor='rgba(59, 130, 246, 0.3)',
-            borderwidth=1
-        ),
-        xaxis=dict(
-            gridcolor='rgba(59, 130, 246, 0.1)',
-            linecolor='rgba(59, 130, 246, 0.3)',
-            showgrid=True
-        ),
-        yaxis=dict(
-            gridcolor='rgba(59, 130, 246, 0.1)',
-            linecolor='rgba(59, 130, 246, 0.3)',
-            showgrid=True,
-            tickformat=',.0f'
-        )
-    )
-    
-    return fig
-
-def create_modern_competitor_chart(comp_data):
-    """Modern rakip karşılaştırma - McKinsey tarzı"""
-    fig = go.Figure()
-    
-    # PF Satış
-    fig.add_trace(go.Bar(
-        x=comp_data['YIL_AY'],
-        y=comp_data['PF'],
-        name='PF',
-        marker_color=PERFORMANCE_COLORS['success'],
-        marker=dict(
-            line=dict(width=2, color='rgba(255, 255, 255, 0.8)')
-        ),
-        text=[format_number(x) for x in comp_data['PF']],
-        textposition='auto',
-    ))
-    
-    # Rakip Satış
-    fig.add_trace(go.Bar(
-        x=comp_data['YIL_AY'],
-        y=comp_data['Rakip'],
-        name='Rakip',
-        marker_color=PERFORMANCE_COLORS['danger'],
-        marker=dict(
-            line=dict(width=2, color='rgba(255, 255, 255, 0.8)')
-        ),
-        text=[format_number(x) for x in comp_data['Rakip']],
-        textposition='auto',
-    ))
-    
-    fig.update_layout(
-        title=dict(
-            text='<b>PF vs Rakip Satış Karşılaştırması</b>',
-            font=dict(size=20, color='white', family='Inter')
-        ),
-        xaxis_title='<b>Ay</b>',
-        yaxis_title='<b>Satış</b>',
-        barmode='group',
-        height=500,
-        plot_bgcolor='rgba(0,0,0,0)',
-        paper_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='#e2e8f0', family='Inter'),
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="right",
-            x=1,
-            bgcolor='rgba(30, 41, 59, 0.8)'
-        ),
-        xaxis=dict(
-            gridcolor='rgba(59, 130, 246, 0.1)'
-        ),
-        yaxis=dict(
-            gridcolor='rgba(59, 130, 246, 0.1)',
-            tickformat=',.0f'
-        )
-    )
-    
-    return fig
-
-def create_modern_growth_chart(comp_data):
-    """Modern büyüme grafiği - McKinsey tarzı"""
-    fig = go.Figure()
-    
-    # PF Büyüme
-    fig.add_trace(go.Scatter(
-        x=comp_data['YIL_AY'],
-        y=comp_data['PF_Buyume'],
-        mode='lines+markers',
-        name='PF Büyüme',
-        line=dict(
-            color=PERFORMANCE_COLORS['success'],
-            width=3,
-            shape='spline'
-        ),
-        marker=dict(
-            size=8,
-            color='white',
-            line=dict(width=2, color=PERFORMANCE_COLORS['success'])
-        ),
-        fill='tozeroy',
-        fillcolor='rgba(16, 185, 129, 0.15)'
-    ))
-    
-    # Rakip Büyüme
-    fig.add_trace(go.Scatter(
-        x=comp_data['YIL_AY'],
-        y=comp_data['Rakip_Buyume'],
-        mode='lines+markers',
-        name='Rakip Büyüme',
-        line=dict(
-            color=PERFORMANCE_COLORS['danger'],
-            width=3,
-            shape='spline'
-        ),
-        marker=dict(
-            size=8,
-            color='white',
-            line=dict(width=2, color=PERFORMANCE_COLORS['danger'])
-        ),
-        fill='tozeroy',
-        fillcolor='rgba(239, 68, 68, 0.15)'
-    ))
-    
-    fig.add_hline(
-        y=0, 
-        line_dash="dash", 
-        line_color=PERFORMANCE_COLORS['neutral'], 
-        opacity=0.5,
-        line_width=2
-    )
-    
-    fig.update_layout(
-        title=dict(
-            text='<b>Büyüme Oranları Karşılaştırması</b>',
-            font=dict(size=20, color='white', family='Inter')
-        ),
-        xaxis_title='<b>Ay</b>',
-        yaxis_title='<b>Büyüme (%)</b>',
-        height=500,
-        plot_bgcolor='rgba(0,0,0,0)',
-        paper_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='#e2e8f0', family='Inter'),
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="right",
-            x=1,
-            bgcolor='rgba(30, 41, 59, 0.8)'
-        ),
-        xaxis=dict(
-            gridcolor='rgba(59, 130, 246, 0.1)'
-        ),
-        yaxis=dict(
-            gridcolor='rgba(59, 130, 246, 0.1)',
-            ticksuffix='%'
-        )
-    )
-    
-    return fig
-
-def create_modern_bcg_chart(bcg_df):
-    """Modern BCG Matrix - McKinsey tarzı"""
-    fig = px.scatter(
-        bcg_df,
-        x='Goreceli_Pazar_Payi',
-        y='Pazar_Buyume_%',
-        size='PF_Satis',
-        color='BCG_Kategori',
-        color_discrete_map=BCG_COLORS,
-        hover_name='Territory',
-        hover_data={
-            'Region': True,
-            'PF_Satis': ':,.0f',
-            'Pazar_Payi_%': ':.1f',
-            'Goreceli_Pazar_Payi': ':.2f',
-            'Pazar_Buyume_%': ':.1f'
-        },
-        labels={
-            'Goreceli_Pazar_Payi': '<b>Göreceli Pazar Payı</b>',
-            'Pazar_Buyume_%': '<b>Pazar Büyüme Oranı (%)</b>'
-        },
-        size_max=60
-    )
-    
-    median_share = bcg_df['Goreceli_Pazar_Payi'].median()
-    median_growth = bcg_df['Pazar_Buyume_%'].median()
-    
-    fig.add_hline(
-        y=median_growth, 
-        line_dash="dash", 
-        line_color=PERFORMANCE_COLORS['neutral'], 
-        opacity=0.5,
-        line_width=2
-    )
-    fig.add_vline(
-        x=median_share, 
-        line_dash="dash", 
-        line_color=PERFORMANCE_COLORS['neutral'], 
-        opacity=0.5,
-        line_width=2
-    )
-    
-    fig.update_layout(
-        title=dict(
-            text='<b>BCG Matrix - Stratejik Konumlandırma</b>',
-            font=dict(size=22, color='white', family='Inter')
-        ),
-        height=650,
-        plot_bgcolor='rgba(15, 23, 41, 0.9)',
-        paper_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='#e2e8f0', family='Inter'),
-        legend=dict(
-            title='<b>BCG Kategorisi</b>',
-            bgcolor='rgba(30, 41, 59, 0.8)',
-            bordercolor='rgba(59, 130, 246, 0.3)',
-            borderwidth=1
-        ),
-        xaxis=dict(
-            gridcolor='rgba(59, 130, 246, 0.1)',
-            linecolor='rgba(59, 130, 246, 0.3)'
-        ),
-        yaxis=dict(
-            gridcolor='rgba(59, 130, 246, 0.1)',
-            linecolor='rgba(59, 130, 246, 0.3)',
-            ticksuffix='%'
-        )
-    )
-    
-    return fig
-
-# =============================================================================
-# ML FEATURE ENGINEERING
-# =============================================================================
-
-def create_ml_features(df):
-    """ML için feature oluştur"""
-    df = df.copy()
-    df = df.sort_values('DATE').reset_index(drop=True)
-    
-    # Lag features
-    df['lag_1'] = df['PF_Satis'].shift(1)
-    df['lag_2'] = df['PF_Satis'].shift(2)
-    df['lag_3'] = df['PF_Satis'].shift(3)
-    
-    # Rolling features
-    df['rolling_mean_3'] = df['PF_Satis'].rolling(window=3, min_periods=1).mean()
-    df['rolling_mean_6'] = df['PF_Satis'].rolling(window=6, min_periods=1).mean()
-    df['rolling_std_3'] = df['PF_Satis'].rolling(window=3, min_periods=1).std()
-    
-    # Date features
-    df['month'] = df['DATE'].dt.month
-    df['quarter'] = df['DATE'].dt.quarter
-    df['month_sin'] = np.sin(2 * np.pi * df['month'] / 12)
-    df['month_cos'] = np.cos(2 * np.pi * df['month'] / 12)
-    df['trend_index'] = range(len(df))
-    
-    # Fill NaN
-    df = df.fillna(method='bfill').fillna(0)
-    
-    return df
-
-def train_ml_models(df, forecast_periods=3):
-    """GERÇEK ML modelleri ile tahmin"""
-    df_features = create_ml_features(df)
-    
-    if len(df_features) < 10:
-        return None, None, None
-    
-    feature_cols = ['lag_1', 'lag_2', 'lag_3', 'rolling_mean_3', 'rolling_mean_6',
-                    'rolling_std_3', 'month', 'quarter', 'month_sin', 'month_cos', 'trend_index']
-    
-    # Train/Test split (zaman bazlı)
-    split_idx = int(len(df_features) * 0.8)
-    
-    train_df = df_features.iloc[:split_idx]
-    test_df = df_features.iloc[split_idx:]
-    
-    X_train = train_df[feature_cols]
-    y_train = train_df['PF_Satis']
-    X_test = test_df[feature_cols]
-    y_test = test_df['PF_Satis']
-    
-    # Modeller
-    models = {
-        'Linear Regression': LinearRegression(),
-        'Ridge Regression': Ridge(alpha=1.0),
-        'Random Forest': RandomForestRegressor(n_estimators=100, random_state=42, max_depth=5)
+    # ML Model Parametreleri
+    ML_PARAMS = {
+        "forecast_periods": 3,
+        "test_size": 0.2,
+        "random_state": 42,
+        "n_estimators": 100,
+        "max_depth": 5,
+        "ridge_alpha": 1.0
     }
+
+
+# =============================================================================
+# SOYUT TEMEL SINIFLAR
+# =============================================================================
+
+class BaseDataProcessor(ABC):
+    """Veri işleme için soyut temel sınıf"""
     
-    results = {}
+    @abstractmethod
+    def process(self, data: pd.DataFrame) -> pd.DataFrame:
+        pass
+
+
+class BaseVisualizer(ABC):
+    """Görselleştirme için soyut temel sınıf"""
     
-    for name, model in models.items():
-        model.fit(X_train, y_train)
-        y_pred = model.predict(X_test)
+    @abstractmethod
+    def create_visualization(self, data: pd.DataFrame, **kwargs) -> go.Figure:
+        pass
+
+
+class BaseAnalyzer(ABC):
+    """Analiz için soyut temel sınıf"""
+    
+    @abstractmethod
+    def analyze(self, data: pd.DataFrame) -> Dict[str, Any]:
+        pass
+
+
+# =============================================================================
+# ŞEHİR NORMALİZASYON SINIFI
+# =============================================================================
+
+class CityNormalizer:
+    """
+    Şehir isimlerini normalleştirir ve standardize eder.
+    Türkiye'nin 81 ili için tüm yazım varyasyonlarını işler.
+    """
+    
+    def __init__(self):
+        self.config = AppConfig()
+        self._setup_normalization_maps()
+    
+    def _setup_normalization_maps(self) -> None:
+        """Normalizasyon haritalarını kur"""
+        self.city_map = self.config.CITY_NORMALIZATION_MAP
         
-        mae = mean_absolute_error(y_test, y_pred)
-        rmse = np.sqrt(mean_squared_error(y_test, y_pred))
-        mape = np.mean(np.abs((y_test - y_pred) / y_test)) * 100
-        
-        results[name] = {
-            'model': model,
-            'MAE': mae,
-            'RMSE': rmse,
-            'MAPE': mape
+        # Türkçe karakter dönüşümü
+        self.turkish_char_map = {
+            "İ": "I", "Ğ": "G", "Ü": "U", "Ş": "S", 
+            "Ö": "O", "Ç": "C", "Â": "A", "Î": "I", "Û": "U"
         }
     
-    # En iyi model (MAPE'e göre)
-    best_model_name = min(results.keys(), key=lambda x: results[x]['MAPE'])
-    best_model = results[best_model_name]['model']
-    
-    # Gelecek tahmin
-    forecast_data = []
-    last_row = df_features.iloc[-1:].copy()
-    
-    for i in range(forecast_periods):
-        next_date = last_row['DATE'].values[0] + pd.DateOffset(months=1)
-        X_future = last_row[feature_cols]
-        next_pred = best_model.predict(X_future)[0]
+    def normalize(self, city_name: str) -> str:
+        """
+        Şehir ismini normalize eder
         
-        forecast_data.append({
-            'DATE': next_date,
-            'YIL_AY': pd.to_datetime(next_date).strftime('%Y-%m'),
-            'PF_Satis': max(0, next_pred),
-            'Model': best_model_name
-        })
+        Args:
+            city_name (str): Normalize edilecek şehir ismi
+            
+        Returns:
+            str: Normalize edilmiş şehir ismi
+        """
+        if pd.isna(city_name):
+            return "Bilinmeyen"
         
-        # Güncelle
-        new_row = last_row.copy()
-        new_row['DATE'] = next_date
-        new_row['PF_Satis'] = next_pred
-        new_row['lag_1'] = last_row['PF_Satis'].values[0]
-        new_row['lag_2'] = last_row['lag_1'].values[0]
-        new_row['lag_3'] = last_row['lag_2'].values[0]
-        new_row['rolling_mean_3'] = (new_row['lag_1'] + new_row['lag_2'] + new_row['lag_3']) / 3
-        new_row['month'] = pd.to_datetime(next_date).month
-        new_row['quarter'] = pd.to_datetime(next_date).quarter
-        new_row['month_sin'] = np.sin(2 * np.pi * new_row['month'] / 12)
-        new_row['month_cos'] = np.cos(2 * np.pi * new_row['month'] / 12)
-        new_row['trend_index'] = last_row['trend_index'].values[0] + 1
+        try:
+            # String'e çevir ve temizle
+            city_str = str(city_name).strip().upper()
+            
+            # Doğrudan eşleşme
+            if city_str in self.city_map:
+                return self.city_map[city_str]
+            
+            # Türkçe karakterleri dönüştür
+            for turkish_char, latin_char in self.turkish_char_map.items():
+                city_str = city_str.replace(turkish_char, latin_char)
+            
+            # Normalize edilmiş eşleşme
+            if city_str in self.city_map:
+                return self.city_map[city_str]
+            
+            # Kısmi eşleşme kontrolü
+            for key, value in self.city_map.items():
+                if city_str in key or key in city_str:
+                    return value
+            
+            return city_str
+            
+        except Exception as e:
+            logging.warning(f"Şehir normalizasyon hatası: {e}, Şehir: {city_name}")
+            return city_name
+    
+    def normalize_dataframe(self, df: pd.DataFrame, column_name: str = "CITY") -> pd.DataFrame:
+        """
+        DataFrame'deki şehir kolonunu normalize eder
         
-        last_row = new_row
-    
-    forecast_df = pd.DataFrame(forecast_data)
-    
-    return results, best_model_name, forecast_df
+        Args:
+            df (pd.DataFrame): İşlenecek DataFrame
+            column_name (str): Şehir kolonu adı
+            
+        Returns:
+            pd.DataFrame: Normalize edilmiş DataFrame
+        """
+        df = df.copy()
+        
+        if column_name in df.columns:
+            df[f"{column_name}_NORMALIZED"] = df[column_name].apply(self.normalize)
+        
+        return df
+
 
 # =============================================================================
-# ANALYSIS FUNCTIONS
+# VERİ İŞLEYİCİ SINIFI
 # =============================================================================
 
-def calculate_city_performance(df, product, date_filter=None):
-    """Şehir bazlı performans"""
-    cols = get_product_columns(product)
-    
-    if date_filter:
-        df = df[(df['DATE'] >= date_filter[0]) & (df['DATE'] <= date_filter[1])]
-    
-    city_perf = df.groupby(['CITY_NORMALIZED', 'REGION']).agg({
-        cols['pf']: 'sum',
-        cols['rakip']: 'sum'
-    }).reset_index()
-    
-    city_perf.columns = ['City', 'Region', 'PF_Satis', 'Rakip_Satis']
-    city_perf['Toplam_Pazar'] = city_perf['PF_Satis'] + city_perf['Rakip_Satis']
-    city_perf['Pazar_Payi_%'] = safe_divide(city_perf['PF_Satis'], city_perf['Toplam_Pazar']) * 100
-    
-    # Bölge isimlerini düzelt
-    city_perf['Bölge'] = city_perf['Region']
-    
-    return city_perf
-
-def calculate_territory_performance(df, product, date_filter=None):
-    """Territory bazlı performans"""
-    cols = get_product_columns(product)
-    
-    if date_filter:
-        df = df[(df['DATE'] >= date_filter[0]) & (df['DATE'] <= date_filter[1])]
-    
-    terr_perf = df.groupby(['TERRITORIES', 'REGION', 'CITY', 'MANAGER']).agg({
-        cols['pf']: 'sum',
-        cols['rakip']: 'sum'
-    }).reset_index()
-    
-    terr_perf.columns = ['Territory', 'Region', 'City', 'Manager', 'PF_Satis', 'Rakip_Satis']
-    terr_perf['Toplam_Pazar'] = terr_perf['PF_Satis'] + terr_perf['Rakip_Satis']
-    terr_perf['Pazar_Payi_%'] = safe_divide(terr_perf['PF_Satis'], terr_perf['Toplam_Pazar']) * 100
-    
-    total_pf = terr_perf['PF_Satis'].sum()
-    terr_perf['Agirlik_%'] = safe_divide(terr_perf['PF_Satis'], total_pf) * 100
-    
-    # TOPLAM PAZAR YÜZDESİ HESAPLA
-    total_market_all = terr_perf['Toplam_Pazar'].sum()
-    terr_perf['Toplam_Pazar_%'] = safe_divide(terr_perf['Toplam_Pazar'], total_market_all) * 100
-    
-    terr_perf['Goreceli_Pazar_Payi'] = safe_divide(terr_perf['PF_Satis'], terr_perf['Rakip_Satis'])
-    
-    return terr_perf.sort_values('PF_Satis', ascending=False)
-
-def calculate_time_series(df, product, territory=None, date_filter=None):
-    """Zaman serisi"""
-    cols = get_product_columns(product)
-    
-    df_filtered = df.copy()
-    if territory and territory != "TÜMÜ":
-        df_filtered = df_filtered[df_filtered['TERRITORIES'] == territory]
-    
-    if date_filter:
-        df_filtered = df_filtered[(df_filtered['DATE'] >= date_filter[0]) & 
-                                   (df_filtered['DATE'] <= date_filter[1])]
-    
-    monthly = df_filtered.groupby('YIL_AY').agg({
-        cols['pf']: 'sum',
-        cols['rakip']: 'sum',
-        'DATE': 'first'
-    }).reset_index().sort_values('YIL_AY')
-    
-    monthly.columns = ['YIL_AY', 'PF_Satis', 'Rakip_Satis', 'DATE']
-    monthly['Toplam_Pazar'] = monthly['PF_Satis'] + monthly['Rakip_Satis']
-    monthly['Pazar_Payi_%'] = safe_divide(monthly['PF_Satis'], monthly['Toplam_Pazar']) * 100
-    monthly['PF_Buyume_%'] = monthly['PF_Satis'].pct_change() * 100
-    monthly['Rakip_Buyume_%'] = monthly['Rakip_Satis'].pct_change() * 100
-    monthly['Goreceli_Buyume_%'] = monthly['PF_Buyume_%'] - monthly['Rakip_Buyume_%']
-    monthly['MA_3'] = monthly['PF_Satis'].rolling(window=3, min_periods=1).mean()
-    monthly['MA_6'] = monthly['PF_Satis'].rolling(window=6, min_periods=1).mean()
-    
-    return monthly
-
-def calculate_competitor_analysis(df, product, date_filter=None):
-    """Rakip analizi"""
-    cols = get_product_columns(product)
-    
-    if date_filter:
-        df = df[(df['DATE'] >= date_filter[0]) & (df['DATE'] <= date_filter[1])]
-    
-    monthly = df.groupby('YIL_AY').agg({
-        cols['pf']: 'sum',
-        cols['rakip']: 'sum'
-    }).reset_index().sort_values('YIL_AY')
-    
-    monthly.columns = ['YIL_AY', 'PF', 'Rakip']
-    monthly['PF_Pay_%'] = (monthly['PF'] / (monthly['PF'] + monthly['Rakip'])) * 100
-    monthly['Rakip_Pay_%'] = 100 - monthly['PF_Pay_%']
-    monthly['PF_Buyume'] = monthly['PF'].pct_change() * 100
-    monthly['Rakip_Buyume'] = monthly['Rakip'].pct_change() * 100
-    monthly['Fark'] = monthly['PF_Buyume'] - monthly['Rakip_Buyume']
-    
-    return monthly
-
-def calculate_bcg_matrix(df, product, date_filter=None):
-    """BCG Matrix"""
-    cols = get_product_columns(product)
-    
-    if date_filter:
-        df_filtered = df[(df['DATE'] >= date_filter[0]) & (df['DATE'] <= date_filter[1])]
-    else:
-        df_filtered = df.copy()
-    
-    terr_perf = calculate_territory_performance(df_filtered, product)
-    
-    df_sorted = df_filtered.sort_values('DATE')
-    mid_point = len(df_sorted) // 2
-    
-    first_half = df_sorted.iloc[:mid_point].groupby('TERRITORIES')[cols['pf']].sum()
-    second_half = df_sorted.iloc[mid_point:].groupby('TERRITORIES')[cols['pf']].sum()
-    
-    growth_rate = {}
-    for terr in first_half.index:
-        if terr in second_half.index and first_half[terr] > 0:
-            growth_rate[terr] = ((second_half[terr] - first_half[terr]) / first_half[terr]) * 100
-        else:
-            growth_rate[terr] = 0
-    
-    terr_perf['Pazar_Buyume_%'] = terr_perf['Territory'].map(growth_rate).fillna(0)
-    
-    median_share = terr_perf['Goreceli_Pazar_Payi'].median()
-    median_growth = terr_perf['Pazar_Buyume_%'].median()
-    
-    def assign_bcg(row):
-        if row['Goreceli_Pazar_Payi'] >= median_share and row['Pazar_Buyume_%'] >= median_growth:
-            return "⭐ Star"
-        elif row['Goreceli_Pazar_Payi'] >= median_share and row['Pazar_Buyume_%'] < median_growth:
-            return "🐄 Cash Cow"
-        elif row['Goreceli_Pazar_Payi'] < median_share and row['Pazar_Buyume_%'] >= median_growth:
-            return "❓ Question Mark"
-        else:
-            return "🐶 Dog"
-    
-    terr_perf['BCG_Kategori'] = terr_perf.apply(assign_bcg, axis=1)
-    
-    return terr_perf
-
-# =============================================================================
-# YATIRIM STRATEJİSİ - GELİŞTİRİLMİŞ ALGORİTMA
-# =============================================================================
-
-def calculate_investment_strategy(city_perf):
+class DataProcessor(BaseDataProcessor):
     """
-    Geliştirilmiş Yatırım Stratejisi Algoritması
+    Veri temizleme, dönüştürme ve hazırlama işlemlerini yönetir
     """
-    df = city_perf.copy()
-    df = df[df['PF_Satis'] > 0]
     
-    if len(df) == 0:
+    def __init__(self):
+        self.config = AppConfig()
+        self.city_normalizer = CityNormalizer()
+    
+    def process(self, data: pd.DataFrame) -> pd.DataFrame:
+        """
+        Ham veriyi analize hazır hale getirir
+        
+        Args:
+            data (pd.DataFrame): Ham veri
+            
+        Returns:
+            pd.DataFrame: İşlenmiş veri
+        """
+        try:
+            df = data.copy()
+            
+            # Temel temizlik
+            df = self._clean_basic(df)
+            
+            # Tarih işlemleri
+            df = self._process_dates(df)
+            
+            # Şehir normalizasyonu
+            df = self.city_normalizer.normalize_dataframe(df)
+            
+            # Metin kolonlarını standartlaştır
+            df = self._standardize_text_columns(df)
+            
+            # Hareketli ortalamaları hesapla
+            df = self._calculate_moving_averages(df)
+            
+            # Yıllık büyümeyi hesapla
+            df = self._calculate_yoy_growth(df)
+            
+            return df
+            
+        except Exception as e:
+            logging.error(f"Veri işleme hatası: {e}")
+            raise
+    
+    def _clean_basic(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Temel veri temizliği"""
+        # Boş değerleri temizle
+        df = df.dropna(subset=['DATE', 'TERRITORIES', 'CITY'])
+        
+        # Sayısal kolonları doldur
+        numeric_cols = df.select_dtypes(include=[np.number]).columns
+        df[numeric_cols] = df[numeric_cols].fillna(0)
+        
         return df
     
-    # 1. PAZAR BÜYÜKLÜĞÜ SEGMENTİ
-    try:
-        df["Pazar_Büyüklüğü"] = pd.qcut(
-            df["Toplam_Pazar"], 
-            q=3, 
-            labels=["Küçük", "Orta", "Büyük"],
-            duplicates='drop'
-        )
-    except:
-        df["Pazar_Büyüklüğü"] = "Orta"
-    
-    # 2. PERFORMANS SEGMENTİ
-    try:
-        df["Performans"] = pd.qcut(
-            df["PF_Satis"], 
-            q=3, 
-            labels=["Düşük", "Orta", "Yüksek"],
-            duplicates='drop'
-        )
-    except:
-        df["Performans"] = "Orta"
-    
-    # 3. PAZAR PAYI SEGMENTİ
-    try:
-        df["Pazar_Payı_Segment"] = pd.qcut(
-            df["Pazar_Payi_%"], 
-            q=3, 
-            labels=["Düşük", "Orta", "Yüksek"],
-            duplicates='drop'
-        )
-    except:
-        df["Pazar_Payı_Segment"] = "Orta"
-    
-    # 4. BÜYÜME POTANSİYELİ
-    df["Büyüme_Alanı"] = df["Toplam_Pazar"] - df["PF_Satis"]
-    try:
-        df["Büyüme_Potansiyeli"] = pd.qcut(
-            df["Büyüme_Alanı"],
-            q=3,
-            labels=["Düşük", "Orta", "Yüksek"],
-            duplicates='drop'
-        )
-    except:
-        df["Büyüme_Potansiyeli"] = "Orta"
-    
-    # 5. STRATEJİ ATAMA
-    def assign_strategy(row):
-        pazar_buyuklugu = str(row["Pazar_Büyüklüğü"])
-        pazar_payi = str(row["Pazar_Payı_Segment"])
-        buyume_potansiyeli = str(row["Büyüme_Potansiyeli"])
-        performans = str(row["Performans"])
+    def _process_dates(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Tarih işlemleri"""
+        df['DATE'] = pd.to_datetime(df['DATE'], errors='coerce')
+        df['YIL_AY'] = df['DATE'].dt.strftime('%Y-%m')
+        df['AY'] = df['DATE'].dt.month
+        df['YIL'] = df['DATE'].dt.year
+        df['QUARTER'] = df['DATE'].dt.quarter
+        df['HAFTA'] = df['DATE'].dt.isocalendar().week
         
+        return df
+    
+    def _standardize_text_columns(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Metin kolonlarını standartlaştır"""
+        text_columns = ['TERRITORIES', 'REGION', 'MANAGER']
+        
+        for col in text_columns:
+            if col in df.columns:
+                df[col] = df[col].astype(str).str.upper().str.strip()
+        
+        return df
+    
+    def _calculate_moving_averages(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Hareketli ortalamaları hesapla"""
+        # Ürün kolonlarını bul
+        product_cols = []
+        for product in self.config.PRODUCT_COLUMN_MAP:
+            cols = self.config.PRODUCT_COLUMN_MAP[product]
+            product_cols.extend([cols['pf'], cols['rakip']])
+        
+        # Benzersiz kolonları al
+        product_cols = list(set(product_cols))
+        
+        # Her territory için hareketli ortalama hesapla
+        for col in product_cols:
+            if col in df.columns:
+                df[f'{col}_MA3'] = df.groupby('TERRITORIES')[col].transform(
+                    lambda x: x.rolling(window=3, min_periods=1).mean()
+                )
+                df[f'{col}_MA6'] = df.groupby('TERRITORIES')[col].transform(
+                    lambda x: x.rolling(window=6, min_periods=1).mean()
+                )
+        
+        return df
+    
+    def _calculate_yoy_growth(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Yıllık büyümeyi hesapla"""
+        # Her territory ve ürün için yıllık büyüme
+        for product in self.config.PRODUCT_COLUMN_MAP:
+            cols = self.config.PRODUCT_COLUMN_MAP[product]
+            pf_col = cols['pf']
+            
+            if pf_col in df.columns:
+                # Yıllık toplamları hesapla
+                yearly_sales = df.groupby(['TERRITORIES', 'YIL'])[pf_col].sum().reset_index()
+                
+                # Yıllık büyümeyi hesapla
+                yearly_sales[f'{pf_col}_YOY'] = yearly_sales.groupby('TERRITORIES')[pf_col].pct_change() * 100
+                
+                # DataFrame'e birleştir
+                df = df.merge(
+                    yearly_sales[['TERRITORIES', 'YIL', f'{pf_col}_YOY']],
+                    on=['TERRITORIES', 'YIL'],
+                    how='left'
+                )
+        
+        return df
+
+
+# =============================================================================
+# HARİTA MOTORU SINIFI
+# =============================================================================
+
+class MapEngine(BaseVisualizer):
+    """
+    Hiyerarşik harita görselleştirmeleri oluşturur
+    """
+    
+    def __init__(self, geojson_path: str = "turkey.geojson"):
+        """
+        Args:
+            geojson_path (str): GeoJSON dosya yolu
+        """
+        self.config = AppConfig()
+        self.geojson_path = geojson_path
+        self.geojson_data = self._load_geojson()
+    
+    def _load_geojson(self) -> Optional[Dict]:
+        """GeoJSON verisini yükle"""
+        try:
+            with open(self.geojson_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception as e:
+            logging.error(f"GeoJSON yükleme hatası: {e}")
+            return None
+    
+    def create_visualization(self, 
+                           city_data: pd.DataFrame, 
+                           view_mode: str = "Bölge Görünümü",
+                           title: str = "Türkiye Satış Haritası") -> Optional[go.Figure]:
+        """
+        Harita görselleştirmesi oluşturur
+        
+        Args:
+            city_data (pd.DataFrame): Şehir bazlı veri
+            view_mode (str): Görünüm modu (Bölge/Şehir)
+            title (str): Harita başlığı
+            
+        Returns:
+            Optional[go.Figure]: Oluşturulan harita
+        """
+        if self.geojson_data is None:
+            logging.error("GeoJSON verisi yüklenemedi")
+            return None
+        
+        try:
+            # Veriyi hazırla
+            prepared_data = self._prepare_map_data(city_data)
+            
+            # Harita türüne göre oluştur
+            if view_mode == "Bölge Görünümü":
+                fig = self._create_region_map(prepared_data, title)
+            else:
+                fig = self._create_city_map(prepared_data, title)
+            
+            # Layout'u güncelle
+            fig = self._update_map_layout(fig, title)
+            
+            return fig
+            
+        except Exception as e:
+            logging.error(f"Harita oluşturma hatası: {e}")
+            return None
+    
+    def _prepare_map_data(self, city_data: pd.DataFrame) -> pd.DataFrame:
+        """Harita verisini hazırla"""
+        city_data = city_data.copy()
+        
+        # Şehir isimlerini normalleştir
+        normalizer = CityNormalizer()
+        city_data['CITY_NORMALIZED'] = city_data['City'].apply(normalizer.normalize)
+        
+        # GeoJSON'daki tüm şehirleri al
+        gdf = gpd.read_file(self.geojson_path)
+        gdf['name_upper'] = gdf['name'].str.upper()
+        
+        # Şehir isimlerini düzelt
+        for idx, row in gdf.iterrows():
+            normalized = normalizer.normalize(row['name'])
+            gdf.at[idx, 'name_normalized'] = normalized
+        
+        # Birleştir
+        merged = gdf.merge(
+            city_data,
+            left_on='name_normalized',
+            right_on='CITY_NORMALIZED',
+            how='left'
+        )
+        
+        # Eksik değerleri doldur
+        merged['PF_Satis'] = merged['PF_Satis'].fillna(0)
+        merged['Pazar_Payi_%'] = merged['Pazar_Payi_%'].fillna(0)
+        merged['Region'] = merged['Region'].fillna('DİĞER')
+        
+        # Performans skorunu hesapla
+        merged['Performance_Score'] = self._calculate_performance_score(merged)
+        
+        return merged
+    
+    def _calculate_performance_score(self, data: pd.DataFrame) -> pd.Series:
+        """Performans skorunu hesapla"""
+        # Pazar payı skoru (0-50)
+        market_share_score = np.clip(data['Pazar_Payi_%'] * 0.5, 0, 50)
+        
+        # Satış büyüklüğü skoru (0-30)
+        sales_score = np.clip(
+            np.log1p(data['PF_Satis']) / np.log1p(data['PF_Satis'].max() + 1) * 30,
+            0, 30
+        )
+        
+        # Büyüme potansiyeli skoru (0-20)
+        growth_potential = (data['Toplam_Pazar'] - data['PF_Satis']) / data['Toplam_Pazar'].clip(lower=1)
+        growth_score = np.clip(growth_potential * 20, 0, 20)
+        
+        return market_share_score + sales_score + growth_score
+    
+    def _create_region_map(self, data: pd.DataFrame, title: str) -> go.Figure:
+        """Bölge haritası oluştur"""
+        fig = go.Figure()
+        
+        # Her bölge için ayrı trace
+        for region in data['Region'].unique():
+            region_data = data[data['Region'] == region]
+            color = self.config.REGION_COLORS.get(region, self.config.COLOR_PALETTE['neutral_medium'])
+            
+            # Bölge verisini GeoJSON formatına çevir
+            region_json = json.loads(region_data.to_json())
+            
+            fig.add_trace(go.Choroplethmapbox(
+                geojson=region_json,
+                locations=region_data.index,
+                z=[1] * len(region_data),  # Sabit değer, renk için
+                colorscale=[[0, color], [1, color]],
+                marker_opacity=0.7,
+                marker_line_width=1.5,
+                marker_line_color='rgba(255, 255, 255, 0.9)',
+                showscale=False,
+                customdata=list(zip(
+                    region_data['name'],
+                    region_data['Region'],
+                    region_data['PF_Satis'],
+                    region_data['Pazar_Payi_%'],
+                    region_data['Performance_Score']
+                )),
+                hovertemplate=(
+                    "<b>%{customdata[0]}</b><br>"
+                    "Bölge: %{customdata[1]}<br>"
+                    "PF Satış: %{customdata[2]:,.0f}<br>"
+                    "Pazar Payı: %{customdata[3]:.1f}%<br>"
+                    "Performans Skoru: %{customdata[4]:.0f}/100"
+                    "<extra></extra>"
+                ),
+                name=region
+            ))
+        
+        # Bölge merkezlerine etiket ekle
+        label_data = self._calculate_region_labels(data)
+        
+        if len(label_data) > 0:
+            fig.add_trace(go.Scattermapbox(
+                lon=label_data['lon'],
+                lat=label_data['lat'],
+                mode='text',
+                text=label_data['text'],
+                textfont=dict(
+                    size=12,
+                    color='white',
+                    family='Inter, sans-serif'
+                ),
+                hoverinfo='skip',
+                showlegend=False
+            ))
+        
+        return fig
+    
+    def _calculate_region_labels(self, data: pd.DataFrame) -> pd.DataFrame:
+        """Bölge etiketlerini hesapla"""
+        labels = []
+        
+        for region in data['Region'].unique():
+            region_data = data[data['Region'] == region]
+            total_sales = region_data['PF_Satis'].sum()
+            
+            if total_sales > 0:
+                # Bölge merkezini hesapla
+                centroid = region_data.geometry.unary_union.centroid
+                
+                labels.append({
+                    'region': region,
+                    'lon': centroid.x,
+                    'lat': centroid.y,
+                    'text': f"<b>{region}</b><br>{total_sales:,.0f}",
+                    'sales': total_sales
+                })
+        
+        return pd.DataFrame(labels)
+    
+    def _create_city_map(self, data: pd.DataFrame, title: str) -> go.Figure:
+        """Şehir haritası oluştur"""
+        fig = go.Figure()
+        
+        # Performans skoruna göre renk skalası
+        max_score = data['Performance_Score'].max() if len(data) > 0 else 1
+        
+        fig.add_trace(go.Choroplethmapbox(
+            geojson=self.geojson_data,
+            locations=data.index,
+            z=data['Performance_Score'],
+            colorscale=[
+                [0, self.config.COLOR_PALETTE['danger_light']],
+                [0.5, self.config.COLOR_PALETTE['warning_medium']],
+                [1, self.config.COLOR_PALETTE['success_medium']]
+            ],
+            zmin=0,
+            zmax=max_score,
+            marker_opacity=0.8,
+            marker_line_width=1,
+            marker_line_color='rgba(255, 255, 255, 0.8)',
+            colorbar=dict(
+                title="Performans<br>Skoru",
+                titleside="right",
+                thickness=15,
+                len=0.8,
+                yanchor="middle",
+                y=0.5,
+                xanchor="left",
+                x=1.02,
+                tickformat=".0f"
+            ),
+            customdata=list(zip(
+                data['name'],
+                data['Region'],
+                data['PF_Satis'],
+                data['Pazar_Payi_%'],
+                data['Performance_Score']
+            )),
+            hovertemplate=(
+                "<b>%{customdata[0]}</b><br>"
+                "Bölge: %{customdata[1]}<br>"
+                "PF Satış: %{customdata[2]:,.0f}<br>"
+                "Pazar Payı: %{customdata[3]:.1f}%<br>"
+                "Performans Skoru: %{customdata[4]:.0f}/100"
+                "<extra></extra>"
+            )
+        ))
+        
+        # Büyük şehirlere etiket ekle
+        large_cities = data[data['PF_Satis'] > data['PF_Satis'].quantile(0.75)]
+        
+        if len(large_cities) > 0:
+            fig.add_trace(go.Scattermapbox(
+                lon=large_cities.geometry.centroid.x,
+                lat=large_cities.geometry.centroid.y,
+                mode='text',
+                text=large_cities['name'],
+                textfont=dict(
+                    size=10,
+                    color='white',
+                    family='Inter, sans-serif'
+                ),
+                hoverinfo='skip',
+                showlegend=False
+            ))
+        
+        return fig
+    
+    def _update_map_layout(self, fig: go.Figure, title: str) -> go.Figure:
+        """Harita layout'unu güncelle"""
+        fig.update_layout(
+            mapbox_style="carto-darkmatter",
+            mapbox=dict(
+                center=dict(lat=39.0, lon=35.0),
+                zoom=5,
+                bearing=0,
+                pitch=0
+            ),
+            height=700,
+            margin=dict(l=0, r=0, t=80, b=0),
+            title=dict(
+                text=f"<b>{title}</b>",
+                x=0.5,
+                font=dict(
+                    size=24,
+                    color=self.config.COLOR_PALETTE['text_primary'],
+                    family='Inter, sans-serif'
+                ),
+                y=0.95
+            ),
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            showlegend=False,
+            hoverlabel=dict(
+                bgcolor=self.config.COLOR_PALETTE['background_dark'],
+                font_size=12,
+                font_family="Inter, sans-serif",
+                font_color=self.config.COLOR_PALETTE['text_primary']
+            )
+        )
+        
+        return fig
+
+
+# =============================================================================
+# İÇGÖRÜ ÜRETİCİ SINIFI
+# =============================================================================
+
+class InsightGenerator(BaseAnalyzer):
+    """
+    Otomatik yönetici içgörüleri ve özetler oluşturur
+    """
+    
+    def __init__(self):
+        self.config = AppConfig()
+        self.thresholds = self.config.PERFORMANCE_THRESHOLDS
+    
+    def analyze(self, data: pd.DataFrame) -> Dict[str, Any]:
+        """
+        Veriyi analiz eder ve içgörüler üretir
+        
+        Args:
+            data (pd.DataFrame): Analiz edilecek veri
+            
+        Returns:
+            Dict[str, Any]: İçgörüler ve özetler
+        """
+        insights = {
+            "executive_summary": [],
+            "key_opportunities": [],
+            "key_risks": [],
+            "strategic_recommendations": [],
+            "performance_metrics": {}
+        }
+        
+        try:
+            # Temel metrikleri hesapla
+            insights["performance_metrics"] = self._calculate_basic_metrics(data)
+            
+            # İçgörüleri oluştur
+            insights["executive_summary"] = self._generate_executive_summary(data)
+            insights["key_opportunities"] = self._identify_opportunities(data)
+            insights["key_risks"] = self._identify_risks(data)
+            insights["strategic_recommendations"] = self._generate_recommendations(data)
+            
+            return insights
+            
+        except Exception as e:
+            logging.error(f"İçgörü üretme hatası: {e}")
+            return insights
+    
+    def _calculate_basic_metrics(self, data: pd.DataFrame) -> Dict[str, float]:
+        """Temel performans metriklerini hesapla"""
+        if len(data) == 0:
+            return {}
+        
+        metrics = {}
+        
+        # Toplam satışlar
+        metrics["total_pf_sales"] = data['PF_Satis'].sum()
+        metrics["total_competitor_sales"] = data['Rakip_Satis'].sum()
+        metrics["total_market"] = metrics["total_pf_sales"] + metrics["total_competitor_sales"]
+        
+        # Pazar payı
+        if metrics["total_market"] > 0:
+            metrics["market_share"] = (metrics["total_pf_sales"] / metrics["total_market"]) * 100
+        else:
+            metrics["market_share"] = 0
+        
+        # Büyüme metrikleri
+        if 'PF_Buyume_%' in data.columns:
+            metrics["avg_growth_rate"] = data['PF_Buyume_%'].mean()
+            metrics["positive_growth_months"] = len(data[data['PF_Buyume_%'] > 0])
+        
+        # Territory metrikleri
+        if 'TERRITORIES' in data.columns:
+            metrics["active_territories"] = data['TERRITORIES'].nunique()
+        
+        # Şehir metrikleri
+        if 'CITY_NORMALIZED' in data.columns:
+            metrics["active_cities"] = data['CITY_NORMALIZED'].nunique()
+        
+        return metrics
+    
+    def _generate_executive_summary(self, data: pd.DataFrame) -> List[str]:
+        """Yönetici özeti oluştur"""
+        summary = []
+        
+        if len(data) == 0:
+            return ["⚠️ Analiz için yeterli veri bulunamadı"]
+        
+        # Toplam satış özeti
+        total_pf = data['PF_Satis'].sum()
+        total_market = data['Toplam_Pazar'].sum() if 'Toplam_Pazar' in data.columns else total_pf + data['Rakip_Satis'].sum()
+        market_share = (total_pf / total_market * 100) if total_market > 0 else 0
+        
+        summary.append(f"📊 **Toplam PF Satış:** {self._format_number(total_pf)}")
+        summary.append(f"🏪 **Toplam Pazar Büyüklüğü:** {self._format_number(total_market)}")
+        summary.append(f"🎯 **Pazar Payı:** {market_share:.1f}%")
+        
+        # Büyüme özeti
+        if 'PF_Buyume_%' in data.columns:
+            avg_growth = data['PF_Buyume_%'].mean()
+            growth_trend = "📈" if avg_growth > 0 else "📉" if avg_growth < 0 else "➡️"
+            summary.append(f"{growth_trend} **Ortalama Aylık Büyüme:** {avg_growth:.1f}%")
+        
+        # Territory özeti
+        if 'TERRITORIES' in data.columns:
+            territory_count = data['TERRITORIES'].nunique()
+            summary.append(f"🏢 **Aktif Territory Sayısı:** {territory_count}")
+        
+        return summary
+    
+    def _identify_opportunities(self, data: pd.DataFrame) -> List[str]:
+        """Fırsatları belirle"""
+        opportunities = []
+        
+        if len(data) == 0:
+            return opportunities
+        
+        # Yüksek büyüme, düşük pazar payı olan şehirler
+        if 'Pazar_Payi_%' in data.columns and 'PF_Buyume_%' in data.columns:
+            high_growth_low_share = data[
+                (data['PF_Buyume_%'] > self.thresholds['growth_high']) &
+                (data['Pazar_Payi_%'] < self.thresholds['market_share_low'])
+            ]
+            
+            if len(high_growth_low_share) > 0:
+                top_opportunities = high_growth_low_share.nlargest(3, 'PF_Buyume_%')
+                for idx, row in top_opportunities.iterrows():
+                    opportunities.append(
+                        f"💎 **{row.get('City', 'Bilinmeyen')}**: Düşük pazar payı ({row['Pazar_Payi_%']:.1f}%) "
+                        f"ancak yüksek büyüme ({row['PF_Buyume_%']:.1f}%). Potansiyel 'Soru İşareti'."
+                    )
+        
+        # Büyük pazar, düşük penetrasyon
+        if 'Toplam_Pazar' in data.columns and 'Pazar_Payi_%' in data.columns:
+            large_market_low_penetration = data[
+                (data['Toplam_Pazar'] > data['Toplam_Pazar'].quantile(0.75)) &
+                (data['Pazar_Payi_%'] < self.thresholds['market_share_low'])
+            ]
+            
+            if len(large_market_low_penetration) > 0:
+                opportunities.append(
+                    f"🏙️ **{len(large_market_low_penetration)} büyük pazarda** "
+                    f"düşük penetrasyon (<{self.thresholds['market_share_low']}%) tespit edildi. "
+                    f"Agresif pazarlama potansiyeli."
+                )
+        
+        return opportunities
+    
+    def _identify_risks(self, data: pd.DataFrame) -> List[str]:
+        """Riskleri belirle"""
+        risks = []
+        
+        if len(data) == 0:
+            return risks
+        
+        # Düşen pazar payı
+        if 'Pazar_Payi_%' in data.columns and 'PF_Buyume_%' in data.columns:
+            declining_markets = data[
+                (data['Pazar_Payi_%'] > self.thresholds['market_share_high']) &
+                (data['PF_Buyume_%'] < 0)
+            ]
+            
+            if len(declining_markets) > 0:
+                risks.append(
+                    f"⚠️ **{len(declining_markets)} yüksek pazar paylı bölgede** "
+                    f"düşüş trendi tespit edildi. 'Cash Cow'ları koruma stratejisi gerekli."
+                )
+        
+        # Yüksek rakip büyümesi
+        if 'Rakip_Buyume_%' in data.columns:
+            high_competitor_growth = data[data['Rakip_Buyume_%'] > self.thresholds['growth_high']]
+            
+            if len(high_competitor_growth) > 0:
+                top_competition = high_competitor_growth.nlargest(3, 'Rakip_Buyume_%')
+                for idx, row in top_competition.iterrows():
+                    risks.append(
+                        f"🎯 **{row.get('City', 'Bilinmeyen')}**: Rakip büyümesi ({row['Rakip_Buyume_%']:.1f}%) "
+                        f"PF büyümesinden ({row.get('PF_Buyume_%', 0):.1f}%) yüksek. "
+                        f"Rakip aktivitesi izlenmeli."
+                    )
+        
+        return risks
+    
+    def _generate_recommendations(self, data: pd.DataFrame) -> List[str]:
+        """Stratejik öneriler oluştur"""
+        recommendations = []
+        
+        if len(data) == 0:
+            return recommendations
+        
+        # BCG kategorilerine göre öneriler
+        if 'BCG_Kategori' in data.columns:
+            bcg_counts = data['BCG_Kategori'].value_counts()
+            
+            if "❓ Question Mark" in bcg_counts:
+                recommendations.append(
+                    f"🚀 **{bcg_counts['❓ Question Mark']} 'Soru İşareti' territory** "
+                    f"tespit edildi. Yatırım önceliği verilmeli."
+                )
+            
+            if "🐄 Cash Cow" in bcg_counts:
+                recommendations.append(
+                    f"🛡️ **{bcg_counts['🐄 Cash Cow']} 'Cash Cow' territory** "
+                    f"mevcut. Koruma ve nakit akışı optimizasyonu önerilir."
+                )
+            
+            if "🐶 Dog" in bcg_counts:
+                recommendations.append(
+                    f"📉 **{bcg_counts['🐶 Dog']} 'Dog' territory** tespit edildi. "
+                    f"Kaynakların yeniden tahsisi değerlendirilmeli."
+                )
+        
+        # Pazar payı bazlı öneriler
+        if 'Pazar_Payi_%' in data.columns:
+            low_share_count = len(data[data['Pazar_Payi_%'] < self.thresholds['market_share_low']])
+            high_share_count = len(data[data['Pazar_Payi_%'] > self.thresholds['market_share_high']])
+            
+            if low_share_count > 0:
+                recommendations.append(
+                    f"🎯 **{low_share_count} bölgede** pazar payı <%{self.thresholds['market_share_low']}. "
+                    f"Penetrasyon artırma stratejileri uygulanmalı."
+                )
+            
+            if high_share_count > 0:
+                recommendations.append(
+                    f"🛡️ **{high_share_count} bölgede** pazar payı >%{self.thresholds['market_share_high']}. "
+                    f"Rakiplerin girişini engelleme stratejileri önerilir."
+                )
+        
+        return recommendations
+    
+    def _format_number(self, num: float) -> str:
+        """Sayıları formatla"""
+        if pd.isna(num):
+            return "0"
+        
+        try:
+            num = float(num)
+            if num == 0:
+                return "0"
+            elif abs(num) >= 1_000_000_000:
+                return f"{num/1_000_000_000:,.1f}B"
+            elif abs(num) >= 1_000_000:
+                return f"{num/1_000_000:,.1f}M"
+            elif abs(num) >= 1_000:
+                return f"{num/1_000:,.1f}K"
+            else:
+                return f"{num:,.0f}"
+        except:
+            return str(num)
+
+
+# =============================================================================
+# SATIŞ TAHMİNCİ SINIFI
+# =============================================================================
+
+class SalesForecaster:
+    """
+    Makine öğrenmesi ile satış tahminleri yapar
+    """
+    
+    def __init__(self):
+        self.config = AppConfig()
+        self.ml_params = self.config.ML_PARAMS
+        self.models = {}
+        self.results = {}
+    
+    def forecast(self, 
+                data: pd.DataFrame, 
+                target_column: str = "PF_Satis",
+                forecast_periods: int = None) -> Dict[str, Any]:
+        """
+        Satış tahmini yapar
+        
+        Args:
+            data (pd.DataFrame): Tarihsel veri
+            target_column (str): Tahmin edilecek kolon
+            forecast_periods (int): Tahmin periyodu sayısı
+            
+        Returns:
+            Dict[str, Any]: Tahmin sonuçları ve model metrikleri
+        """
+        if forecast_periods is None:
+            forecast_periods = self.ml_params["forecast_periods"]
+        
+        results = {
+            "forecast": None,
+            "model_performance": {},
+            "best_model": None,
+            "feature_importance": {}
+        }
+        
+        try:
+            # Veriyi hazırla
+            prepared_data = self._prepare_forecast_data(data, target_column)
+            
+            if len(prepared_data) < 10:
+                results["error"] = "Tahmin için yeterli veri yok (en az 10 gözlem gerekli)"
+                return results
+            
+            # Feature engineering
+            features_df = self._create_features(prepared_data, target_column)
+            
+            # Model eğitimi
+            model_results = self._train_models(features_df, target_column)
+            
+            # En iyi modeli seç
+            best_model_name = self._select_best_model(model_results)
+            results["best_model"] = best_model_name
+            results["model_performance"] = model_results
+            
+            # Tahmin yap
+            forecast = self._generate_forecast(
+                features_df, 
+                model_results[best_model_name]["model"],
+                forecast_periods
+            )
+            
+            results["forecast"] = forecast
+            
+            # Feature importance
+            if best_model_name == "Random Forest":
+                results["feature_importance"] = self._get_feature_importance(
+                    model_results[best_model_name]["model"],
+                    features_df.columns.tolist()
+                )
+            
+            return results
+            
+        except Exception as e:
+            logging.error(f"Tahmin hatası: {e}")
+            results["error"] = str(e)
+            return results
+    
+    def _prepare_forecast_data(self, data: pd.DataFrame, target_column: str) -> pd.DataFrame:
+        """Tahmin verisini hazırla"""
+        df = data.copy()
+        
+        # Tarih sıralaması
+        if 'DATE' in df.columns:
+            df = df.sort_values('DATE').reset_index(drop=True)
+        
+        # Target kolonu kontrolü
+        if target_column not in df.columns:
+            raise ValueError(f"Target kolonu '{target_column}' veride bulunamadı")
+        
+        return df
+    
+    def _create_features(self, data: pd.DataFrame, target_column: str) -> pd.DataFrame:
+        """Feature engineering"""
+        df = data.copy()
+        
+        # Lag features
+        for lag in [1, 2, 3, 6, 12]:
+            df[f'lag_{lag}'] = df[target_column].shift(lag)
+        
+        # Rolling statistics
+        df['rolling_mean_3'] = df[target_column].rolling(window=3, min_periods=1).mean()
+        df['rolling_mean_6'] = df[target_column].rolling(window=6, min_periods=1).mean()
+        df['rolling_mean_12'] = df[target_column].rolling(window=12, min_periods=1).mean()
+        df['rolling_std_3'] = df[target_column].rolling(window=3, min_periods=1).std()
+        
+        # Seasonality features
+        if 'DATE' in df.columns:
+            df['month'] = df['DATE'].dt.month
+            df['quarter'] = df['DATE'].dt.quarter
+            df['month_sin'] = np.sin(2 * np.pi * df['month'] / 12)
+            df['month_cos'] = np.cos(2 * np.pi * df['month'] / 12)
+        
+        # Trend
+        df['trend'] = np.arange(len(df))
+        
+        # YoY growth if available
+        yoy_col = f'{target_column}_YOY'
+        if yoy_col in df.columns:
+            df[yoy_col] = df[yoy_col].fillna(0)
+        
+        # Fill NaN values
+        df = df.fillna(method='bfill').fillna(method='ffill').fillna(0)
+        
+        return df
+    
+    def _train_models(self, data: pd.DataFrame, target_column: str) -> Dict[str, Dict]:
+        """ML modellerini eğit"""
+        # Feature ve target'ları ayır
+        feature_cols = [col for col in data.columns if col not in ['DATE', target_column, 'YIL_AY']]
+        X = data[feature_cols]
+        y = data[target_column]
+        
+        # Train/test split
+        split_idx = int(len(X) * (1 - self.ml_params["test_size"]))
+        
+        X_train = X.iloc[:split_idx]
+        y_train = y.iloc[:split_idx]
+        X_test = X.iloc[split_idx:]
+        y_test = y.iloc[split_idx:]
+        
+        # Model tanımları
+        models = {
+            "Linear Regression": LinearRegression(),
+            "Ridge Regression": Ridge(alpha=self.ml_params["ridge_alpha"]),
+            "Random Forest": RandomForestRegressor(
+                n_estimators=self.ml_params["n_estimators"],
+                max_depth=self.ml_params["max_depth"],
+                random_state=self.ml_params["random_state"]
+            )
+        }
+        
+        results = {}
+        
+        for name, model in models.items():
+            try:
+                # Model eğitimi
+                model.fit(X_train, y_train)
+                
+                # Tahminler
+                y_pred_train = model.predict(X_train)
+                y_pred_test = model.predict(X_test)
+                
+                # Metrikler
+                train_mae = mean_absolute_error(y_train, y_pred_train)
+                test_mae = mean_absolute_error(y_test, y_pred_test)
+                train_rmse = np.sqrt(mean_squared_error(y_train, y_pred_train))
+                test_rmse = np.sqrt(mean_squared_error(y_test, y_pred_test))
+                
+                # MAPE (Mean Absolute Percentage Error)
+                train_mape = self._calculate_mape(y_train, y_pred_train)
+                test_mape = self._calculate_mape(y_test, y_pred_test)
+                
+                # R² Score
+                train_r2 = r2_score(y_train, y_pred_train)
+                test_r2 = r2_score(y_test, y_pred_test)
+                
+                results[name] = {
+                    "model": model,
+                    "metrics": {
+                        "train_mae": train_mae,
+                        "test_mae": test_mae,
+                        "train_rmse": train_rmse,
+                        "test_rmse": test_rmse,
+                        "train_mape": train_mape,
+                        "test_mape": test_mape,
+                        "train_r2": train_r2,
+                        "test_r2": test_r2
+                    },
+                    "feature_columns": feature_cols
+                }
+                
+            except Exception as e:
+                logging.error(f"Model {name} eğitim hatası: {e}")
+                continue
+        
+        return results
+    
+    def _calculate_mape(self, y_true: pd.Series, y_pred: pd.Series) -> float:
+        """MAPE hesapla"""
+        y_true, y_pred = np.array(y_true), np.array(y_pred)
+        mask = y_true != 0
+        if np.sum(mask) == 0:
+            return 0.0
+        return np.mean(np.abs((y_true[mask] - y_pred[mask]) / y_true[mask])) * 100
+    
+    def _select_best_model(self, model_results: Dict[str, Dict]) -> str:
+        """En iyi modeli seç (test MAPE'e göre)"""
+        if not model_results:
+            return None
+        
+        best_model = None
+        best_mape = float('inf')
+        
+        for name, result in model_results.items():
+            test_mape = result["metrics"]["test_mape"]
+            if test_mape < best_mape:
+                best_mape = test_mape
+                best_model = name
+        
+        return best_model
+    
+    def _generate_forecast(self, 
+                          data: pd.DataFrame, 
+                          model: Any,
+                          periods: int) -> pd.DataFrame:
+        """Gelecek tahmini yap"""
+        # Son satırı al
+        last_row = data.iloc[-1:].copy()
+        feature_cols = [col for col in data.columns if col not in ['DATE', 'YIL_AY']]
+        
+        forecast_data = []
+        
+        for i in range(periods):
+            # Son tarihi al
+            if 'DATE' in last_row.columns:
+                last_date = last_row['DATE'].iloc[0]
+                next_date = last_date + pd.DateOffset(months=1)
+            else:
+                next_date = None
+            
+            # Feature'ları hazırla
+            X_next = last_row[feature_cols].copy()
+            
+            # Tahmin yap
+            next_pred = max(0, model.predict(X_next)[0])
+            
+            forecast_data.append({
+                'DATE': next_date,
+                'YIL_AY': next_date.strftime('%Y-%m') if next_date else f"T+{i+1}",
+                'PF_Satis': next_pred,
+                'Forecast_Type': 'Tahmin'
+            })
+            
+            # Next row için feature'ları güncelle
+            new_row = last_row.copy()
+            
+            # Lag'leri güncelle
+            for lag in range(5, 0, -1):
+                if f'lag_{lag}' in new_row.columns:
+                    if lag == 1:
+                        new_row[f'lag_{lag}'] = next_pred
+                    else:
+                        new_row[f'lag_{lag}'] = last_row[f'lag_{lag-1}'].values[0]
+            
+            # Rolling statistics güncelle
+            if 'rolling_mean_3' in new_row.columns:
+                new_row['rolling_mean_3'] = (
+                    new_row['lag_1'] + new_row['lag_2'] + new_row['lag_3']
+                ) / 3
+            
+            if 'rolling_mean_6' in new_row.columns:
+                new_row['rolling_mean_6'] = (
+                    new_row['lag_1'] + new_row['lag_2'] + new_row['lag_3'] +
+                    new_row['lag_4'] + new_row['lag_5'] + new_row['lag_6']
+                ) / 6
+            
+            # Tarih feature'larını güncelle
+            if next_date:
+                new_row['DATE'] = next_date
+                new_row['month'] = next_date.month
+                new_row['quarter'] = next_date.quarter
+                new_row['month_sin'] = np.sin(2 * np.pi * new_row['month'] / 12)
+                new_row['month_cos'] = np.cos(2 * np.pi * new_row['month'] / 12)
+            
+            # Trend'i artır
+            if 'trend' in new_row.columns:
+                new_row['trend'] = last_row['trend'].values[0] + 1
+            
+            last_row = new_row
+        
+        return pd.DataFrame(forecast_data)
+    
+    def _get_feature_importance(self, model: Any, feature_names: List[str]) -> Dict[str, float]:
+        """Feature importance değerlerini al"""
+        if hasattr(model, 'feature_importances_'):
+            importances = model.feature_importances_
+            return dict(zip(feature_names, importances))
+        elif hasattr(model, 'coef_'):
+            coef = model.coef_
+            return dict(zip(feature_names, coef))
+        else:
+            return {}
+
+
+# =============================================================================
+# BCG ANALİZ SINIFI
+# =============================================================================
+
+class BCGAnalyzer(BaseAnalyzer):
+    """
+    BCG Matrix analizleri yapar
+    """
+    
+    def __init__(self):
+        self.config = AppConfig()
+    
+    def analyze(self, data: pd.DataFrame) -> Dict[str, Any]:
+        """
+        BCG Matrix analizi yapar
+        
+        Args:
+            data (pd.DataFrame): Territory bazlı veri
+            
+        Returns:
+            Dict[str, Any]: BCG analiz sonuçları
+        """
+        results = {
+            "bcg_matrix": None,
+            "category_summary": {},
+            "strategic_implications": []
+        }
+        
+        try:
+            # BCG kategorilerini hesapla
+            bcg_df = self._calculate_bcg_categories(data)
+            results["bcg_matrix"] = bcg_df
+            
+            # Kategori özeti
+            results["category_summary"] = self._summarize_categories(bcg_df)
+            
+            # Stratejik çıkarımlar
+            results["strategic_implications"] = self._derive_strategic_implications(bcg_df)
+            
+            return results
+            
+        except Exception as e:
+            logging.error(f"BCG analiz hatası: {e}")
+            return results
+    
+    def _calculate_bcg_categories(self, data: pd.DataFrame) -> pd.DataFrame:
+        """BCG kategorilerini hesapla"""
+        df = data.copy()
+        
+        # Göreceli pazar payı
+        if 'Goreceli_Pazar_Payi' not in df.columns:
+            df['Goreceli_Pazar_Payi'] = df['PF_Satis'] / df['Rakip_Satis'].replace(0, 1)
+        
+        # Pazar büyüme oranı
+        if 'Pazar_Buyume_%' not in df.columns:
+            # Basit büyüme hesaplaması
+            df['Pazar_Buyume_%'] = df['PF_Satis'].pct_change() * 100
+            df['Pazar_Buyume_%'] = df['Pazar_Buyume_%'].fillna(0)
+        
+        # Medyan değerler
+        median_share = df['Goreceli_Pazar_Payi'].median()
+        median_growth = df['Pazar_Buyume_%'].median()
+        
+        # BCG kategorilerini ata
+        def assign_bcg_category(row):
+            if pd.isna(row['Goreceli_Pazar_Payi']) or pd.isna(row['Pazar_Buyume_%']):
+                return "🐶 Dog"
+            
+            if row['Goreceli_Pazar_Payi'] >= median_share and row['Pazar_Buyume_%'] >= median_growth:
+                return "⭐ Star"
+            elif row['Goreceli_Pazar_Payi'] >= median_share and row['Pazar_Buyume_%'] < median_growth:
+                return "🐄 Cash Cow"
+            elif row['Goreceli_Pazar_Payi'] < median_share and row['Pazar_Buyume_%'] >= median_growth:
+                return "❓ Question Mark"
+            else:
+                return "🐶 Dog"
+        
+        df['BCG_Kategori'] = df.apply(assign_bcg_category, axis=1)
+        
+        return df
+    
+    def _summarize_categories(self, bcg_df: pd.DataFrame) -> Dict[str, Any]:
+        """BCG kategorilerini özetle"""
+        if len(bcg_df) == 0:
+            return {}
+        
+        summary = {}
+        
+        for category in self.config.BCG_COLORS.keys():
+            cat_data = bcg_df[bcg_df['BCG_Kategori'] == category]
+            
+            summary[category] = {
+                "count": len(cat_data),
+                "total_sales": cat_data['PF_Satis'].sum() if len(cat_data) > 0 else 0,
+                "avg_market_share": cat_data['Pazar_Payi_%'].mean() if len(cat_data) > 0 else 0,
+                "avg_growth": cat_data['Pazar_Buyume_%'].mean() if len(cat_data) > 0 else 0,
+                "top_territories": cat_data.nlargest(3, 'PF_Satis')[['Territory', 'PF_Satis', 'Pazar_Payi_%']].to_dict('records')
+            }
+        
+        return summary
+    
+    def _derive_strategic_implications(self, bcg_df: pd.DataFrame) -> List[str]:
+        """Stratejik çıkarımlar oluştur"""
+        implications = []
+        
+        if len(bcg_df) == 0:
+            return implications
+        
+        category_counts = bcg_df['BCG_Kategori'].value_counts()
+        
+        # Stars için
+        star_count = category_counts.get("⭐ Star", 0)
+        if star_count > 0:
+            star_sales = bcg_df[bcg_df['BCG_Kategori'] == "⭐ Star"]['PF_Satis'].sum()
+            implications.append(
+                f"🚀 **{star_count} 'Star' territory** tespit edildi (Toplam: {self._format_number(star_sales)}). "
+                f"Bu territory'lere yatırım devam etmeli, büyümeleri desteklenmeli."
+            )
+        
+        # Cash Cows için
+        cow_count = category_counts.get("🐄 Cash Cow", 0)
+        if cow_count > 0:
+            cow_sales = bcg_df[bcg_df['BCG_Kategori'] == "🐄 Cash Cow"]['PF_Satis'].sum()
+            implications.append(
+                f"💰 **{cow_count} 'Cash Cow' territory** tespit edildi (Toplam: {self._format_number(cow_sales)}). "
+                f"Nakit akışı üretimi maksimize edilmeli, koruma stratejisi uygulanmalı."
+            )
+        
+        # Question Marks için
+        question_count = category_counts.get("❓ Question Mark", 0)
+        if question_count > 0:
+            implications.append(
+                f"🎯 **{question_count} 'Soru İşareti' territory** tespit edildi. "
+                f"Detaylı analiz yapılıp, ya yatırım artırılmalı ya da çıkış stratejisi uygulanmalı."
+            )
+        
+        # Dogs için
+        dog_count = category_counts.get("🐶 Dog", 0)
+        if dog_count > 0:
+            implications.append(
+                f"📉 **{dog_count} 'Dog' territory** tespit edildi. "
+                f"Kaynakların verimli kullanımı için minimal yatırım veya çıkış değerlendirilmeli."
+            )
+        
+        # Portfolio dengelenmesi
+        total = len(bcg_df)
+        if total > 0:
+            star_ratio = (star_count / total) * 100
+            cow_ratio = (cow_count / total) * 100
+            
+            if star_ratio < 20:
+                implications.append(
+                    f"⚠️ **Portföy dengesi**: Star oranı (%{star_ratio:.1f}) düşük. "
+                    f"Yeni 'Star' adayları geliştirilmeli."
+                )
+            
+            if cow_ratio < 30:
+                implications.append(
+                    f"⚠️ **Nakit akışı riski**: Cash Cow oranı (%{cow_ratio:.1f}) düşük. "
+                    f"Star'ların Cash Cow'a dönüşümü hızlandırılmalı."
+                )
+        
+        return implications
+    
+    def _format_number(self, num: float) -> str:
+        """Sayıları formatla"""
+        if pd.isna(num):
+            return "0"
+        
+        try:
+            num = float(num)
+            if num == 0:
+                return "0"
+            elif abs(num) >= 1_000_000_000:
+                return f"{num/1_000_000_000:,.1f}B"
+            elif abs(num) >= 1_000_000:
+                return f"{num/1_000_000:,.1f}M"
+            elif abs(num) >= 1_000:
+                return f"{num/1_000:,.1f}K"
+            else:
+                return f"{num:,.0f}"
+        except:
+            return str(num)
+
+
+# =============================================================================
+# YATIRIM STRATEJİSİ SINIFI
+# =============================================================================
+
+class InvestmentStrategyAnalyzer(BaseAnalyzer):
+    """
+    Yatırım stratejisi analizleri yapar
+    """
+    
+    def __init__(self):
+        self.config = AppConfig()
+    
+    def analyze(self, data: pd.DataFrame) -> Dict[str, Any]:
+        """
+        Yatırım stratejisi analizi yapar
+        
+        Args:
+            data (pd.DataFrame): Şehir bazlı veri
+            
+        Returns:
+            Dict[str, Any]: Yatırım stratejisi sonuçları
+        """
+        results = {
+            "strategy_matrix": None,
+            "strategy_distribution": {},
+            "investment_recommendations": []
+        }
+        
+        try:
+            # Yatırım stratejilerini hesapla
+            strategy_df = self._calculate_investment_strategies(data)
+            results["strategy_matrix"] = strategy_df
+            
+            # Strateji dağılımı
+            results["strategy_distribution"] = self._analyze_strategy_distribution(strategy_df)
+            
+            # Yatırım önerileri
+            results["investment_recommendations"] = self._generate_investment_recommendations(strategy_df)
+            
+            return results
+            
+        except Exception as e:
+            logging.error(f"Yatırım stratejisi analiz hatası: {e}")
+            return results
+    
+    def _calculate_investment_strategies(self, data: pd.DataFrame) -> pd.DataFrame:
+        """Yatırım stratejilerini hesapla"""
+        df = data.copy()
+        
+        if len(df) == 0:
+            return df
+        
+        # Segmentleri hesapla
+        df = self._calculate_segments(df)
+        
+        # Stratejileri ata
+        df['Yatırım_Stratejisi'] = df.apply(self._assign_strategy, axis=1)
+        
+        return df
+    
+    def _calculate_segments(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Pazar segmentlerini hesapla"""
+        # Pazar büyüklüğü segmenti
+        try:
+            df["Pazar_Büyüklüğü_Segment"] = pd.qcut(
+                df["Toplam_Pazar"], 
+                q=3, 
+                labels=["Küçük", "Orta", "Büyük"],
+                duplicates='drop'
+            )
+        except:
+            df["Pazar_Büyüklüğü_Segment"] = "Orta"
+        
+        # Performans segmenti
+        try:
+            df["Performans_Segment"] = pd.qcut(
+                df["PF_Satis"], 
+                q=3, 
+                labels=["Düşük", "Orta", "Yüksek"],
+                duplicates='drop'
+            )
+        except:
+            df["Performans_Segment"] = "Orta"
+        
+        # Pazar payı segmenti
+        try:
+            df["Pazar_Payı_Segment"] = pd.qcut(
+                df["Pazar_Payi_%"], 
+                q=3, 
+                labels=["Düşük", "Orta", "Yüksek"],
+                duplicates='drop'
+            )
+        except:
+            df["Pazar_Payı_Segment"] = "Orta"
+        
+        # Büyüme potansiyeli
+        df["Büyüme_Potansiyeli"] = df["Toplam_Pazar"] - df["PF_Satis"]
+        try:
+            df["Büyüme_Potansiyeli_Segment"] = pd.qcut(
+                df["Büyüme_Potansiyeli"],
+                q=3,
+                labels=["Düşük", "Orta", "Yüksek"],
+                duplicates='drop'
+            )
+        except:
+            df["Büyüme_Potansiyeli_Segment"] = "Orta"
+        
+        return df
+    
+    def _assign_strategy(self, row: pd.Series) -> str:
+        """Satır bazında strateji ata"""
+        pazar_buyuklugu = str(row.get("Pazar_Büyüklüğü_Segment", "Orta"))
+        pazar_payi = str(row.get("Pazar_Payı_Segment", "Orta"))
+        buyume_potansiyeli = str(row.get("Büyüme_Potansiyeli_Segment", "Orta"))
+        performans = str(row.get("Performans_Segment", "Orta"))
+        
+        # 1. Agresif Strateji: Büyük pazar, düşük pay, yüksek potansiyel
         if (pazar_buyuklugu in ["Büyük", "Orta"] and 
             pazar_payi == "Düşük" and 
             buyume_potansiyeli in ["Yüksek", "Orta"]):
             return "🚀 Agresif"
         
+        # 2. Hızlandırılmış Strateji: Orta/Büyük pazar, orta pay, orta/yüksek performans
         elif (pazar_buyuklugu in ["Büyük", "Orta"] and 
               pazar_payi == "Orta" and
               performans in ["Orta", "Yüksek"]):
             return "⚡ Hızlandırılmış"
         
+        # 3. Koruma Stratejisi: Büyük pazar, yüksek pay
         elif (pazar_buyuklugu == "Büyük" and 
               pazar_payi == "Yüksek"):
             return "🛡️ Koruma"
         
+        # 4. Potansiyel Stratejisi: Küçük pazar, yüksek potansiyel, orta/yüksek performans
         elif (pazar_buyuklugu == "Küçük" and 
               buyume_potansiyeli == "Yüksek" and
               performans in ["Orta", "Yüksek"]):
             return "💎 Potansiyel"
         
+        # 5. İzleme Stratejisi: Diğer durumlar
         else:
             return "👁️ İzleme"
     
-    df["Yatırım_Stratejisi"] = df.apply(assign_strategy, axis=1)
+    def _analyze_strategy_distribution(self, strategy_df: pd.DataFrame) -> Dict[str, Any]:
+        """Strateji dağılımını analiz et"""
+        if len(strategy_df) == 0:
+            return {}
+        
+        distribution = {}
+        strategy_counts = strategy_df['Yatırım_Stratejisi'].value_counts()
+        
+        for strategy in self.config.STRATEGY_COLORS.keys():
+            count = strategy_counts.get(strategy, 0)
+            strategy_data = strategy_df[strategy_df['Yatırım_Stratejisi'] == strategy]
+            
+            distribution[strategy] = {
+                "count": count,
+                "percentage": (count / len(strategy_df)) * 100 if len(strategy_df) > 0 else 0,
+                "total_sales": strategy_data['PF_Satis'].sum() if len(strategy_data) > 0 else 0,
+                "avg_market_share": strategy_data['Pazar_Payi_%'].mean() if len(strategy_data) > 0 else 0,
+                "top_cities": strategy_data.nlargest(3, 'PF_Satis')[['City', 'PF_Satis', 'Pazar_Payi_%']].to_dict('records')
+            }
+        
+        return distribution
     
-    return df
-
-# =============================================================================
-# MODERN DATA TABLE STYLING - DÜZELTİLMİŞ VERSİYON
-# =============================================================================
-
-def style_dataframe(df, color_column=None, gradient_columns=None):
-    """Modern dataframe stilini uygula - DÜZELTİLMİŞ VERSİYON"""
-    if gradient_columns is None:
-        gradient_columns = []
-    
-    # Orijinal sayısal değerleri sakla (gradient için)
-    numeric_data = df.copy()
-    
-    # Sayısal sütunları formatla (görüntü için)
-    df_formatted = df.copy()
-    
-    # Sayısal sütunları bul ve formatla
-    for col in df_formatted.columns:
-        if col in numeric_data.columns and numeric_data[col].dtype in ['int64', 'float64', 'int32', 'float32']:
-            if any(keyword in col.lower() for keyword in ['%', 'yüzde', 'pay', 'oran', 'büyüme']):
-                # Yüzdelik sütunlar
-                df_formatted[col] = numeric_data[col].apply(lambda x: f"{x:,.1f}%" if pd.notnull(x) else "")
-            else:
-                # Normal sayısal sütunlar
-                df_formatted[col] = numeric_data[col].apply(lambda x: format_number(x) if pd.notnull(x) else "")
-    
-    styled_df = df_formatted.style
-    
-    # Genel stil
-    styled_df = styled_df.set_properties(**{
-        'background-color': 'rgba(30, 41, 59, 0.7)',
-        'color': '#e2e8f0',
-        'border': '1px solid rgba(59, 130, 246, 0.2)',
-        'font-family': 'Inter, sans-serif',
-        'text-align': 'center'
-    })
-    
-    # Başlık satırı - McKinsey tarzı
-    styled_df = styled_df.set_table_styles([{
-        'selector': 'thead th',
-        'props': [
-            ('background-color', 'rgba(59, 130, 246, 0.3)'),
-            ('color', 'white'),
-            ('font-weight', '700'),
-            ('border', '1px solid rgba(59, 130, 246, 0.4)'),
-            ('padding', '12px 8px'),
-            ('text-align', 'center')
-        ]
-    }])
-    
-    # Hücreler
-    styled_df = styled_df.set_table_styles([{
-        'selector': 'td',
-        'props': [
-            ('padding', '10px 8px'),
-            ('text-align', 'center')
-        ]
-    }])
-    
-    # Gradient uygula - ORIJINAL sayısal veri ile
-    for col in gradient_columns:
-        if col in numeric_data.columns and numeric_data[col].dtype in ['int64', 'float64', 'int32', 'float32']:
-            # Gradient için sadece sayısal sütunları kullan
-            try:
-                col_data = numeric_data[col].astype(float)
-                min_val = col_data.min()
-                max_val = col_data.max()
-                
-                if min_val != max_val:  # Sadece farklı değerler varsa gradient uygula
-                    styled_df = styled_df.background_gradient(
-                        subset=[col], 
-                        cmap='RdYlGn',
-                        vmin=min_val,
-                        vmax=max_val,
-                        gmap=col_data
-                    )
-            except:
-                # Gradient uygulanamazsa atla
-                pass
-    
-    # Renk sütunu
-    if color_column and color_column in numeric_data.columns:
-        def color_cells(val):
-            try:
-                num_val = float(val)
-                if num_val >= 70:
-                    return 'background-color: rgba(16, 185, 129, 0.3); color: #10B981; font-weight: 600'
-                elif num_val >= 40:
-                    return 'background-color: rgba(245, 158, 11, 0.3); color: #F59E0B; font-weight: 600'
-                else:
-                    return 'background-color: rgba(239, 68, 68, 0.3); color: #EF4444; font-weight: 600'
-            except:
-                return ''
+    def _generate_investment_recommendations(self, strategy_df: pd.DataFrame) -> List[str]:
+        """Yatırım önerileri oluştur"""
+        recommendations = []
         
-        # Renk için orijinal sayısal değerleri kullan
-        styled_df = styled_df.applymap(color_cells, subset=[color_column])
-    
-    # Alternatif satır renkleri - McKinsey tarzı
-    styled_df = styled_df.set_table_styles([{
-        'selector': 'tbody tr:nth-child(even)',
-        'props': [('background-color', 'rgba(30, 41, 59, 0.5)')]
-    }, {
-        'selector': 'tbody tr:nth-child(odd)',
-        'props': [('background-color', 'rgba(30, 41, 59, 0.3)')]
-    }])
-    
-    return styled_df
-
-# =============================================================================
-# MAIN APP - MCKINSEY ENHANCED VERSION
-# =============================================================================
-
-def main():
-    # Başlık ve açıklama
-    st.markdown('<h1 class="main-header">🎯 TİCARİ PORTFÖY ANALİZ SİSTEMİ</h1>', unsafe_allow_html=True)
-    st.markdown('<div style="text-align: center; font-size: 1.2rem; color: #94a3b8; margin-bottom: 3rem;">'
-                'GERÇEK ML Tahminleme • Hiyerarşik Harita • Otomatik Analitik Yorumlar • McKinsey-Stratejik Analiz'
-                '</div>', unsafe_allow_html=True)
-    
-    # SIDEBAR - ENHANCED WITH DRILL-DOWN CONTROLS
-    with st.sidebar:
-        st.markdown('<div style="background: linear-gradient(135deg, #3B82F6 0%, #10B981 100%); '
-                   'padding: 1rem; border-radius: 12px; margin-bottom: 2rem;">'
-                   '<h3 style="color: white; margin: 0; text-align: center;">📂 VERİ YÜKLEME</h3>'
-                   '</div>', unsafe_allow_html=True)
+        if len(strategy_df) == 0:
+            return recommendations
         
-        uploaded_file = st.file_uploader("Excel Dosyası Yükleyin", type=['xlsx', 'xls'])
+        distribution = self._analyze_strategy_distribution(strategy_df)
         
-        if not uploaded_file:
-            st.info("👈 Lütfen sol taraftan Excel dosyasını yükleyin")
-            st.stop()
+        # Agresif strateji önerileri
+        aggressive = distribution.get("🚀 Agresif", {})
+        if aggressive.get("count", 0) > 0:
+            recommendations.append(
+                f"🎯 **{aggressive['count']} şehirde 'Agresif' strateji** öneriliyor. "
+                f"Toplam {self._format_number(aggressive['total_sales'])} PF satış potansiyeli. "
+                f"Saha gücü ve pazarlama bütçesi artırılmalı."
+            )
         
-        try:
-            df = load_excel_data(uploaded_file)
-            gdf = load_geojson_gpd()
-            geojson = load_geojson_json()
-            st.success(f"✅ **{len(df):,}** satır veri yüklendi")
-        except Exception as e:
-            st.error(f"❌ Veri yükleme hatası: {str(e)}")
-            st.stop()
+        # Potansiyel strateji önerileri
+        potential = distribution.get("💎 Potansiyel", {})
+        if potential.get("count", 0) > 0:
+            recommendations.append(
+                f"💎 **{potential['count']} 'Potansiyel' şehir** tespit edildi. "
+                f"Küçük ama hızlı büyüyen pazarlar. Pilot programlar başlatılmalı."
+            )
         
-        st.markdown("---")
+        # Koruma stratejisi önerileri
+        protection = distribution.get("🛡️ Koruma", {})
+        if protection.get("count", 0) > 0:
+            recommendations.append(
+                f"🛡️ **{protection['count']} şehirde 'Koruma' stratejisi** gerekli. "
+                f"Yüksek pazar payı korunmalı, rakip girişleri engellenmeli."
+            )
         
-        # Ürün Seçimi
-        st.markdown('<div style="background: rgba(30, 41, 59, 0.7); padding: 1rem; border-radius: 10px; margin: 1rem 0;">'
-                   '<h4 style="color: #e2e8f0; margin: 0 0 1rem 0;">💊 ÜRÜN SEÇİMİ</h4>', unsafe_allow_html=True)
-        selected_product = st.selectbox("", ["TROCMETAM", "CORTIPOL", "DEKSAMETAZON", "PF IZOTONIK"], label_visibility="collapsed")
-        st.markdown('</div>', unsafe_allow_html=True)
+        # Kaynak tahsisi önerisi
+        total_investment_needed = sum([
+            aggressive.get("count", 0) * 1.5,  # Agresif: Yüksek yatırım
+            distribution.get("⚡ Hızlandırılmış", {}).get("count", 0) * 1.0,  # Orta yatırım
+            potential.get("count", 0) * 0.7,  # Düşük yatırım
+            protection.get("count", 0) * 0.5,  # Minimal yatırım
+            distribution.get("👁️ İzleme", {}).get("count", 0) * 0.2  # Çok düşük yatırım
+        ])
         
-        st.markdown("---")
-        
-        # Tarih Aralığı
-        st.markdown('<div style="background: rgba(30, 41, 59, 0.7); padding: 1rem; border-radius: 10px; margin: 1rem 0;">'
-                   '<h4 style="color: #e2e8f0; margin: 0 0 1rem 0;">📅 TARİH ARALIĞI</h4>', unsafe_allow_html=True)
-        
-        min_date = df['DATE'].min()
-        max_date = df['DATE'].max()
-        
-        date_option = st.selectbox("Dönem Seçin", ["Tüm Veriler", "Son 3 Ay", "Son 6 Ay", "Son 1 Yıl", "2025", "2024", "Özel Aralık"])
-        
-        if date_option == "Tüm Veriler":
-            date_filter = None
-        elif date_option == "Son 3 Ay":
-            start_date = max_date - pd.DateOffset(months=3)
-            date_filter = (start_date, max_date)
-        elif date_option == "Son 6 Ay":
-            start_date = max_date - pd.DateOffset(months=6)
-            date_filter = (start_date, max_date)
-        elif date_option == "Son 1 Yıl":
-            start_date = max_date - pd.DateOffset(years=1)
-            date_filter = (start_date, max_date)
-        elif date_option == "2025":
-            date_filter = (pd.to_datetime('2025-01-01'), pd.to_datetime('2025-12-31'))
-        elif date_option == "2024":
-            date_filter = (pd.to_datetime('2024-01-01'), pd.to_datetime('2024-12-31'))
-        else:
-            col_date1, col_date2 = st.columns(2)
-            with col_date1:
-                start_date = st.date_input("Başlangıç", min_date, min_value=min_date, max_value=max_date)
-            with col_date2:
-                end_date = st.date_input("Bitiş", max_date, min_value=min_date, max_value=max_date)
-            date_filter = (pd.to_datetime(start_date), pd.to_datetime(end_date))
-        
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-        st.markdown("---")
-        
-        # Filtreler
-        st.markdown('<div style="background: rgba(30, 41, 59, 0.7); padding: 1rem; border-radius: 10px; margin: 1rem 0;">'
-                   '<h4 style="color: #e2e8f0; margin: 0 0 1rem 0;">🔍 FİLTRELER</h4>', unsafe_allow_html=True)
-        
-        territories = ["TÜMÜ"] + sorted(df['TERRITORIES'].unique())
-        selected_territory = st.selectbox("Territory", territories)
-        
-        regions = ["TÜMÜ"] + sorted(df['REGION'].unique())
-        selected_region = st.selectbox("Bölge", regions)
-        
-        managers = ["TÜMÜ"] + sorted(df['MANAGER'].unique())
-        selected_manager = st.selectbox("Manager", managers)
-        
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-        # Veri filtreleme
-        df_filtered = df.copy()
-        if selected_territory != "TÜMÜ":
-            df_filtered = df_filtered[df_filtered['TERRITORIES'] == selected_territory]
-        if selected_region != "TÜMÜ":
-            df_filtered = df_filtered[df_filtered['REGION'] == selected_region]
-        if selected_manager != "TÜMÜ":
-            df_filtered = df_filtered[df_filtered['MANAGER'] == selected_manager]
-        
-        st.markdown("---")
-        
-        # Hierarchical Map Controls
-        st.markdown('<div style="background: rgba(30, 41, 59, 0.7); padding: 1rem; border-radius: 10px; margin: 1rem 0;">'
-                   '<h4 style="color: #e2e8f0; margin: 0 0 1rem 0;">🗺️ HARİTA HİYERARŞİSİ</h4>', unsafe_allow_html=True)
-        
-        map_level = st.radio(
-            "Görünüm Seviyesi",
-            ["BÖLGE", "ŞEHİR"],
-            index=0,
-            horizontal=True
+        recommendations.append(
+            f"💰 **Kaynak Tahsisi**: Toplam {total_investment_needed:.1f} birim yatırım gerekli. "
+            f"Öncelik sırası: Agresif → Hızlandırılmış → Potansiyel → Koruma → İzleme"
         )
         
-        if map_level == "ŞEHİR":
-            regions = ["TÜMÜ"] + sorted(df_filtered['REGION'].unique().tolist())
-            selected_map_region = st.selectbox("Bölge Seçin", regions)
+        return recommendations
+    
+    def _format_number(self, num: float) -> str:
+        """Sayıları formatla"""
+        if pd.isna(num):
+            return "0"
+        
+        try:
+            num = float(num)
+            if num == 0:
+                return "0"
+            elif abs(num) >= 1_000_000_000:
+                return f"{num/1_000_000_000:,.1f}B"
+            elif abs(num) >= 1_000_000:
+                return f"{num/1_000_000:,.1f}M"
+            elif abs(num) >= 1_000:
+                return f"{num/1_000:,.1f}K"
+            else:
+                return f"{num:,.0f}"
+        except:
+            return str(num)
+
+
+# =============================================================================
+# KULLANICI ARAYÜZ YÖNETİCİSİ
+# =============================================================================
+
+class UIManager:
+    """
+    Streamlit UI bileşenlerini ve stilini yönetir
+    """
+    
+    def __init__(self):
+        self.config = AppConfig()
+        self._setup_page_config()
+        self._inject_custom_css()
+    
+    def _setup_page_config(self) -> None:
+        """Sayfa konfigürasyonunu ayarla"""
+        st.set_page_config(
+            page_title="Stratejik Ticari Portföy Analiz Sistemi",
+            page_icon="🎯",
+            layout="wide",
+            initial_sidebar_state="expanded"
+        )
+    
+    def _inject_custom_css(self) -> None:
+        """Özel CSS enjekte et"""
+        custom_css = f"""
+        <style>
+            /* Temel Stil */
+            * {{
+                font-family: 'Inter', 'Segoe UI', sans-serif;
+            }}
+            
+            .stApp {{
+                background: linear-gradient(135deg, 
+                    {self.config.COLOR_PALETTE['background_dark']} 0%, 
+                    {self.config.COLOR_PALETTE['background_medium']} 50%, 
+                    {self.config.COLOR_PALETTE['background_light']} 100%);
+            }}
+            
+            /* Başlık */
+            .main-header {{
+                font-size: 2.8rem;
+                font-weight: 800;
+                text-align: center;
+                padding: 1.5rem 0;
+                background: linear-gradient(135deg, 
+                    {self.config.COLOR_PALETTE['primary_medium']} 0%, 
+                    {self.config.COLOR_PALETTE['success_medium']} 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                margin-bottom: 1rem;
+            }}
+            
+            /* Metrik Kartları */
+            div[data-testid="metric-container"] {{
+                background: rgba(30, 41, 59, 0.85);
+                padding: 1.2rem;
+                border-radius: 12px;
+                border: 1px solid rgba(59, 130, 246, 0.2);
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+                backdrop-filter: blur(10px);
+                transition: all 0.3s ease;
+            }}
+            
+            div[data-testid="metric-container"]:hover {{
+                transform: translateY(-4px);
+                box-shadow: 0 8px 30px rgba(59, 130, 246, 0.3);
+                border-color: rgba(59, 130, 246, 0.4);
+            }}
+            
+            div[data-testid="stMetricValue"] {{
+                font-size: 2.2rem;
+                font-weight: 700;
+                color: {self.config.COLOR_PALETTE['text_primary']};
+            }}
+            
+            div[data-testid="stMetricLabel"] {{
+                font-size: 0.9rem;
+                font-weight: 600;
+                color: {self.config.COLOR_PALETTE['text_secondary']};
+            }}
+            
+            /* Tab'ler */
+            .stTabs [data-baseweb="tab-list"] {{
+                gap: 0.5rem;
+                background: rgba(30, 41, 59, 0.7);
+                border-radius: 10px;
+                padding: 0.5rem;
+            }}
+            
+            .stTabs [data-baseweb="tab"] {{
+                color: {self.config.COLOR_PALETTE['text_secondary']};
+                font-weight: 600;
+                padding: 0.8rem 1.5rem;
+                background: rgba(30, 41, 59, 0.5);
+                border-radius: 8px;
+                border: 1px solid transparent;
+                transition: all 0.3s ease;
+            }}
+            
+            .stTabs [data-baseweb="tab"]:hover {{
+                background: rgba(59, 130, 246, 0.15);
+                color: {self.config.COLOR_PALETTE['text_primary']};
+                border-color: rgba(59, 130, 246, 0.3);
+            }}
+            
+            .stTabs [data-baseweb="tab"][aria-selected="true"] {{
+                background: linear-gradient(135deg, 
+                    {self.config.COLOR_PALETTE['primary_medium']} 0%, 
+                    {self.config.COLOR_PALETTE['success_medium']} 100%);
+                color: white;
+                box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+            }}
+            
+            /* Butonlar */
+            .stButton > button {{
+                background: linear-gradient(135deg, 
+                    {self.config.COLOR_PALETTE['primary_medium']} 0%, 
+                    {self.config.COLOR_PALETTE['success_medium']} 100%);
+                color: white;
+                border: none;
+                padding: 0.7rem 1.8rem;
+                border-radius: 10px;
+                font-weight: 600;
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+            }}
+            
+            .stButton > button:hover {{
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+            }}
+            
+            /* Sidebar */
+            [data-testid="stSidebar"] {{
+                background: rgba(15, 23, 41, 0.95);
+                backdrop-filter: blur(15px);
+                border-right: 1px solid rgba(59, 130, 246, 0.1);
+            }}
+            
+            /* Input Alanları */
+            .stSelectbox, .stSlider, .stRadio {{
+                background: rgba(30, 41, 59, 0.7);
+                padding: 0.5rem;
+                border-radius: 8px;
+                border: 1px solid rgba(59, 130, 246, 0.2);
+            }}
+            
+            /* Dataframe */
+            .dataframe {{
+                border-radius: 10px;
+                overflow: hidden;
+            }}
+            
+            /* Scrollbar */
+            ::-webkit-scrollbar {{
+                width: 8px;
+                height: 8px;
+            }}
+            
+            ::-webkit-scrollbar-track {{
+                background: rgba(30, 41, 59, 0.5);
+                border-radius: 4px;
+            }}
+            
+            ::-webkit-scrollbar-thumb {{
+                background: linear-gradient(135deg, 
+                    {self.config.COLOR_PALETTE['primary_medium']} 0%, 
+                    {self.config.COLOR_PALETTE['success_medium']} 100%);
+                border-radius: 4px;
+            }}
+            
+            ::-webkit-scrollbar-thumb:hover {{
+                background: linear-gradient(135deg, 
+                    {self.config.COLOR_PALETTE['success_medium']} 0%, 
+                    {self.config.COLOR_PALETTE['warning_medium']} 100%);
+            }}
+            
+            /* Kart Stilleri */
+            .custom-card {{
+                background: rgba(30, 41, 59, 0.8);
+                padding: 1.5rem;
+                border-radius: 12px;
+                border: 1px solid rgba(59, 130, 246, 0.2);
+                margin-bottom: 1rem;
+            }}
+            
+            .insight-card {{
+                background: rgba(30, 41, 59, 0.9);
+                padding: 1.2rem;
+                border-radius: 10px;
+                border-left: 4px solid {self.config.COLOR_PALETTE['success_medium']};
+                margin-bottom: 0.8rem;
+            }}
+            
+            .warning-card {{
+                background: rgba(30, 41, 59, 0.9);
+                padding: 1.2rem;
+                border-radius: 10px;
+                border-left: 4px solid {self.config.COLOR_PALETTE['warning_medium']};
+                margin-bottom: 0.8rem;
+            }}
+            
+            .danger-card {{
+                background: rgba(30, 41, 59, 0.9);
+                padding: 1.2rem;
+                border-radius: 10px;
+                border-left: 4px solid {self.config.COLOR_PALETTE['danger_medium']};
+                margin-bottom: 0.8rem;
+            }}
+        </style>
+        """
+        
+        st.markdown(custom_css, unsafe_allow_html=True)
+    
+    def create_metric_card(self, label: str, value: Any, delta: str = None) -> None:
+        """
+        Metrik kartı oluştur
+        
+        Args:
+            label (str): Metrik etiketi
+            value (Any): Metrik değeri
+            delta (str): Delta değeri
+        """
+        st.metric(label=label, value=value, delta=delta)
+    
+    def create_insight_card(self, title: str, content: str, type: str = "info") -> None:
+        """
+        İçgörü kartı oluştur
+        
+        Args:
+            title (str): Kart başlığı
+            content (str): İçerik
+            type (str): Kart türü (info/warning/danger)
+        """
+        if type == "warning":
+            st.markdown(f'<div class="warning-card"><h4>{title}</h4><p>{content}</p></div>', 
+                       unsafe_allow_html=True)
+        elif type == "danger":
+            st.markdown(f'<div class="danger-card"><h4>{title}</h4><p>{content}</p></div>', 
+                       unsafe_allow_html=True)
         else:
-            selected_map_region = None
+            st.markdown(f'<div class="insight-card"><h4>{title}</h4><p>{content}</p></div>', 
+                       unsafe_allow_html=True)
+    
+    def create_header(self, title: str, subtitle: str = None) -> None:
+        """
+        Sayfa başlığı oluştur
         
-        st.markdown('</div>', unsafe_allow_html=True)
+        Args:
+            title (str): Ana başlık
+            subtitle (str): Alt başlık
+        """
+        st.markdown(f'<h1 class="main-header">{title}</h1>', unsafe_allow_html=True)
         
-        # Yatırım stratejisi filtresi
-        st.markdown("---")
-        st.markdown('<div style="background: rgba(30, 41, 59, 0.7); padding: 1rem; border-radius: 10px; margin: 1rem 0;">'
-                   '<h4 style="color: #e2e8f0; margin: 0 0 1rem 0;">🎯 YATIRIM STRATEJİSİ</h4>', unsafe_allow_html=True)
+        if subtitle:
+            st.markdown(f'<div style="text-align: center; color: {self.config.COLOR_PALETTE["text_secondary"]}; '
+                       f'margin-bottom: 2rem;">{subtitle}</div>', unsafe_allow_html=True)
+
+
+# =============================================================================
+# ANA UYGULAMA SINIFI
+# =============================================================================
+
+class StrategicPortfolioAnalyzer:
+    """
+    Ana uygulama sınıfı - Tüm bileşenleri koordine eder
+    """
+    
+    def __init__(self):
+        self.config = AppConfig()
+        self.ui = UIManager()
+        self.data_processor = DataProcessor()
+        self.city_normalizer = CityNormalizer()
+        self.map_engine = MapEngine()
+        self.insight_generator = InsightGenerator()
+        self.sales_forecaster = SalesForecaster()
+        self.bcg_analyzer = BCGAnalyzer()
+        self.investment_strategy_analyzer = InvestmentStrategyAnalyzer()
         
-        strateji_list = ["Tümü", "🚀 Agresif", "⚡ Hızlandırılmış", "🛡️ Koruma", "💎 Potansiyel", "👁️ İzleme"]
-        selected_strateji = st.selectbox("Filtrele", strateji_list)
+        # Session state initialization
+        self._init_session_state()
+    
+    def _init_session_state(self) -> None:
+        """Session state'i başlat"""
+        if 'data_loaded' not in st.session_state:
+            st.session_state.data_loaded = False
+        if 'processed_data' not in st.session_state:
+            st.session_state.processed_data = None
+        if 'current_product' not in st.session_state:
+            st.session_state.current_product = "TROCMETAM"
+        if 'date_filter' not in st.session_state:
+            st.session_state.date_filter = None
+        if 'selected_territory' not in st.session_state:
+            st.session_state.selected_territory = "TÜMÜ"
+    
+    def run(self) -> None:
+        """Ana uygulamayı çalıştır"""
+        # Başlık
+        self.ui.create_header(
+            "🎯 Stratejik Ticari Portföy Analiz Sistemi",
+            "Yönetici Karar Destek Sistemi • McKinsey/BCG Tarzı • ML Tahminleme"
+        )
         
-        st.markdown('</div>', unsafe_allow_html=True)
+        # Sidebar
+        self._create_sidebar()
         
-        # Renk Legend
-        st.markdown("---")
-        st.markdown('<h4 style="color: #e2e8f0;">🎨 MCKINSEY RENK PALETİ</h4>', unsafe_allow_html=True)
+        # Ana içerik
+        self._create_main_content()
+    
+    def _create_sidebar(self) -> None:
+        """Sidebar bileşenlerini oluştur"""
+        with st.sidebar:
+            # Veri Yükleme Bölümü
+            st.markdown('<div class="custom-card">', unsafe_allow_html=True)
+            st.markdown('### 📂 Veri Yükleme')
+            
+            uploaded_file = st.file_uploader(
+                "Excel Dosyası Seçin",
+                type=['xlsx', 'xls'],
+                key="file_uploader"
+            )
+            
+            if uploaded_file and not st.session_state.data_loaded:
+                try:
+                    with st.spinner("Veri yükleniyor ve işleniyor..."):
+                        # Veriyi yükle
+                        raw_data = pd.read_excel(uploaded_file)
+                        
+                        # Veriyi işle
+                        processed_data = self.data_processor.process(raw_data)
+                        
+                        # Session state'e kaydet
+                        st.session_state.processed_data = processed_data
+                        st.session_state.data_loaded = True
+                        
+                        st.success(f"✅ **{len(processed_data):,}** satır veri yüklendi")
+                        
+                except Exception as e:
+                    st.error(f"❌ Veri yükleme hatası: {str(e)}")
+                    st.session_state.data_loaded = False
+            
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+            if st.session_state.data_loaded:
+                # Filtre Bölümü
+                st.markdown('<div class="custom-card">', unsafe_allow_html=True)
+                st.markdown('### 🔍 Filtreler')
+                
+                # Ürün Seçimi
+                products = list(self.config.PRODUCT_COLUMN_MAP.keys())
+                selected_product = st.selectbox(
+                    "💊 Ürün",
+                    products,
+                    index=products.index(st.session_state.current_product)
+                )
+                st.session_state.current_product = selected_product
+                
+                # Tarih Filtresi
+                date_option = st.selectbox(
+                    "📅 Dönem",
+                    self.config.DATE_OPTIONS,
+                    key="date_option"
+                )
+                
+                # Tarih aralığı hesapla
+                if st.session_state.processed_data is not None:
+                    df = st.session_state.processed_data
+                    min_date = df['DATE'].min()
+                    max_date = df['DATE'].max()
+                    
+                    if date_option == "Tüm Veriler":
+                        st.session_state.date_filter = None
+                    elif date_option == "Son 3 Ay":
+                        start_date = max_date - pd.DateOffset(months=3)
+                        st.session_state.date_filter = (start_date, max_date)
+                    elif date_option == "Son 6 Ay":
+                        start_date = max_date - pd.DateOffset(months=6)
+                        st.session_state.date_filter = (start_date, max_date)
+                    elif date_option == "Son 1 Yıl":
+                        start_date = max_date - pd.DateOffset(years=1)
+                        st.session_state.date_filter = (start_date, max_date)
+                    elif date_option == "2025":
+                        st.session_state.date_filter = (
+                            pd.to_datetime('2025-01-01'), 
+                            pd.to_datetime('2025-12-31')
+                        )
+                    elif date_option == "2024":
+                        st.session_state.date_filter = (
+                            pd.to_datetime('2024-01-01'), 
+                            pd.to_datetime('2024-12-31')
+                        )
+                    else:  # Özel Aralık
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            start_date = st.date_input(
+                                "Başlangıç", 
+                                min_date, 
+                                min_value=min_date, 
+                                max_value=max_date
+                            )
+                        with col2:
+                            end_date = st.date_input(
+                                "Bitiş", 
+                                max_date, 
+                                min_value=min_date, 
+                                max_value=max_date
+                            )
+                        st.session_state.date_filter = (
+                            pd.to_datetime(start_date), 
+                            pd.to_datetime(end_date)
+                        )
+                
+                # Territory Filtresi
+                if st.session_state.processed_data is not None:
+                    territories = ["TÜMÜ"] + sorted(
+                        st.session_state.processed_data['TERRITORIES'].unique()
+                    )
+                    selected_territory = st.selectbox(
+                        "🏢 Territory",
+                        territories,
+                        index=territories.index(st.session_state.selected_territory)
+                    )
+                    st.session_state.selected_territory = selected_territory
+                
+                # Bölge Filtresi
+                if st.session_state.processed_data is not None:
+                    regions = ["TÜMÜ"] + sorted(
+                        st.session_state.processed_data['REGION'].unique()
+                    )
+                    selected_region = st.selectbox("🗺️ Bölge", regions)
+                
+                # Manager Filtresi
+                if st.session_state.processed_data is not None:
+                    managers = ["TÜMÜ"] + sorted(
+                        st.session_state.processed_data['MANAGER'].unique()
+                    )
+                    selected_manager = st.selectbox("👨‍💼 Manager", managers)
+                
+                st.markdown('</div>', unsafe_allow_html=True)
+                
+                # Harita Ayarları
+                st.markdown('<div class="custom-card">', unsafe_allow_html=True)
+                st.markdown('### 🗺️ Harita Ayarları')
+                
+                view_mode = st.radio(
+                    "Görünüm Modu",
+                    ["Bölge Görünümü", "Şehir Görünümü"],
+                    horizontal=True
+                )
+                
+                st.markdown('</div>', unsafe_allow_html=True)
+                
+                # Bölge Renkleri
+                st.markdown('<div class="custom-card">', unsafe_allow_html=True)
+                st.markdown('### 🎨 Bölge Renkleri')
+                
+                cols = st.columns(2)
+                region_colors = list(self.config.REGION_COLORS.items())
+                
+                for idx, (region, color) in enumerate(region_colors):
+                    col_idx = idx % 2
+                    with cols[col_idx]:
+                        st.markdown(
+                            f'<div style="display: flex; align-items: center; margin: 0.2rem 0;">'
+                            f'<div style="width: 12px; height: 12px; background-color: {color}; '
+                            f'border-radius: 2px; margin-right: 6px;"></div>'
+                            f'<span style="color: {self.config.COLOR_PALETTE["text_secondary"]}; '
+                            f'font-size: 0.85rem;">{region}</span>'
+                            f'</div>',
+                            unsafe_allow_html=True
+                        )
+                
+                st.markdown('</div>', unsafe_allow_html=True)
+    
+    def _create_main_content(self) -> None:
+        """Ana içerik bileşenlerini oluştur"""
+        if not st.session_state.data_loaded:
+            st.info("👈 Lütfen sol taraftan Excel dosyasını yükleyin")
+            return
         
-        color_legend = [
-            ("#166534", "Yüksek Performans / Pozitif"),
-            ("#C48A2A", "Orta Performans / Uyarı"),
-            ("#991B1B", "Düşük Performans / Risk"),
-            ("#1E40AF", "Bilgi / Nötr"),
-            ("#64748B", "Rakip / Desatüre")
+        # Tab'ler
+        tab_titles = [
+            "📊 Genel Bakış",
+            "🗺️ Coğrafi Analiz",
+            "🏢 Performans Detay",
+            "📈 Trend & Tahmin",
+            "🎯 Stratejik Analiz",
+            "🤖 ML İleri Analiz",
+            "📥 Raporlar"
         ]
         
-        for color, label in color_legend:
-            st.markdown(f'<div style="display: flex; align-items: center; margin: 0.3rem 0;">'
-                       f'<div style="width: 12px; height: 12px; background-color: {color}; border-radius: 2px; margin-right: 8px;"></div>'
-                       f'<span style="color: #cbd5e1; font-size: 0.9rem;">{label}</span>'
-                       f'</div>', unsafe_allow_html=True)
+        tabs = st.tabs(tab_titles)
+        
+        with tabs[0]:  # Genel Bakış
+            self._create_overview_tab()
+        
+        with tabs[1]:  # Coğrafi Analiz
+            self._create_geographic_tab()
+        
+        with tabs[2]:  # Performans Detay
+            self._create_performance_tab()
+        
+        with tabs[3]:  # Trend & Tahmin
+            self._create_trend_tab()
+        
+        with tabs[4]:  # Stratejik Analiz
+            self._create_strategic_tab()
+        
+        with tabs[5]:  # ML İleri Analiz
+            self._create_ml_tab()
+        
+        with tabs[6]:  # Raporlar
+            self._create_reports_tab()
     
-    # ANA İÇERİK - TAB'LER
-    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
-        "📊 Genel Bakış",
-        "🗺️ Hiyerarşik Harita",
-        "🏢 Territory Analizi",
-        "📈 Zaman Serisi & ML",
-        "🎯 Rakip Analizi",
-        "⭐ BCG & Strateji",
-        "📥 Raporlar"
-    ])
+    def _get_filtered_data(self) -> pd.DataFrame:
+        """Filtrelenmiş veriyi al"""
+        if st.session_state.processed_data is None:
+            return pd.DataFrame()
+        
+        df = st.session_state.processed_data.copy()
+        
+        # Tarih filtresi
+        if st.session_state.date_filter:
+            start_date, end_date = st.session_state.date_filter
+            df = df[(df['DATE'] >= start_date) & (df['DATE'] <= end_date)]
+        
+        # Ürün kolonlarını al
+        product_cols = self.config.PRODUCT_COLUMN_MAP[st.session_state.current_product]
+        pf_col = product_cols['pf']
+        rakip_col = product_cols['rakip']
+        
+        # Eğer kolonlar yoksa, oluştur
+        if pf_col not in df.columns:
+            df[pf_col] = 0
+        if rakip_col not in df.columns:
+            df[rakip_col] = 0
+        
+        # Territory filtresi
+        if st.session_state.selected_territory != "TÜMÜ":
+            df = df[df['TERRITORIES'] == st.session_state.selected_territory]
+        
+        return df
     
-    # TAB 1: GENEL BAKIŞ - MCKINSEY ENHANCED
-    with tab1:
-        st.header("📊 Genel Performans Özeti & Analitik Bulgular")
+    def _create_overview_tab(self) -> None:
+        """Genel Bakış tab'ını oluştur"""
+        st.header("📊 Genel Performans Özeti")
         
-        cols = get_product_columns(selected_product)
+        df = self._get_filtered_data()
         
-        if date_filter:
-            df_period = df_filtered[(df_filtered['DATE'] >= date_filter[0]) & (df_filtered['DATE'] <= date_filter[1])]
-        else:
-            df_period = df_filtered
+        if len(df) == 0:
+            st.warning("Seçilen filtrelerde veri bulunamadı")
+            return
         
-        # EXECUTIVE INSIGHTS SECTION - MCKINSEY STYLE
-        st.subheader("🧠 MCKINSEY-STYLE ANALİTİK BULGULAR")
+        # Ürün kolonlarını al
+        product_cols = self.config.PRODUCT_COLUMN_MAP[st.session_state.current_product]
+        pf_col = product_cols['pf']
+        rakip_col = product_cols['rakip']
         
-        # Generate insights
-        insights = generate_executive_insights(df_filtered, selected_product, date_filter)
-        
-        for insight in insights:
-            color_map = {
-                "success": "#10B981",
-                "warning": "#F59E0B", 
-                "danger": "#EF4444",
-                "info": "#3B82F6"
-            }
-            
-            st.markdown(f"""
-            <div style="background: rgba(30, 41, 59, 0.7); padding: 1.2rem; border-radius: 12px; 
-                        border-left: 4px solid {color_map.get(insight['type'], '#64748B')};
-                        margin-bottom: 1rem; animation: fadeIn 0.5s ease-out;">
-                <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
-                    <div style="color: {color_map.get(insight['type'], '#64748B')}; font-weight: 700; font-size: 1.1rem;">
-                        {insight['title']}
-                    </div>
-                </div>
-                <div style="color: #cbd5e1; font-size: 0.95rem; line-height: 1.5;">
-                    {insight['content']}
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        st.markdown("---")
-        
-        # Metrikler - McKinsey Style Cards
-        st.subheader("📈 ANA PERFORMANS GÖSTERGELERİ")
-        
-        total_pf = df_period[cols['pf']].sum()
-        total_rakip = df_period[cols['rakip']].sum()
+        # Temel metrikleri hesapla
+        total_pf = df[pf_col].sum()
+        total_rakip = df[rakip_col].sum()
         total_market = total_pf + total_rakip
         market_share = (total_pf / total_market * 100) if total_market > 0 else 0
-        active_territories = df_period['TERRITORIES'].nunique()
-        avg_monthly_pf = total_pf / df_period['YIL_AY'].nunique() if df_period['YIL_AY'].nunique() > 0 else 0
+        active_territories = df['TERRITORIES'].nunique()
+        active_cities = df['CITY_NORMALIZED'].nunique()
+        avg_monthly_pf = total_pf / df['YIL_AY'].nunique() if df['YIL_AY'].nunique() > 0 else 0
         
-        # Previous period for trend calculation
-        if date_filter and date_filter[0] > df['DATE'].min():
-            prev_start = date_filter[0] - (date_filter[1] - date_filter[0])
-            prev_end = date_filter[0] - pd.Timedelta(days=1)
-            prev_df = df_filtered[(df_filtered['DATE'] >= prev_start) & (df_filtered['DATE'] <= prev_end)]
-            prev_total_pf = prev_df[cols['pf']].sum()
-            prev_market_share = (prev_total_pf / (prev_total_pf + prev_df[cols['rakip']].sum()) * 100) if (prev_total_pf + prev_df[cols['rakip']].sum()) > 0 else 0
-        else:
-            prev_total_pf = None
-            prev_market_share = None
-        
+        # Metrik kartları
         col1, col2, col3, col4 = st.columns(4)
         
         with col1:
-            st.markdown(create_mckinsey_metric_card(
-                total_pf, "💊 PF Satış", prev_total_pf, format_number, "💰"
-            ), unsafe_allow_html=True)
+            self.ui.create_metric_card(
+                "💊 PF Satış",
+                self._format_number(total_pf),
+                f"{self._format_number(avg_monthly_pf)}/ay"
+            )
         
         with col2:
-            st.markdown(create_mckinsey_metric_card(
-                total_market, "🏪 Toplam Pazar", None, format_number, "📊"
-            ), unsafe_allow_html=True)
+            self.ui.create_metric_card(
+                "🏪 Toplam Pazar",
+                self._format_number(total_market),
+                f"{self._format_number(total_rakip)} rakip"
+            )
         
         with col3:
-            st.markdown(create_mckinsey_metric_card(
-                market_share, "🎯 Pazar Payı", prev_market_share, format_percentage, "📈"
-            ), unsafe_allow_html=True)
+            self.ui.create_metric_card(
+                "📊 Pazar Payı",
+                f"{market_share:.1f}%",
+                f"{(100-market_share):.1f}% rakip"
+            )
         
         with col4:
-            st.markdown(create_mckinsey_metric_card(
-                active_territories, "🏢 Active Territory", None, lambda x: f"{x}", "📍"
-            ), unsafe_allow_html=True)
+            self.ui.create_metric_card(
+                "🏢 Aktif Birimler",
+                f"{active_territories} Territory",
+                f"{active_cities} Şehir"
+            )
         
         st.markdown("---")
         
-        # Top 10 Territory
-        st.subheader("🏆 Top 10 Territory Performansı")
-        terr_perf = calculate_territory_performance(df_filtered, selected_product, date_filter)
-        top10 = terr_perf.head(10)
+        # İçgörüler
+        st.subheader("💡 Yönetici İçgörüleri")
         
-        col_chart1, col_chart2 = st.columns([2, 1])
+        # İçgörü oluştur
+        insight_data = pd.DataFrame({
+            'PF_Satis': df[pf_col],
+            'Rakip_Satis': df[rakip_col],
+            'Toplam_Pazar': df[pf_col] + df[rakip_col],
+            'Pazar_Payi_%': (df[pf_col] / (df[pf_col] + df[rakip_col].replace(0, 1))) * 100
+        })
         
-        with col_chart1:
-            fig_top10 = go.Figure()
-            
-            # Formatlanmış metinler
-            pf_texts = [format_number(x) for x in top10['PF_Satis']]
-            rakip_texts = [format_number(x) for x in top10['Rakip_Satis']]
-            
-            fig_top10.add_trace(go.Bar(
-                x=top10['Territory'],
-                y=top10['PF_Satis'],
-                name='PF Satış',
-                marker_color=PERFORMANCE_COLORS['success'],
-                text=pf_texts,
-                textposition='outside',
-                marker=dict(
-                    line=dict(width=2, color='rgba(255, 255, 255, 0.8)')
-                )
-            ))
-            
-            fig_top10.add_trace(go.Bar(
-                x=top10['Territory'],
-                y=top10['Rakip_Satis'],
-                name='Rakip Satış',
-                marker_color=PERFORMANCE_COLORS['danger'],
-                text=rakip_texts,
-                textposition='outside',
-                marker=dict(
-                    line=dict(width=2, color='rgba(255, 255, 255, 0.8)')
-                )
-            ))
-            
-            fig_top10.update_layout(
-                title=dict(
-                    text='<b>Top 10 Territory - PF vs Rakip</b>',
-                    font=dict(size=18, color='white')
-                ),
-                xaxis_title='<b>Territory</b>',
-                yaxis_title='<b>Satış</b>',
-                barmode='group',
-                height=500,
-                xaxis=dict(tickangle=-45),
-                plot_bgcolor='rgba(0,0,0,0)',
-                paper_bgcolor='rgba(0,0,0,0)',
-                font=dict(color='#e2e8f0'),
-                legend=dict(
-                    orientation="h",
-                    yanchor="bottom",
-                    y=1.02,
-                    xanchor="right",
-                    x=1
-                ),
-                yaxis=dict(
-                    tickformat=',.0f'
-                )
-            )
-            
-            st.plotly_chart(fig_top10, use_container_width=True)
+        insights = self.insight_generator.analyze(insight_data)
         
-        with col_chart2:
-            # Top 5 Territory için pasta grafiği
-            top5 = top10.head(5)
-            fig_pie = px.pie(
-                top5,
-                values='PF_Satis',
-                names='Territory',
-                title='<b>Top 5 Territory Dağılımı</b>',
-                color_discrete_sequence=GRADIENT_SCALES['blue_green'],
-                hole=0.4
-            )
-            
-            fig_pie.update_layout(
-                height=500,
-                plot_bgcolor='rgba(0,0,0,0)',
-                paper_bgcolor='rgba(0,0,0,0)',
-                font=dict(color='#e2e8f0'),
-                legend=dict(
-                    orientation="v",
-                    yanchor="middle",
-                    y=0.5,
-                    xanchor="right",
-                    x=1.3
-                )
-            )
-            
-            fig_pie.update_traces(
-                textposition='inside',
-                textinfo='percent+label',
-                marker=dict(line=dict(color='rgba(255, 255, 255, 0.8)', width=2))
-            )
-            
-            st.plotly_chart(fig_pie, use_container_width=True)
+        # İçgörüleri göster
+        col_insight1, col_insight2 = st.columns(2)
         
-        # Detaylı Tablo
+        with col_insight1:
+            if insights["key_opportunities"]:
+                st.markdown("##### 🚀 Ana Fırsatlar")
+                for opportunity in insights["key_opportunities"][:3]:  # İlk 3'ü göster
+                    self.ui.create_insight_card("Fırsat", opportunity, "info")
+        
+        with col_insight2:
+            if insights["key_risks"]:
+                st.markdown("##### ⚠️ Ana Riskler")
+                for risk in insights["key_risks"][:3]:  # İlk 3'ü göster
+                    self.ui.create_insight_card("Risk", risk, "warning")
+        
+        # Özet metrikler
         st.markdown("---")
-        st.subheader("📋 Top 10 Territory Detayları")
+        st.subheader("📈 Performans Özeti")
         
-        display_cols = ['Territory', 'Region', 'City', 'Manager', 'PF_Satis', 'Toplam_Pazar', 'Toplam_Pazar_%', 'Pazar_Payi_%', 'Agirlik_%']
-        
-        top10_display = top10[display_cols].copy()
-        top10_display.columns = ['Territory', 'Region', 'City', 'Manager', 'PF Satış', 'Toplam Pazar', 'Toplam Pazar %', 'Pazar Payı %', 'Ağırlık %']
-        top10_display.index = range(1, len(top10_display) + 1)
-        
-        # Modern tablo stilini uygula
-        styled_df = style_dataframe(
-            top10_display,
-            color_column='Pazar Payı %',
-            gradient_columns=['Toplam Pazar %', 'Ağırlık %']
-        )
-        
-        st.dataframe(
-            styled_df,
-            use_container_width=True,
-            height=400
-        )
+        if insights["performance_metrics"]:
+            metrics = insights["performance_metrics"]
+            
+            col_sum1, col_sum2, col_sum3 = st.columns(3)
+            
+            with col_sum1:
+                st.metric("💰 Toplam PF Değeri", self._format_number(metrics.get("total_pf_sales", 0)))
+            
+            with col_sum2:
+                st.metric("📊 Pazar Payı", f"{metrics.get('market_share', 0):.1f}%")
+            
+            with col_sum3:
+                growth = metrics.get("avg_growth_rate", 0)
+                st.metric("📈 Ort. Büyüme", f"{growth:.1f}%")
     
-    # TAB 2: HİYERARŞİK HARITA - MCKINSEY ENHANCED
-    with tab2:
-        st.header("🗺️ Hiyerarşik Türkiye Haritası & Coğrafi Analiz")
+    def _create_geographic_tab(self) -> None:
+        """Coğrafi Analiz tab'ını oluştur"""
+        st.header("🗺️ Coğrafi Dağılım Analizi")
         
-        city_data = calculate_city_performance(df_filtered, selected_product, date_filter)
+        df = self._get_filtered_data()
         
-        # Yatırım stratejisi hesapla
-        investment_df = calculate_investment_strategy(city_data)
+        if len(df) == 0:
+            st.warning("Seçilen filtrelerde veri bulunamadı")
+            return
         
-        # McKinsey Metric Cards
-        st.subheader("📊 COĞRAFİ PERFORMANS GÖSTERGELERİ")
+        # Ürün kolonlarını al
+        product_cols = self.config.PRODUCT_COLUMN_MAP[st.session_state.current_product]
+        pf_col = product_cols['pf']
+        rakip_col = product_cols['rakip']
         
-        col_kpi1, col_kpi2, col_kpi3, col_kpi4 = st.columns(4)
+        # Şehir bazlı veriyi hazırla
+        city_data = df.groupby(['CITY_NORMALIZED', 'REGION']).agg({
+            pf_col: 'sum',
+            rakip_col: 'sum'
+        }).reset_index()
         
-        with col_kpi1:
+        city_data.columns = ['City', 'Region', 'PF_Satis', 'Rakip_Satis']
+        city_data['Toplam_Pazar'] = city_data['PF_Satis'] + city_data['Rakip_Satis']
+        city_data['Pazar_Payi_%'] = (city_data['PF_Satis'] / city_data['Toplam_Pazar'].replace(0, 1)) * 100
+        
+        # Metrikler
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
             total_pf = city_data['PF_Satis'].sum()
-            prev_total = calculate_city_performance(
-                df_filtered[df_filtered['DATE'] < df_filtered['DATE'].max() - pd.DateOffset(months=1)], 
-                selected_product, 
-                date_filter
-            )['PF_Satis'].sum() if len(df_filtered) > 1 else None
-            
-            st.markdown(create_mckinsey_metric_card(
-                total_pf, "Toplam PF Satış", prev_total, format_number, "💰"
-            ), unsafe_allow_html=True)
+            st.metric("🌍 PF Satış", self._format_number(total_pf))
         
-        with col_kpi2:
-            avg_share = city_data['Pazar_Payi_%'].mean()
-            prev_share = calculate_city_performance(
-                df_filtered[df_filtered['DATE'] < df_filtered['DATE'].max() - pd.DateOffset(months=1)], 
-                selected_product, 
-                date_filter
-            )['Pazar_Payi_%'].mean() if len(df_filtered) > 1 else None
-            
-            st.markdown(create_mckinsey_metric_card(
-                avg_share, "Ort. Pazar Payı", prev_share, format_percentage, "🎯"
-            ), unsafe_allow_html=True)
-        
-        with col_kpi3:
+        with col2:
             active_cities = len(city_data[city_data['PF_Satis'] > 0])
-            prev_active = len(calculate_city_performance(
-                df_filtered[df_filtered['DATE'] < df_filtered['DATE'].max() - pd.DateOffset(months=1)], 
-                selected_product, 
-                date_filter
-            )[city_data['PF_Satis'] > 0]) if len(df_filtered) > 1 else None
-            
-            st.markdown(create_mckinsey_metric_card(
-                active_cities, "Aktif Şehir", prev_active, lambda x: f"{x}", "🏙️"
-            ), unsafe_allow_html=True)
+            st.metric("🏙️ Aktif Şehir", str(active_cities))
         
-        with col_kpi4:
-            market_concentration = city_data.nlargest(3, 'PF_Satis')['PF_Satis'].sum() / total_pf * 100
-            st.markdown(create_mckinsey_metric_card(
-                market_concentration, "Top 3 Konsantrasyon", None, format_percentage, "🎯"
-            ), unsafe_allow_html=True)
+        with col3:
+            avg_share = city_data['Pazar_Payi_%'].mean()
+            st.metric("🎯 Ort. Pazar Payı", f"{avg_share:.1f}%")
+        
+        with col4:
+            top_city = city_data.loc[city_data['PF_Satis'].idxmax(), 'City'] if len(city_data) > 0 else "Yok"
+            st.metric("🏆 Lider Şehir", top_city)
         
         st.markdown("---")
         
-        # Hierarchical Map
-        st.subheader("📍 COĞRAFİ DAĞILIM - DRILL-DOWN HARİTA")
+        # Harita
+        st.subheader("📍 Türkiye Haritası")
         
-        if gdf is not None:
-            hierarchical_map = create_hierarchical_turkey_map(
-                city_data, 
-                gdf, 
-                current_level=map_level,
-                selected_region=selected_map_region if selected_map_region != "TÜMÜ" else None,
-                title=f"{selected_product} - Coğrafi Analiz"
-            )
-            
-            if hierarchical_map:
-                st.plotly_chart(hierarchical_map, use_container_width=True)
-                
-                # Map Controls
-                col_map1, col_map2, col_map3 = st.columns([1, 1, 2])
-                with col_map1:
-                    if map_level == "BÖLGE" and st.button("📍 Şehir Detayına Geç", type="secondary"):
-                        st.session_state.map_level = "ŞEHİR"
-                        st.rerun()
-                with col_map2:
-                    if map_level == "ŞEHİR" and st.button("🗺️ Bölgeye Geri Dön", type="secondary"):
-                        st.session_state.map_level = "BÖLGE"
-                        st.rerun()
-                with col_map3:
-                    st.info(f"**Görünüm:** {map_level} bazlı" + (f" - {selected_map_region}" if selected_map_region else ""))
-        
-        st.markdown("---")
-        
-        # Performance Matrix
-        st.subheader("🎯 STRATEJİK PERFORMANS MATRİSİ")
-        
-        perf_matrix = create_mckinsey_performance_matrix(
-            city_data,
-            title=f"{selected_product} - Stratejik Konumlandırma"
+        # Harita görünümü seçimi
+        view_mode = st.radio(
+            "Harita Görünümü",
+            ["Bölge Görünümü", "Şehir Görünümü"],
+            horizontal=True,
+            key="map_view"
         )
         
-        if perf_matrix:
-            st.plotly_chart(perf_matrix, use_container_width=True)
-            
-            # Matrix Interpretation
-            st.markdown("""
-            <div style="background: rgba(30, 41, 59, 0.7); padding: 1.2rem; border-radius: 12px; margin-top: 1rem;">
-                <h4 style="color: #e2e8f0; margin-top: 0;">📋 MATRİS YORUM REHBERİ:</h4>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
-                    <div style="border-left: 4px solid #10B981; padding-left: 0.8rem;">
-                        <div style="color: #10B981; font-weight: 600;">🚀 Yüksek Potansiyel</div>
-                        <div style="color: #94a3b8; font-size: 0.9rem;">Büyük pazar + yüksek pay → Sürdür & Koru</div>
-                    </div>
-                    <div style="border-left: 4px solid #F59E0B; padding-left: 0.8rem;">
-                        <div style="color: #F59E0B; font-weight: 600;">🎯 Büyüme Hedefi</div>
-                        <div style="color: #94a3b8; font-size: 0.9rem;">Büyük pazar + düşük pay → Agresif Yatırım</div>
-                    </div>
-                    <div style="border-left: 4px solid #3B82F6; padding-left: 0.8rem;">
-                        <div style="color: #3B82F6; font-weight: 600;">🛡️ Koruma Alanı</div>
-                        <div style="color: #94a3b8; font-size: 0.9rem;">Küçük pazar + yüksek pay → Seçici Yatırım</div>
-                    </div>
-                    <div style="border-left: 4px solid #64748B; padding-left: 0.8rem;">
-                        <div style="color: #64748B; font-weight: 600;">👁️ İzleme Alanı</div>
-                        <div style="color: #94a3b8; font-size: 0.9rem;">Küçük pazar + düşük pay → Monitor & Optimize</div>
-                    </div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+        # Harita oluştur
+        map_fig = self.map_engine.create_visualization(
+            city_data,
+            view_mode=view_mode,
+            title=f"{st.session_state.current_product} - Coğrafi Dağılım"
+        )
         
-        # Şehir Analizi
+        if map_fig:
+            st.plotly_chart(map_fig, use_container_width=True)
+        else:
+            st.error("Harita oluşturulamadı. GeoJSON dosyasını kontrol edin.")
+        
         st.markdown("---")
-        st.subheader("🏙️ DETAYLI ŞEHİR ANALİZİ")
         
-        col_analysis1, col_analysis2 = st.columns(2)
+        # Şehir Performans Tablosu
+        st.subheader("📋 Şehir Performans Detayları")
         
-        with col_analysis1:
-            st.markdown("**🏆 Top 10 Şehir**")
-            top_cities = city_data.nlargest(10, 'PF_Satis')
+        # Sıralama seçeneği
+        sort_option = st.selectbox(
+            "Sıralama Kriteri",
+            ["PF Satış", "Pazar Payı", "Toplam Pazar"],
+            key="city_sort"
+        )
+        
+        sort_column_map = {
+            "PF Satış": "PF_Satis",
+            "Pazar Payı": "Pazar_Payi_%",
+            "Toplam Pazar": "Toplam_Pazar"
+        }
+        
+        city_sorted = city_data.sort_values(
+            sort_column_map[sort_option], 
+            ascending=False
+        ).head(20)
+        
+        # Tabloyu göster
+        display_cols = ['City', 'Region', 'PF_Satis', 'Toplam_Pazar', 'Pazar_Payi_%']
+        city_display = city_sorted[display_cols].copy()
+        city_display.columns = ['Şehir', 'Bölge', 'PF Satış', 'Toplam Pazar', 'Pazar Payı %']
+        city_display.index = range(1, len(city_display) + 1)
+        
+        # Stil uygula
+        styled_df = self._style_dataframe(
+            city_display,
+            color_column='Pazar Payı %'
+        )
+        
+        st.dataframe(styled_df, use_container_width=True, height=400)
+    
+    def _create_performance_tab(self) -> None:
+        """Performans Detay tab'ını oluştur"""
+        st.header("🏢 Territory Performans Analizi")
+        
+        df = self._get_filtered_data()
+        
+        if len(df) == 0:
+            st.warning("Seçilen filtrelerde veri bulunamadı")
+            return
+        
+        # Ürün kolonlarını al
+        product_cols = self.config.PRODUCT_COLUMN_MAP[st.session_state.current_product]
+        pf_col = product_cols['pf']
+        rakip_col = product_cols['rakip']
+        
+        # Territory bazlı veriyi hazırla
+        territory_data = df.groupby(['TERRITORIES', 'REGION', 'CITY', 'MANAGER']).agg({
+            pf_col: 'sum',
+            rakip_col: 'sum'
+        }).reset_index()
+        
+        territory_data.columns = ['Territory', 'Region', 'City', 'Manager', 'PF_Satis', 'Rakip_Satis']
+        territory_data['Toplam_Pazar'] = territory_data['PF_Satis'] + territory_data['Rakip_Satis']
+        territory_data['Pazar_Payi_%'] = (territory_data['PF_Satis'] / territory_data['Toplam_Pazar'].replace(0, 1)) * 100
+        
+        total_pf = territory_data['PF_Satis'].sum()
+        territory_data['Agirlik_%'] = (territory_data['PF_Satis'] / total_pf * 100) if total_pf > 0 else 0
+        
+        # Metrikler
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            top_territory = territory_data.loc[territory_data['PF_Satis'].idxmax(), 'Territory'] if len(territory_data) > 0 else "Yok"
+            st.metric("🥇 En İyi Territory", top_territory)
+        
+        with col2:
+            avg_share = territory_data['Pazar_Payi_%'].mean()
+            st.metric("📊 Ort. Pazar Payı", f"{avg_share:.1f}%")
+        
+        with col3:
+            high_performance = len(territory_data[territory_data['Pazar_Payi_%'] > 50])
+            st.metric("🎯 >%50 Pay", str(high_performance))
+        
+        with col4:
+            total_territories = len(territory_data)
+            st.metric("🏢 Toplam Territory", str(total_territories))
+        
+        st.markdown("---")
+        
+        # Görselleştirmeler
+        col_viz1, col_viz2 = st.columns(2)
+        
+        with col_viz1:
+            st.subheader("📊 Top 10 Territory")
             
-            bar_texts = [format_number(x) for x in top_cities['PF_Satis']]
+            top_10 = territory_data.nlargest(10, 'PF_Satis')
             
-            fig_bar = px.bar(
-                top_cities,
-                x='City',
+            fig = px.bar(
+                top_10,
+                x='Territory',
                 y='PF_Satis',
-                title='<b>En Yüksek Satış Yapan Şehirler</b>',
                 color='Region',
-                color_discrete_map=REGION_COLORS,
-                hover_data=['Region', 'PF_Satis', 'Pazar_Payi_%'],
-                text=bar_texts
+                color_discrete_map=self.config.REGION_COLORS,
+                title='En Yüksek Satış Yapan Territory\'ler',
+                text_auto='.2s'
             )
             
-            fig_bar.update_layout(
+            fig.update_layout(
                 height=500,
                 xaxis_tickangle=-45,
                 plot_bgcolor='rgba(0,0,0,0)',
                 paper_bgcolor='rgba(0,0,0,0)',
-                font=dict(color='#e2e8f0'),
-                yaxis_title='<b>PF Satış</b>',
-                xaxis_title='<b>Şehir</b>',
-                yaxis=dict(tickformat=',.0f')
+                font_color=self.config.COLOR_PALETTE['text_primary'],
+                showlegend=True
             )
             
-            fig_bar.update_traces(
-                textposition='outside',
-                marker=dict(line=dict(width=2, color='rgba(255, 255, 255, 0.8)'))
-            )
-            
-            st.plotly_chart(fig_bar, use_container_width=True)
+            st.plotly_chart(fig, use_container_width=True)
         
-        with col_analysis2:
-            st.markdown("**🗺️ Bölge Dağılımı**")
+        with col_viz2:
+            st.subheader("🎯 Pazar Payı Dağılımı")
             
-            region_perf = city_data.groupby('Region').agg({
-                'PF_Satis': 'sum',
-                'Toplam_Pazar': 'sum'
-            }).reset_index()
-            
-            region_perf['Pazar_Payi_%'] = safe_divide(region_perf['PF_Satis'], region_perf['Toplam_Pazar']) * 100
-            
-            fig_pie = px.pie(
-                region_perf,
-                values='PF_Satis',
-                names='Region',
-                title='<b>Bölgelere Göre Satış Dağılımı</b>',
+            fig = px.scatter(
+                territory_data,
+                x='PF_Satis',
+                y='Pazar_Payi_%',
+                size='Toplam_Pazar',
                 color='Region',
-                color_discrete_map=REGION_COLORS,
-                hole=0.3
+                color_discrete_map=self.config.REGION_COLORS,
+                hover_name='Territory',
+                hover_data=['Manager', 'PF_Satis', 'Pazar_Payi_%'],
+                title='Territory Performans Haritası'
             )
             
-            fig_pie.update_layout(
+            fig.update_layout(
                 height=500,
                 plot_bgcolor='rgba(0,0,0,0)',
                 paper_bgcolor='rgba(0,0,0,0)',
-                font=dict(color='#e2e8f0'),
-                showlegend=True,
-                legend=dict(
-                    orientation="v",
-                    yanchor="middle",
-                    y=0.5,
-                    xanchor="right",
-                    x=1.3
-                )
+                font_color=self.config.COLOR_PALETTE['text_primary'],
+                xaxis_title='PF Satış',
+                yaxis_title='Pazar Payı (%)'
             )
             
-            fig_pie.update_traces(
-                textposition='inside',
-                textinfo='percent+label',
-                marker=dict(line=dict(color='rgba(255, 255, 255, 0.8)', width=2))
-            )
-            
-            st.plotly_chart(fig_pie, use_container_width=True)
+            st.plotly_chart(fig, use_container_width=True)
         
-        # Yatırım Stratejisi
         st.markdown("---")
-        st.subheader("🎯 YATIRIM STRATEJİSİ ANALİZİ")
         
-        if len(investment_df) > 0:
-            # Strateji istatistikleri
-            strategy_counts = investment_df['Yatırım_Stratejisi'].value_counts()
-            
-            cols_strategy = st.columns(5)
-            strategy_metrics = [
-                ("🚀 Agresif", "Agresif"),
-                ("⚡ Hızlandırılmış", "Hızlandırılmış"),
-                ("🛡️ Koruma", "Koruma"),
-                ("💎 Potansiyel", "Potansiyel"),
-                ("👁️ İzleme", "İzleme")
-            ]
-            
-            for idx, (strategy_key, strategy_name) in enumerate(strategy_metrics):
-                with cols_strategy[idx]:
-                    count = strategy_counts.get(strategy_key, 0)
-                    total_value = investment_df[investment_df['Yatırım_Stratejisi'] == strategy_key]['PF_Satis'].sum()
-                    st.metric(
-                        strategy_name,
-                        f"{count} şehir",
-                        f"{format_number(total_value)} PF"
-                    )
-            
-            st.markdown("---")
-            
-            # Detaylı tablo
-            st.subheader("📋 Detaylı Şehir Listesi")
-            
-            # Strateji filtresini uygula
-            investment_display = investment_df.copy()
-            if selected_strateji != "Tümü":
-                investment_display = investment_display[investment_display['Yatırım_Stratejisi'] == selected_strateji]
-            
-            city_display = investment_display.sort_values('PF_Satis', ascending=False).copy()
-            
-            display_cols = ['City', 'Region', 'PF_Satis', 'Toplam_Pazar', 'Pazar_Payi_%', 'Yatırım_Stratejisi']
-            city_display_formatted = city_display[display_cols].copy()
-            city_display_formatted.columns = ['Şehir', 'Bölge', 'PF Satış', 'Toplam Pazar', 'Pazar Payı %', 'Strateji']
-            city_display_formatted.index = range(1, len(city_display_formatted) + 1)
-            
-            # Modern tablo stilini uygula
-            styled_cities = style_dataframe(
-                city_display_formatted,
-                color_column='Pazar Payı %',
-                gradient_columns=['PF Satış']
-            )
-            
-            st.dataframe(
-                styled_cities,
-                use_container_width=True,
-                height=400
-            )
-    
-    # TAB 3: TERRITORY ANALİZİ - GÜNCELLENMİŞ
-    with tab3:
-        st.header("🏢 Territory Bazlı Detaylı Analiz")
+        # Detaylı Tablo
+        st.subheader("📋 Detaylı Territory Listesi")
         
-        terr_perf = calculate_territory_performance(df_filtered, selected_product, date_filter)
-        
-        # Filtreleme ve sıralama
-        col_filter1, col_filter2 = st.columns([1, 2])
+        # Filtreleme seçenekleri
+        col_filter1, col_filter2 = st.columns(2)
         
         with col_filter1:
-            sort_options = {
-                'PF_Satis': 'PF Satış',
-                'Pazar_Payi_%': 'Pazar Payı %',
-                'Toplam_Pazar': 'Toplam Pazar',
-                'Toplam_Pazar_%': 'Toplam Pazar %',
-                'Agirlik_%': 'Ağırlık %'
-            }
-            sort_by = st.selectbox(
-                "Sıralama Kriteri",
-                options=list(sort_options.keys()),
-                format_func=lambda x: sort_options[x]
-            )
+            show_count = st.slider("Gösterilecek Territory Sayısı", 10, 100, 25, 5)
         
         with col_filter2:
-            show_n = st.slider("Gösterilecek Territory Sayısı", 10, 100, 25, 5)
+            sort_by = st.selectbox(
+                "Sıralama Kriteri",
+                ["PF Satış", "Pazar Payı", "Toplam Pazar", "Ağırlık %"],
+                key="territory_sort"
+            )
         
-        terr_sorted = terr_perf.sort_values(sort_by, ascending=False).head(show_n)
+        sort_map = {
+            "PF Satış": "PF_Satis",
+            "Pazar Payı": "Pazar_Payi_%",
+            "Toplam Pazar": "Toplam_Pazar",
+            "Ağırlık %": "Agirlik_%"
+        }
         
-        # Visualizations
-        col_viz1, col_viz2 = st.columns(2)
+        territory_sorted = territory_data.sort_values(
+            sort_map[sort_by],
+            ascending=False
+        ).head(show_count)
         
-        with col_viz1:
-            st.subheader("📊 PF vs Rakip Satış")
+        # Tabloyu göster
+        display_cols = ['Territory', 'Region', 'City', 'Manager', 'PF_Satis', 'Toplam_Pazar', 'Pazar_Payi_%', 'Agirlik_%']
+        territory_display = territory_sorted[display_cols].copy()
+        territory_display.columns = ['Territory', 'Bölge', 'Şehir', 'Manager', 'PF Satış', 'Toplam Pazar', 'Pazar Payı %', 'Ağırlık %']
+        territory_display.index = range(1, len(territory_display) + 1)
+        
+        # Stil uygula
+        styled_df = self._style_dataframe(
+            territory_display,
+            color_column='Pazar Payı %',
+            gradient_columns=['Ağırlık %', 'PF Satış']
+        )
+        
+        st.dataframe(styled_df, use_container_width=True, height=500)
+    
+    def _create_trend_tab(self) -> None:
+        """Trend & Tahmin tab'ını oluştur"""
+        st.header("📈 Zaman Serisi Analizi ve Trendler")
+        
+        df = self._get_filtered_data()
+        
+        if len(df) == 0:
+            st.warning("Seçilen filtrelerde veri bulunamadı")
+            return
+        
+        # Ürün kolonlarını al
+        product_cols = self.config.PRODUCT_COLUMN_MAP[st.session_state.current_product]
+        pf_col = product_cols['pf']
+        rakip_col = product_cols['rakip']
+        
+        # Aylık veriyi hazırla
+        monthly_data = df.groupby('YIL_AY').agg({
+            pf_col: 'sum',
+            rakip_col: 'sum',
+            'DATE': 'first'
+        }).reset_index().sort_values('YIL_AY')
+        
+        monthly_data.columns = ['YIL_AY', 'PF_Satis', 'Rakip_Satis', 'DATE']
+        monthly_data['Toplam_Pazar'] = monthly_data['PF_Satis'] + monthly_data['Rakip_Satis']
+        monthly_data['Pazar_Payi_%'] = (monthly_data['PF_Satis'] / monthly_data['Toplam_Pazar'].replace(0, 1)) * 100
+        monthly_data['PF_Buyume_%'] = monthly_data['PF_Satis'].pct_change() * 100
+        monthly_data['Rakip_Buyume_%'] = monthly_data['Rakip_Satis'].pct_change() * 100
+        monthly_data['Goreceli_Buyume_%'] = monthly_data['PF_Buyume_%'] - monthly_data['Rakip_Buyume_%']
+        
+        # Metrikler
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            avg_pf = monthly_data['PF_Satis'].mean()
+            st.metric("📊 Ort. Aylık PF", self._format_number(avg_pf))
+        
+        with col2:
+            avg_growth = monthly_data['PF_Buyume_%'].mean()
+            st.metric("📈 Ort. Büyüme", f"{avg_growth:.1f}%")
+        
+        with col3:
+            avg_share = monthly_data['Pazar_Payi_%'].mean()
+            st.metric("🎯 Ort. Pazar Payı", f"{avg_share:.1f}%")
+        
+        with col4:
+            win_months = len(monthly_data[monthly_data['Goreceli_Buyume_%'] > 0])
+            total_months = len(monthly_data)
+            st.metric("🏆 Kazanılan Aylar", f"{win_months}/{total_months}")
+        
+        st.markdown("---")
+        
+        # Görselleştirmeler
+        col_chart1, col_chart2 = st.columns(2)
+        
+        with col_chart1:
+            st.subheader("💰 Satış Trendi")
             
-            # Formatlanmış metinler
-            pf_texts = [format_number(x) for x in terr_sorted['PF_Satis']]
-            rakip_texts = [format_number(x) for x in terr_sorted['Rakip_Satis']]
+            fig = go.Figure()
             
-            fig_bar = go.Figure()
-            
-            # Her territory için çubuk grafik
-            fig_bar.add_trace(go.Bar(
-                x=terr_sorted['Territory'],
-                y=terr_sorted['PF_Satis'],
+            fig.add_trace(go.Scatter(
+                x=monthly_data['DATE'],
+                y=monthly_data['PF_Satis'],
+                mode='lines+markers',
                 name='PF Satış',
-                marker_color=PERFORMANCE_COLORS['success'],
-                text=pf_texts,
-                textposition='outside',
-                marker=dict(
-                    line=dict(width=1.5, color='rgba(255, 255, 255, 0.8)')
-                )
+                line=dict(color=self.config.COLOR_PALETTE['success_medium'], width=3),
+                marker=dict(size=8, color='white', line=dict(width=2, color=self.config.COLOR_PALETTE['success_medium']))
             ))
             
-            fig_bar.add_trace(go.Bar(
-                x=terr_sorted['Territory'],
-                y=terr_sorted['Rakip_Satis'],
+            fig.add_trace(go.Scatter(
+                x=monthly_data['DATE'],
+                y=monthly_data['Rakip_Satis'],
+                mode='lines+markers',
                 name='Rakip Satış',
-                marker_color=PERFORMANCE_COLORS['danger'],
-                text=rakip_texts,
-                textposition='outside',
-                marker=dict(
-                    line=dict(width=1.5, color='rgba(255, 255, 255, 0.8)')
-                )
+                line=dict(color=self.config.COLOR_PALETTE['danger_medium'], width=3),
+                marker=dict(size=8, color='white', line=dict(width=2, color=self.config.COLOR_PALETTE['danger_medium']))
             ))
             
-            fig_bar.update_layout(
-                title=dict(
-                    text=f'<b>Top {show_n} Territory - PF vs Rakip</b>',
-                    font=dict(size=18, color='white')
-                ),
-                xaxis_title='<b>Territory</b>',
-                yaxis_title='<b>Satış</b>',
-                barmode='group',
-                height=600,
-                xaxis=dict(tickangle=-45),
+            fig.update_layout(
+                height=500,
+                xaxis_title='Tarih',
+                yaxis_title='Satış',
+                hovermode='x unified',
                 plot_bgcolor='rgba(0,0,0,0)',
                 paper_bgcolor='rgba(0,0,0,0)',
-                font=dict(color='#e2e8f0'),
+                font_color=self.config.COLOR_PALETTE['text_primary'],
                 legend=dict(
                     orientation="h",
                     yanchor="bottom",
                     y=1.02,
                     xanchor="right",
                     x=1
-                ),
-                yaxis=dict(
-                    tickformat=',.0f'
                 )
             )
             
-            st.plotly_chart(fig_bar, use_container_width=True)
+            st.plotly_chart(fig, use_container_width=True)
         
-        with col_viz2:
-            st.subheader("🎯 Pazar Payı Dağılımı")
+        with col_chart2:
+            st.subheader("📈 Büyüme Oranları")
             
-            # Heatmap style scatter plot
-            fig_scatter = px.scatter(
-                terr_sorted,
-                x='PF_Satis',
-                y='Pazar_Payi_%',
-                size='Toplam_Pazar',
-                color='Region',
-                color_discrete_map=REGION_COLORS,
-                hover_name='Territory',
-                hover_data={
-                    'Region': True,
-                    'PF_Satis': ':,.0f',
-                    'Rakip_Satis': ':,.0f',
-                    'Pazar_Payi_%': ':.1f',
-                    'Toplam_Pazar_%': ':.1f'
-                },
-                size_max=50,
-                title=f'<b>Territory Performans Haritası</b>'
-            )
+            fig = go.Figure()
             
-            fig_scatter.update_layout(
-                height=600,
-                plot_bgcolor='rgba(15, 23, 41, 0.9)',
+            fig.add_trace(go.Scatter(
+                x=monthly_data['DATE'],
+                y=monthly_data['PF_Buyume_%'],
+                mode='lines+markers',
+                name='PF Büyüme',
+                line=dict(color=self.config.COLOR_PALETTE['success_medium'], width=3),
+                marker=dict(size=8, color='white', line=dict(width=2, color=self.config.COLOR_PALETTE['success_medium'])),
+                fill='tozeroy',
+                fillcolor='rgba(16, 185, 129, 0.1)'
+            ))
+            
+            fig.add_trace(go.Scatter(
+                x=monthly_data['DATE'],
+                y=monthly_data['Rakip_Buyume_%'],
+                mode='lines+markers',
+                name='Rakip Büyüme',
+                line=dict(color=self.config.COLOR_PALETTE['danger_medium'], width=3),
+                marker=dict(size=8, color='white', line=dict(width=2, color=self.config.COLOR_PALETTE['danger_medium'])),
+                fill='tozeroy',
+                fillcolor='rgba(239, 68, 68, 0.1)'
+            ))
+            
+            fig.add_hline(y=0, line_dash="dash", line_color="gray", opacity=0.5)
+            
+            fig.update_layout(
+                height=500,
+                xaxis_title='Tarih',
+                yaxis_title='Büyüme (%)',
+                plot_bgcolor='rgba(0,0,0,0)',
                 paper_bgcolor='rgba(0,0,0,0)',
-                font=dict(color='#e2e8f0'),
-                xaxis_title='<b>PF Satış</b>',
-                yaxis_title='<b>Pazar Payı %</b>',
+                font_color=self.config.COLOR_PALETTE['text_primary'],
                 legend=dict(
-                    title='<b>Bölge</b>',
-                    bgcolor='rgba(30, 41, 59, 0.8)'
-                ),
-                xaxis=dict(
-                    tickformat=',.0f'
-                ),
-                yaxis=dict(
-                    ticksuffix='%'
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1
                 )
             )
             
-            st.plotly_chart(fig_scatter, use_container_width=True)
+            st.plotly_chart(fig, use_container_width=True)
         
         st.markdown("---")
         
-        # Detaylı Territory Listesi
-        st.subheader(f"📋 Detaylı Territory Listesi (Top {show_n})")
+        # Detaylı Tablo
+        st.subheader("📋 Aylık Performans Detayları")
         
-        display_cols = [
-            'Territory', 'Region', 'City', 'Manager',
-            'PF_Satis', 'Rakip_Satis', 'Toplam_Pazar', 'Toplam_Pazar_%',
-            'Pazar_Payi_%', 'Goreceli_Pazar_Payi', 'Agirlik_%'
-        ]
+        display_cols = ['YIL_AY', 'PF_Satis', 'Rakip_Satis', 'Toplam_Pazar', 'Pazar_Payi_%', 'PF_Buyume_%', 'Rakip_Buyume_%', 'Goreceli_Buyume_%']
+        monthly_display = monthly_data[display_cols].copy()
+        monthly_display.columns = ['Ay', 'PF Satış', 'Rakip Satış', 'Toplam Pazar', 'Pazar Payı %', 'PF Büyüme %', 'Rakip Büyüme %', 'Göreceli Büyüme %']
+        monthly_display.index = range(1, len(monthly_display) + 1)
         
-        terr_display = terr_sorted[display_cols].copy()
-        terr_display.columns = [
-            'Territory', 'Region', 'City', 'Manager',
-            'PF Satış', 'Rakip Satış', 'Toplam Pazar', 'Toplam Pazar %',
-            'Pazar Payı %', 'Göreceli Pay', 'Ağırlık %'
-        ]
-        terr_display.index = range(1, len(terr_display) + 1)
-        
-        # Modern tablo stilini uygula
-        styled_territory = style_dataframe(
-            terr_display,
-            color_column='Pazar Payı %',
-            gradient_columns=['Toplam Pazar %', 'Ağırlık %', 'Göreceli Pay']
+        # Stil uygula
+        styled_df = self._style_dataframe(
+            monthly_display,
+            color_column='Göreceli Büyüme %',
+            gradient_columns=['Pazar Payı %', 'PF Büyüme %']
         )
         
-        st.dataframe(
-            styled_territory,
-            use_container_width=True,
-            height=600
-        )
-        
-        # Özet İstatistikler
-        st.markdown("---")
-        st.subheader("📊 Territory Performans Özeti")
-        
-        col_sum1, col_sum2, col_sum3, col_sum4 = st.columns(4)
-        
-        with col_sum1:
-            avg_pazar_payi = terr_sorted['Pazar_Payi_%'].mean()
-            st.metric("📊 Ort. Pazar Payı", format_percentage(avg_pazar_payi))
-        
-        with col_sum2:
-            total_pf = terr_sorted['PF_Satis'].sum()
-            st.metric("💰 Toplam PF Satış", format_number(total_pf))
-        
-        with col_sum3:
-            avg_toplam_pazar_yuzde = terr_sorted['Toplam_Pazar_%'].mean()
-            st.metric("🏪 Ort. Pazar Payı", format_percentage(avg_toplam_pazar_yuzde))
-        
-        with col_sum4:
-            dominant_region = terr_display['Region'].mode()[0] if len(terr_display) > 0 else "Yok"
-            region_color = REGION_COLORS.get(dominant_region, "#64748B")
-            st.markdown(
-                f'<div style="color:{region_color}; font-size:1.2rem; font-weight:bold; text-align: center;">'
-                f'🏆 {dominant_region}</div>',
-                unsafe_allow_html=True
-            )
+        st.dataframe(styled_df, use_container_width=True, height=400)
     
-    # TAB 4: ZAMAN SERİSİ & ML - MCKINSEY ENHANCED
-    with tab4:
-        st.header("📈 Zaman Serisi Analizi & GERÇEK ML Tahminleme")
+    def _create_strategic_tab(self) -> None:
+        """Stratejik Analiz tab'ını oluştur"""
+        st.header("🎯 Stratejik Analiz ve Planlama")
         
-        territory_for_ts = st.selectbox(
-            "Territory Seçin",
-            ["TÜMÜ"] + sorted(df_filtered['TERRITORIES'].unique()),
-            key='ts_territory'
-        )
+        df = self._get_filtered_data()
         
-        monthly_df = calculate_time_series(df_filtered, selected_product, territory_for_ts, date_filter)
+        if len(df) == 0:
+            st.warning("Seçilen filtrelerde veri bulunamadı")
+            return
         
-        if len(monthly_df) == 0:
-            st.warning("⚠️ Seçilen filtrelerde veri bulunamadı")
-        else:
-            # Özet Metrikler - McKinsey Cards
-            col_ts1, col_ts2, col_ts3, col_ts4 = st.columns(4)
+        # Ürün kolonlarını al
+        product_cols = self.config.PRODUCT_COLUMN_MAP[st.session_state.current_product]
+        pf_col = product_cols['pf']
+        rakip_col = product_cols['rakip']
+        
+        # BCG Analizi
+        st.subheader("⭐ BCG Matrix Analizi")
+        
+        # Territory bazlı veriyi hazırla
+        territory_data = df.groupby(['TERRITORIES', 'REGION', 'CITY']).agg({
+            pf_col: 'sum',
+            rakip_col: 'sum'
+        }).reset_index()
+        
+        territory_data.columns = ['Territory', 'Region', 'City', 'PF_Satis', 'Rakip_Satis']
+        territory_data['Toplam_Pazar'] = territory_data['PF_Satis'] + territory_data['Rakip_Satis']
+        territory_data['Pazar_Payi_%'] = (territory_data['PF_Satis'] / territory_data['Toplam_Pazar'].replace(0, 1)) * 100
+        territory_data['Goreceli_Pazar_Payi'] = territory_data['PF_Satis'] / territory_data['Rakip_Satis'].replace(0, 1)
+        
+        # Büyüme hesapla (basit versiyon)
+        territory_data['Pazar_Buyume_%'] = 0  # Gerçek uygulamada tarihsel büyüme hesaplanmalı
+        
+        # BCG analizi yap
+        bcg_results = self.bcg_analyzer.analyze(territory_data)
+        
+        if bcg_results["bcg_matrix"] is not None:
+            bcg_df = bcg_results["bcg_matrix"]
             
-            with col_ts1:
-                avg_pf = monthly_df['PF_Satis'].mean()
-                prev_avg = calculate_time_series(
-                    df_filtered[df_filtered['DATE'] < monthly_df['DATE'].max() - pd.DateOffset(months=1)], 
-                    selected_product, 
-                    territory_for_ts, 
-                    date_filter
-                )['PF_Satis'].mean() if len(monthly_df) > 1 else None
-                
-                st.markdown(create_mckinsey_metric_card(
-                    avg_pf, "Ort. Aylık PF", prev_avg, format_number, "📊"
-                ), unsafe_allow_html=True)
+            # BCG Görselleştirme
+            fig = px.scatter(
+                bcg_df,
+                x='Goreceli_Pazar_Payi',
+                y='Pazar_Buyume_%',
+                size='PF_Satis',
+                color='BCG_Kategori',
+                color_discrete_map=self.config.BCG_COLORS,
+                hover_name='Territory',
+                hover_data=['Region', 'PF_Satis', 'Pazar_Payi_%'],
+                title='BCG Matrix - Stratejik Konumlandırma',
+                labels={
+                    'Goreceli_Pazar_Payi': 'Göreceli Pazar Payı',
+                    'Pazar_Buyume_%': 'Pazar Büyüme Oranı (%)'
+                }
+            )
             
-            with col_ts2:
-                avg_growth = monthly_df['PF_Buyume_%'].mean()
-                st.markdown(create_mckinsey_metric_card(
-                    avg_growth, "Ort. Büyüme", None, format_percentage, "📈"
-                ), unsafe_allow_html=True)
+            # Medyan çizgileri
+            median_share = bcg_df['Goreceli_Pazar_Payi'].median()
+            median_growth = bcg_df['Pazar_Buyume_%'].median()
             
-            with col_ts3:
-                avg_share = monthly_df['Pazar_Payi_%'].mean()
-                st.markdown(create_mckinsey_metric_card(
-                    avg_share, "Ort. Pazar Payı", None, format_percentage, "🎯"
-                ), unsafe_allow_html=True)
+            fig.add_hline(y=median_growth, line_dash="dash", line_color="gray", opacity=0.5)
+            fig.add_vline(x=median_share, line_dash="dash", line_color="gray", opacity=0.5)
             
-            with col_ts4:
-                total_months = len(monthly_df)
-                st.markdown(create_mckinsey_metric_card(
-                    total_months, "Veri Dönemi", None, lambda x: f"{x} ay", "📅"
-                ), unsafe_allow_html=True)
+            fig.update_layout(
+                height=600,
+                plot_bgcolor='rgba(0,0,0,0)',
+                paper_bgcolor='rgba(0,0,0,0)',
+                font_color=self.config.COLOR_PALETTE['text_primary']
+            )
             
+            st.plotly_chart(fig, use_container_width=True)
+            
+            # BCG Özeti
             st.markdown("---")
+            st.subheader("📊 BCG Portföy Dağılımı")
             
-            # Trend Analysis Chart - MCKINSEY STYLE
-            st.subheader("📈 Detaylı Trend Analizi")
-            
-            if len(monthly_df) >= 3:
-                trend_chart = create_mckinsey_trend_analysis(monthly_df, window=3)
-                st.plotly_chart(trend_chart, use_container_width=True)
+            if bcg_results["category_summary"]:
+                summary = bcg_results["category_summary"]
                 
-                # Trend Yorumu
-                latest_3m_avg = monthly_df['PF_Satis'].tail(3).mean()
-                prev_3m_avg = monthly_df['PF_Satis'].iloc[-6:-3].mean() if len(monthly_df) >= 6 else None
+                cols = st.columns(4)
+                categories = list(self.config.BCG_COLORS.keys())
                 
-                if prev_3m_avg and prev_3m_avg > 0:
-                    trend_pct = ((latest_3m_avg - prev_3m_avg) / prev_3m_avg) * 100
-                    
-                    if trend_pct > 10:
-                        trend_insight = "🟢 **Güçlü pozitif trend** - Son 3 ay ortalaması önceki 3 aya göre %{:.1f} artmış.".format(trend_pct)
-                    elif trend_pct > 0:
-                        trend_insight = "🟡 **Hafif pozitif trend** - Son 3 ayda %{:.1f}'lik artış gözlenmiş.".format(trend_pct)
-                    elif trend_pct > -10:
-                        trend_insight = "🟠 **Düz trend** - Büyüme oranı sabit kalmış."
-                    else:
-                        trend_insight = "🔴 **Negatif trend** - Son 3 ayda %{:.1f}'lik düşüş var.".format(abs(trend_pct))
-                    
-                    st.info(trend_insight)
-            
-            # Grafikler
-            st.markdown("---")
-            col_chart1, col_chart2 = st.columns(2)
-            
-            with col_chart1:
-                st.subheader("📊 Satış Trendi")
-                fig_ts = go.Figure()
-                
-                fig_ts.add_trace(go.Scatter(
-                    x=monthly_df['DATE'],
-                    y=monthly_df['PF_Satis'],
-                    mode='lines+markers',
-                    name='PF Satış',
-                    line=dict(color=PERFORMANCE_COLORS['success'], width=3, shape='spline'),
-                    marker=dict(size=8, color='white', line=dict(width=2, color=PERFORMANCE_COLORS['success'])),
-                    fill='tozeroy',
-                    fillcolor='rgba(16, 185, 129, 0.1)'
-                ))
-                
-                fig_ts.add_trace(go.Scatter(
-                    x=monthly_df['DATE'],
-                    y=monthly_df['Rakip_Satis'],
-                    mode='lines+markers',
-                    name='Rakip Satış',
-                    line=dict(color=PERFORMANCE_COLORS['danger'], width=3, shape='spline'),
-                    marker=dict(size=8, color='white', line=dict(width=2, color=PERFORMANCE_COLORS['danger'])),
-                    fill='tozeroy',
-                    fillcolor='rgba(239, 68, 68, 0.1)'
-                ))
-                
-                fig_ts.update_layout(
-                    height=500,
-                    xaxis_title='<b>Tarih</b>',
-                    yaxis_title='<b>Satış</b>',
-                    hovermode='x unified',
-                    plot_bgcolor='rgba(0,0,0,0)',
-                    paper_bgcolor='rgba(0,0,0,0)',
-                    font=dict(color='#e2e8f0'),
-                    legend=dict(
-                        orientation="h",
-                        yanchor="bottom",
-                        y=1.02,
-                        xanchor="right",
-                        x=1
-                    ),
-                    yaxis=dict(
-                        tickformat=',.0f'
-                    )
-                )
-                
-                st.plotly_chart(fig_ts, use_container_width=True)
-            
-            with col_chart2:
-                st.subheader("🎯 Pazar Payı Trendi")
-                fig_share = go.Figure()
-                
-                fig_share.add_trace(go.Scatter(
-                    x=monthly_df['DATE'],
-                    y=monthly_df['Pazar_Payi_%'],
-                    mode='lines+markers',
-                    name='Pazar Payı %',
-                    line=dict(color=PERFORMANCE_COLORS['info'], width=3, shape='spline'),
-                    marker=dict(size=8, color='white', line=dict(width=2, color=PERFORMANCE_COLORS['info'])),
-                    fill='tozeroy',
-                    fillcolor='rgba(59, 130, 246, 0.1)'
-                ))
-                
-                fig_share.add_hline(
-                    y=50,
-                    line_dash="dash",
-                    line_color=PERFORMANCE_COLORS['warning'],
-                    opacity=0.5,
-                    line_width=2,
-                    annotation_text="50% Eşik"
-                )
-                
-                fig_share.update_layout(
-                    height=500,
-                    xaxis_title='<b>Tarih</b>',
-                    yaxis_title='<b>Pazar Payı (%)</b>',
-                    yaxis=dict(range=[0, 100]),
-                    plot_bgcolor='rgba(0,0,0,0)',
-                    paper_bgcolor='rgba(0,0,0,0)',
-                    font=dict(color='#e2e8f0'),
-                    yaxis_ticksuffix='%'
-                )
-                
-                st.plotly_chart(fig_share, use_container_width=True)
-            
-            # ML Tahminleme
-            st.markdown("---")
-            st.header("🤖 Machine Learning Satış Tahmini")
-            
-            forecast_months = st.slider("Tahmin Periyodu (Ay)", 1, 6, 3, key='forecast_months')
-            
-            if len(monthly_df) < 10:
-                st.warning("⚠️ Tahmin için yeterli veri yok (en az 10 ay gerekli)")
-            else:
-                with st.spinner("ML modelleri eğitiliyor..."):
-                    ml_results, best_model_name, forecast_df = train_ml_models(monthly_df, forecast_months)
-                
-                if ml_results is None:
-                    st.error("❌ Model eğitimi başarısız")
-                else:
-                    # Model Performansı
-                    st.subheader("📊 Model Performans Karşılaştırması")
-                    
-                    perf_data = []
-                    for name, metrics in ml_results.items():
-                        perf_data.append({
-                            'Model': name,
-                            'MAE': metrics['MAE'],
-                            'RMSE': metrics['RMSE'],
-                            'MAPE (%)': metrics['MAPE']
-                        })
-                    
-                    perf_df = pd.DataFrame(perf_data)
-                    perf_df = perf_df.sort_values('MAPE (%)')
-                    
-                    col_ml1, col_ml2 = st.columns([2, 1])
-                    
-                    with col_ml1:
-                        styled_perf = style_dataframe(
-                            perf_df,
-                            color_column='MAPE (%)',
-                            gradient_columns=['MAE', 'RMSE']
+                for idx, category in enumerate(categories):
+                    with cols[idx]:
+                        cat_data = summary.get(category, {})
+                        count = cat_data.get("count", 0)
+                        sales = cat_data.get("total_sales", 0)
+                        
+                        st.metric(
+                            category,
+                            f"{count} Territory",
+                            delta=f"{self._format_number(sales)} PF"
                         )
-                        st.dataframe(styled_perf, use_container_width=True)
-                    
-                    with col_ml2:
-                        best_mape = ml_results[best_model_name]['MAPE']
+            
+            # Stratejik Çıkarımlar
+            st.markdown("---")
+            st.subheader("💡 Stratejik Çıkarımlar")
+            
+            if bcg_results["strategic_implications"]:
+                for implication in bcg_results["strategic_implications"]:
+                    self.ui.create_insight_card("Stratejik Öneri", implication, "info")
+        
+        # Yatırım Stratejisi Analizi
+        st.markdown("---")
+        st.subheader("💰 Yatırım Stratejisi Analizi")
+        
+        # Şehir bazlı veriyi hazırla
+        city_data = df.groupby(['CITY_NORMALIZED', 'REGION']).agg({
+            pf_col: 'sum',
+            rakip_col: 'sum'
+        }).reset_index()
+        
+        city_data.columns = ['City', 'Region', 'PF_Satis', 'Rakip_Satis']
+        city_data['Toplam_Pazar'] = city_data['PF_Satis'] + city_data['Rakip_Satis']
+        city_data['Pazar_Payi_%'] = (city_data['PF_Satis'] / city_data['Toplam_Pazar'].replace(0, 1)) * 100
+        
+        # Yatırım stratejisi analizi yap
+        strategy_results = self.investment_strategy_analyzer.analyze(city_data)
+        
+        if strategy_results["strategy_matrix"] is not None:
+            strategy_df = strategy_results["strategy_matrix"]
+            
+            # Strateji Dağılımı
+            if strategy_results["strategy_distribution"]:
+                distribution = strategy_results["strategy_distribution"]
+                
+                cols = st.columns(5)
+                strategies = list(self.config.STRATEGY_COLORS.keys())
+                
+                for idx, strategy in enumerate(strategies):
+                    with cols[idx]:
+                        strat_data = distribution.get(strategy, {})
+                        count = strat_data.get("count", 0)
+                        sales = strat_data.get("total_sales", 0)
                         
-                        if best_mape < 10:
-                            confidence_level = "🟢 YÜKSEK"
-                            confidence_color = "#10B981"
-                        elif best_mape < 20:
-                            confidence_level = "🟡 ORTA"
-                            confidence_color = "#F59E0B"
-                        else:
-                            confidence_level = "🔴 DÜŞÜK"
-                            confidence_color = "#EF4444"
-                        
-                        st.markdown(f'<div style="background: rgba(30, 41, 59, 0.8); padding: 1.5rem; border-radius: 12px; border: 2px solid {confidence_color}; margin-top: 1rem;">'
-                                   f'<h3 style="color: white; margin: 0 0 1rem 0;">🏆 En İyi Model</h3>'
-                                   f'<p style="color: {confidence_color}; font-size: 1.5rem; font-weight: 700; margin: 0 0 0.5rem 0;">{best_model_name}</p>'
-                                   f'<p style="color: #94a3b8; margin: 0 0 1rem 0;">MAPE: <span style="color: {confidence_color}; font-weight: 700;">{best_mape:.2f}%</span></p>'
-                                   f'<p style="color: #e2e8f0; font-weight: 600; margin: 0;">Güven Seviyesi: <span style="color: {confidence_color};">{confidence_level}</span></p>'
-                                   '</div>', unsafe_allow_html=True)
-                    
-                    # Tahmin Grafiği
-                    st.markdown("---")
-                    st.subheader("📈 Gerçek vs ML Tahmini")
-                    
-                    forecast_chart = create_modern_forecast_chart(monthly_df, forecast_df)
-                    st.plotly_chart(forecast_chart, use_container_width=True)
-                    
-                    # Tahmin Detayları
-                    st.markdown("---")
-                    st.subheader("📋 Tahmin Detayları")
-                    
-                    forecast_display = forecast_df[['YIL_AY', 'PF_Satis', 'Model']].copy()
-                    forecast_display.columns = ['Ay', 'Tahmin Edilen Satış', 'Kullanılan Model']
-                    forecast_display.index = range(1, len(forecast_display) + 1)
-                    
-                    styled_forecast = style_dataframe(
-                        forecast_display,
-                        gradient_columns=['Tahmin Edilen Satış']
-                    )
-                    
-                    st.dataframe(styled_forecast, use_container_width=True)
+                        st.metric(
+                            strategy,
+                            f"{count} Şehir",
+                            delta=f"{self._format_number(sales)} PF"
+                        )
+            
+            # Yatırım Önerileri
+            st.markdown("---")
+            st.subheader("🎯 Yatırım Önerileri")
+            
+            if strategy_results["investment_recommendations"]:
+                for recommendation in strategy_results["investment_recommendations"]:
+                    self.ui.create_insight_card("Yatırım Önerisi", recommendation, "info")
     
-    # TAB 5: RAKİP ANALİZİ
-    with tab5:
-        st.header("📊 Detaylı Rakip Analizi")
+    def _create_ml_tab(self) -> None:
+        """ML İleri Analiz tab'ını oluştur"""
+        st.header("🤖 Makine Öğrenmesi İle İleri Analiz")
         
-        comp_data = calculate_competitor_analysis(df_filtered, selected_product, date_filter)
+        df = self._get_filtered_data()
         
-        if len(comp_data) == 0:
-            st.warning("⚠️ Seçilen filtrelerde veri bulunamadı")
-        else:
-            # Özet Metrikler - McKinsey Cards
-            col1, col2, col3, col4 = st.columns(4)
+        if len(df) == 0:
+            st.warning("Seçilen filtrelerde veri bulunamadı")
+            return
+        
+        # Ürün kolonlarını al
+        product_cols = self.config.PRODUCT_COLUMN_MAP[st.session_state.current_product]
+        pf_col = product_cols['pf']
+        
+        # Aylık veriyi hazırla
+        monthly_data = df.groupby('YIL_AY').agg({
+            pf_col: 'sum',
+            'DATE': 'first'
+        }).reset_index().sort_values('YIL_AY')
+        
+        monthly_data.columns = ['YIL_AY', 'PF_Satis', 'DATE']
+        
+        # Tahmin periyodu seçimi
+        st.subheader("📅 Tahmin Ayarları")
+        
+        col_set1, col_set2 = st.columns(2)
+        
+        with col_set1:
+            forecast_periods = st.slider(
+                "Tahmin Periyodu (Ay)",
+                min_value=1,
+                max_value=12,
+                value=3,
+                step=1
+            )
+        
+        with col_set2:
+            test_size = st.slider(
+                "Test Seti Oranı (%)",
+                min_value=10,
+                max_value=40,
+                value=20,
+                step=5
+            ) / 100
+        
+        st.markdown("---")
+        
+        # ML Tahminleme
+        st.subheader("🔮 Satış Tahmini")
+        
+        if len(monthly_data) < 10:
+            st.warning("Tahmin için en az 10 ay veri gereklidir")
+            return
+        
+        with st.spinner("ML modelleri eğitiliyor..."):
+            # ML parametrelerini güncelle
+            self.sales_forecaster.ml_params["test_size"] = test_size
+            self.sales_forecaster.ml_params["forecast_periods"] = forecast_periods
             
-            avg_pf_share = comp_data['PF_Pay_%'].mean()
-            avg_pf_growth = comp_data['PF_Buyume'].mean()
-            avg_rakip_growth = comp_data['Rakip_Buyume'].mean()
-            win_months = len(comp_data[comp_data['Fark'] > 0])
+            # Tahmin yap
+            forecast_results = self.sales_forecaster.forecast(
+                monthly_data,
+                target_column="PF_Satis",
+                forecast_periods=forecast_periods
+            )
+        
+        if "error" in forecast_results:
+            st.error(f"Tahmin hatası: {forecast_results['error']}")
+            return
+        
+        # Model Performansı
+        st.subheader("📊 Model Performans Karşılaştırması")
+        
+        if forecast_results["model_performance"]:
+            perf_data = []
             
-            with col1:
-                st.markdown(create_mckinsey_metric_card(
-                    avg_pf_share, "Ort. PF Pazar Payı", None, format_percentage, "🎯"
-                ), unsafe_allow_html=True)
+            for model_name, result in forecast_results["model_performance"].items():
+                metrics = result["metrics"]
+                perf_data.append({
+                    'Model': model_name,
+                    'Test MAE': metrics["test_mae"],
+                    'Test RMSE': metrics["test_rmse"],
+                    'Test MAPE (%)': metrics["test_mape"],
+                    'Test R²': metrics["test_r2"]
+                })
             
-            with col2:
-                st.markdown(create_mckinsey_metric_card(
-                    avg_pf_growth, "Ort. PF Büyüme", None, format_percentage, "📈"
-                ), unsafe_allow_html=True)
+            perf_df = pd.DataFrame(perf_data)
+            perf_df = perf_df.sort_values('Test MAPE (%)')
             
-            with col3:
-                st.markdown(create_mckinsey_metric_card(
-                    avg_rakip_growth, "Ort. Rakip Büyüme", None, format_percentage, "📉"
-                ), unsafe_allow_html=True)
-            
-            with col4:
-                st.markdown(create_mckinsey_metric_card(
-                    win_months, "Kazanılan Aylar", None, lambda x: f"{x}/{len(comp_data)}", "🏆"
-                ), unsafe_allow_html=True)
-            
-            st.markdown("---")
-            
-            # Grafikler
-            col_g1, col_g2 = st.columns(2)
-            
-            with col_g1:
-                st.subheader("💰 Satış Karşılaştırması")
-                comp_chart = create_modern_competitor_chart(comp_data)
-                st.plotly_chart(comp_chart, use_container_width=True)
-            
-            with col_g2:
-                st.subheader("📈 Büyüme Karşılaştırması")
-                growth_chart = create_modern_growth_chart(comp_data)
-                st.plotly_chart(growth_chart, use_container_width=True)
-            
-            # Detaylı Tablo
-            st.markdown("---")
-            st.subheader("📋 Aylık Performans Detayları")
-            
-            comp_display = comp_data[['YIL_AY', 'PF', 'Rakip', 'PF_Pay_%', 'PF_Buyume', 'Rakip_Buyume', 'Fark']].copy()
-            comp_display.columns = ['Ay', 'PF Satış', 'Rakip Satış', 'PF Pay %', 'PF Büyüme %', 'Rakip Büyüme %', 'Fark %']
-            comp_display.index = range(1, len(comp_display) + 1)
-            
-            styled_comp = style_dataframe(
-                comp_display,
-                color_column='Fark %',
-                gradient_columns=['PF Pay %', 'PF Büyüme %', 'Rakip Büyüme %']
+            # Stil uygula
+            styled_perf = self._style_dataframe(
+                perf_df,
+                color_column='Test MAPE (%)',
+                gradient_columns=['Test R²']
             )
             
-            st.dataframe(
-                styled_comp,
-                use_container_width=True,
-                height=400
+            st.dataframe(styled_perf, use_container_width=True)
+            
+            # En iyi model
+            best_model = forecast_results["best_model"]
+            best_metrics = forecast_results["model_performance"][best_model]["metrics"]
+            
+            st.markdown(f"**🏆 En İyi Model:** {best_model}")
+            st.markdown(f"**📈 Test MAPE:** {best_metrics['test_mape']:.2f}%")
+            st.markdown(f"**🎯 Test R²:** {best_metrics['test_r2']:.3f}")
+        
+        # Tahmin Grafiği
+        st.markdown("---")
+        st.subheader("📈 Gerçek vs Tahmin Edilen Satışlar")
+        
+        if forecast_results["forecast"] is not None:
+            forecast_df = forecast_results["forecast"]
+            
+            # Geçmiş ve geleceği birleştir
+            historical_dates = monthly_data['DATE'].tolist()
+            historical_values = monthly_data['PF_Satis'].tolist()
+            
+            forecast_dates = forecast_df['DATE'].tolist()
+            forecast_values = forecast_df['PF_Satis'].tolist()
+            
+            all_dates = historical_dates + forecast_dates
+            all_values = historical_values + forecast_values
+            all_types = ['Gerçek'] * len(historical_dates) + ['Tahmin'] * len(forecast_dates)
+            
+            combined_df = pd.DataFrame({
+                'DATE': all_dates,
+                'PF_Satis': all_values,
+                'Type': all_types
+            })
+            
+            # Grafik oluştur
+            fig = go.Figure()
+            
+            # Gerçek veri
+            real_data = combined_df[combined_df['Type'] == 'Gerçek']
+            fig.add_trace(go.Scatter(
+                x=real_data['DATE'],
+                y=real_data['PF_Satis'],
+                mode='lines+markers',
+                name='Gerçek Satış',
+                line=dict(color=self.config.COLOR_PALETTE['success_medium'], width=3),
+                marker=dict(size=8, color='white', line=dict(width=2, color=self.config.COLOR_PALETTE['success_medium']))
+            ))
+            
+            # Tahmin verisi
+            forecast_data = combined_df[combined_df['Type'] == 'Tahmin']
+            fig.add_trace(go.Scatter(
+                x=forecast_data['DATE'],
+                y=forecast_data['PF_Satis'],
+                mode='lines+markers',
+                name='Tahmin',
+                line=dict(color=self.config.COLOR_PALETTE['warning_medium'], width=3, dash='dash'),
+                marker=dict(size=10, symbol='diamond', color='white', 
+                          line=dict(width=2, color=self.config.COLOR_PALETTE['warning_medium']))
+            ))
+            
+            fig.update_layout(
+                height=500,
+                xaxis_title='Tarih',
+                yaxis_title='PF Satış',
+                plot_bgcolor='rgba(0,0,0,0)',
+                paper_bgcolor='rgba(0,0,0,0)',
+                font_color=self.config.COLOR_PALETTE['text_primary'],
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1
+                )
             )
+            
+            st.plotly_chart(fig, use_container_width=True)
+            
+            # Tahmin Detayları
+            st.markdown("---")
+            st.subheader("📋 Tahmin Detayları")
+            
+            forecast_display = forecast_df[['YIL_AY', 'PF_Satis']].copy()
+            forecast_display.columns = ['Ay', 'Tahmin Edilen Satış']
+            forecast_display.index = range(1, len(forecast_display) + 1)
+            
+            styled_forecast = self._style_dataframe(
+                forecast_display,
+                gradient_columns=['Tahmin Edilen Satış']
+            )
+            
+            st.dataframe(styled_forecast, use_container_width=True)
     
-    # TAB 6: BCG & STRATEJİ
-    with tab6:
-        st.header("⭐ BCG Matrix & Yatırım Stratejisi")
+    def _create_reports_tab(self) -> None:
+        """Raporlar tab'ını oluştur"""
+        st.header("📥 Rapor İndirme ve Dışa Aktarma")
         
-        bcg_df = calculate_bcg_matrix(df_filtered, selected_product, date_filter)
-        
-        # BCG Dağılımı - McKinsey Cards
-        st.subheader("📊 Portföy Dağılımı")
-        
-        bcg_counts = bcg_df['BCG_Kategori'].value_counts()
-        
-        col_bcg1, col_bcg2, col_bcg3, col_bcg4 = st.columns(4)
-        
-        with col_bcg1:
-            star_count = bcg_counts.get("⭐ Star", 0)
-            star_pf = bcg_df[bcg_df['BCG_Kategori'] == "⭐ Star"]['PF_Satis'].sum()
-            st.metric("⭐ Star", f"{star_count}", delta=f"{format_number(star_pf)} PF")
-        
-        with col_bcg2:
-            cow_count = bcg_counts.get("🐄 Cash Cow", 0)
-            cow_pf = bcg_df[bcg_df['BCG_Kategori'] == "🐄 Cash Cow"]['PF_Satis'].sum()
-            st.metric("🐄 Cash Cow", f"{cow_count}", delta=f"{format_number(cow_pf)} PF")
-        
-        with col_bcg3:
-            q_count = bcg_counts.get("❓ Question Mark", 0)
-            q_pf = bcg_df[bcg_df['BCG_Kategori'] == "❓ Question Mark"]['PF_Satis'].sum()
-            st.metric("❓ Question", f"{q_count}", delta=f"{format_number(q_pf)} PF")
-        
-        with col_bcg4:
-            dog_count = bcg_counts.get("🐶 Dog", 0)
-            dog_pf = bcg_df[bcg_df['BCG_Kategori'] == "🐶 Dog"]['PF_Satis'].sum()
-            st.metric("🐶 Dog", f"{dog_count}", delta=f"{format_number(dog_pf)} PF")
-        
-        st.markdown("---")
-        
-        # BCG Matrix
-        st.subheader("🎯 BCG Matrix - Stratejik Konumlandırma")
-        
-        bcg_chart = create_modern_bcg_chart(bcg_df)
-        st.plotly_chart(bcg_chart, use_container_width=True)
-        
-        # BCG Detayları
-        st.markdown("---")
-        st.subheader("📋 BCG Kategori Detayları")
-        
-        display_cols_bcg = ['Territory', 'Region', 'BCG_Kategori', 'PF_Satis', 'Pazar_Payi_%', 'Goreceli_Pazar_Payi', 'Pazar_Buyume_%']
-        
-        bcg_display = bcg_df[display_cols_bcg].copy()
-        bcg_display.columns = ['Territory', 'Region', 'BCG', 'PF Satış', 'Pazar Payı %', 'Göreceli Pay', 'Büyüme %']
-        bcg_display = bcg_display.sort_values('PF Satış', ascending=False)
-        bcg_display.index = range(1, len(bcg_display) + 1)
-        
-        styled_bcg = style_dataframe(
-            bcg_display,
-            color_column='Pazar Payı %',
-            gradient_columns=['PF Satış', 'Büyüme %']
-        )
-        
-        st.dataframe(
-            styled_bcg,
-            use_container_width=True,
-            height=400
-        )
-        
-        # Strateji Önerileri
-        st.markdown("---")
-        st.subheader("🎯 BCG STRATEJİ ÖNERİLERİ")
-        
-        strategy_recommendations = {
-            "⭐ Star": "**Yatırımı Sürdür**: Bu territory'ler pazar lideri ve büyüyor. Kaynak ayırmaya devam et.",
-            "🐄 Cash Cow": "**Nakit Çıkar**: Yüksek pazar payı ama düşük büyüme. Nakit akışı için optimize et.",
-            "❓ Question Mark": "**Analiz Et**: Büyüme potansiyeli var ama pazar payı düşük. Dikkatli yatırım yap.",
-            "🐶 Dog": "**Gözden Geçir**: Düşük pay ve düşük büyüme. Yeniden konumlandır veya çık."
-        }
-        
-        for category, recommendation in strategy_recommendations.items():
-            count = bcg_counts.get(category, 0)
-            if count > 0:
-                color = BCG_COLORS.get(category, "#64748B")
-                st.markdown(f"""
-                <div style="border-left: 4px solid {color}; padding-left: 1rem; margin-bottom: 1rem;">
-                    <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
-                        <div style="font-size: 1.2rem; margin-right: 0.5rem;">{category}</div>
-                        <div style="background: {color}; color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">
-                            {count} territory
-                        </div>
-                    </div>
-                    <div style="color: #cbd5e1;">{recommendation}</div>
-                </div>
-                """, unsafe_allow_html=True)
-    
-    # TAB 7: RAPORLAR - MCKINSEY ENHANCED
-    with tab7:
-        st.header("📥 Rapor İndirme & Executive Summary")
+        if not st.session_state.data_loaded:
+            st.warning("Lütfen önce veri yükleyin")
+            return
         
         st.markdown("""
-        <div style="background: rgba(30, 41, 59, 0.7); padding: 2rem; border-radius: 12px; margin-bottom: 2rem;">
-            <h3 style="color: #e2e8f0; margin-top: 0;">📊 MCKINSEY-STYLE EXECUTIVE RAPORU</h3>
-            <p style="color: #94a3b8; margin-bottom: 1.5rem;">
-                Tüm analizlerinizi içeren kapsamlı bir Excel raporu oluşturun. 
-                Rapor aşağıdaki sayfaları içerecektir:
-            </p>
-            <ul style="color: #cbd5e1; margin-left: 1.5rem;">
-                <li>📊 Executive Summary & Key Insights</li>
-                <li>🗺️ Coğrafi Performans Analizi</li>
-                <li>🏢 Territory Performans (Toplam Pazar % ile)</li>
-                <li>📈 Zaman Serisi & Trend Analizi</li>
-                <li>🎯 BCG Matrix & Stratejik Konumlandırma</li>
-                <li>📊 Rakip Analizi & Benchmarking</li>
-                <li>🤖 ML Tahmin Sonuçları</li>
-                <li>🎯 Yatırım Stratejisi Önerileri</li>
+        <div class="custom-card">
+            <h3>📊 Kapsamlı Excel Raporu</h3>
+            <p>Tüm analiz sonuçlarını içeren detaylı bir Excel raporu oluşturun.</p>
+            <p>Rapor aşağıdaki sayfaları içerecektir:</p>
+            <ul>
+                <li>Genel Performans Özeti</li>
+                <li>Territory Bazlı Analiz</li>
+                <li>Şehir Bazlı Analiz</li>
+                <li>Zaman Serisi Analizi</li>
+                <li>BCG Matrix Sonuçları</li>
+                <li>Yatırım Stratejisi Önerileri</li>
+                <li>ML Tahmin Sonuçları</li>
             </ul>
         </div>
         """, unsafe_allow_html=True)
         
-        if st.button("📊 McKinsey Raporu Oluştur", type="primary", use_container_width=True):
+        if st.button("📈 Excel Raporu Oluştur", type="primary", use_container_width=True):
             with st.spinner("Rapor hazırlanıyor..."):
-                # Tüm analizleri hesapla
-                terr_perf = calculate_territory_performance(df_filtered, selected_product, date_filter)
-                total_market_all = terr_perf['Toplam_Pazar'].sum()
-                terr_perf['Toplam_Pazar_%'] = safe_divide(terr_perf['Toplam_Pazar'], total_market_all) * 100
-                
-                monthly_df = calculate_time_series(df_filtered, selected_product, None, date_filter)
-                bcg_df = calculate_bcg_matrix(df_filtered, selected_product, date_filter)
-                city_data = calculate_city_performance(df_filtered, selected_product, date_filter)
-                comp_data = calculate_competitor_analysis(df_filtered, selected_product, date_filter)
-                investment_df = calculate_investment_strategy(city_data)
-                
-                # ML tahmini
-                ml_results, best_model_name, forecast_df = train_ml_models(monthly_df, 3)
-                
-                # Executive Insights
-                insights = generate_executive_insights(df_filtered, selected_product, date_filter)
-                insights_df = pd.DataFrame(insights)
-                
-                output = BytesIO()
-                with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                    # Executive Summary
-                    summary_data = {
-                        'Metrik': ['Ürün', 'Dönem', 'Toplam PF Satış', 'Toplam Pazar', 'Pazar Payı', 
-                                  'Territory Sayısı', 'Aktif Şehir', 'Ort. Pazar Payı', 'En İyi Model', 'MAPE'],
-                        'Değer': [
-                            selected_product,
-                            date_option,
-                            f"{terr_perf['PF_Satis'].sum():,.0f}",
-                            f"{terr_perf['Toplam_Pazar'].sum():,.0f}",
-                            f"{(terr_perf['PF_Satis'].sum() / terr_perf['Toplam_Pazar'].sum() * 100):.1f}%" if terr_perf['Toplam_Pazar'].sum() > 0 else "0%",
-                            len(terr_perf),
-                            len(city_data[city_data['PF_Satis'] > 0]),
-                            f"{city_data['Pazar_Payi_%'].mean():.1f}%",
-                            best_model_name if best_model_name else "N/A",
-                            f"{ml_results[best_model_name]['MAPE']:.2f}%" if ml_results and best_model_name else "N/A"
-                        ]
-                    }
-                    summary_df = pd.DataFrame(summary_data)
-                    summary_df.to_excel(writer, sheet_name='Executive Summary', index=False)
+                try:
+                    df = self._get_filtered_data()
                     
-                    # Insights
-                    insights_df.to_excel(writer, sheet_name='Key Insights', index=False)
+                    if len(df) == 0:
+                        st.error("Rapor için yeterli veri yok")
+                        return
                     
-                    # Data sheets
-                    terr_perf.to_excel(writer, sheet_name='Territory Performans', index=False)
-                    monthly_df.to_excel(writer, sheet_name='Zaman Serisi', index=False)
-                    bcg_df.to_excel(writer, sheet_name='BCG Matrix', index=False)
-                    city_data.to_excel(writer, sheet_name='Coğrafi Analiz', index=False)
-                    comp_data.to_excel(writer, sheet_name='Rakip Analizi', index=False)
-                    investment_df.to_excel(writer, sheet_name='Yatırım Stratejisi', index=False)
+                    # Ürün kolonlarını al
+                    product_cols = self.config.PRODUCT_COLUMN_MAP[st.session_state.current_product]
+                    pf_col = product_cols['pf']
+                    rakip_col = product_cols['rakip']
                     
-                    if forecast_df is not None:
-                        forecast_df.to_excel(writer, sheet_name='ML Tahminler', index=False)
+                    # Tüm analizleri yap
                     
-                    # Recommendations
-                    recommendations = pd.DataFrame({
-                        'Priority': ['High', 'High', 'Medium', 'Medium', 'Low'],
-                        'Recommendation': [
-                            f"Focus on {selected_product} in top 3 regions",
-                            "Increase investment in 'Question Mark' territories",
-                            "Optimize resources in 'Cash Cow' territories",
-                            "Monitor 'Dog' territories for potential exit",
-                            "Expand to underpenetrated cities"
-                        ],
-                        'Expected Impact': ['High', 'High', 'Medium', 'Low', 'Medium'],
-                        'Timeline': ['Q1', 'Q2', 'Ongoing', 'Q3', 'Q4']
-                    })
-                    recommendations.to_excel(writer, sheet_name='Recommendations', index=False)
-                
-                st.success("✅ McKinsey-style rapor hazır!")
-                
-                # İndirme butonu
-                st.download_button(
-                    label="💾 McKinsey Raporunu İndir",
-                    data=output.getvalue(),
-                    file_name=f"mckinsey_portfoy_raporu_{selected_product}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    use_container_width=True
-                )
+                    # 1. Territory Bazlı Analiz
+                    territory_data = df.groupby(['TERRITORIES', 'REGION', 'CITY', 'MANAGER']).agg({
+                        pf_col: 'sum',
+                        rakip_col: 'sum'
+                    }).reset_index()
+                    
+                    territory_data['Toplam_Pazar'] = territory_data[pf_col] + territory_data[rakip_col]
+                    territory_data['Pazar_Payi_%'] = (territory_data[pf_col] / territory_data['Toplam_Pazar'].replace(0, 1)) * 100
+                    
+                    # 2. Şehir Bazlı Analiz
+                    city_data = df.groupby(['CITY_NORMALIZED', 'REGION']).agg({
+                        pf_col: 'sum',
+                        rakip_col: 'sum'
+                    }).reset_index()
+                    
+                    city_data['Toplam_Pazar'] = city_data[pf_col] + city_data[rakip_col]
+                    city_data['Pazar_Payi_%'] = (city_data[pf_col] / city_data['Toplam_Pazar'].replace(0, 1)) * 100
+                    
+                    # 3. Zaman Serisi Analizi
+                    monthly_data = df.groupby('YIL_AY').agg({
+                        pf_col: 'sum',
+                        rakip_col: 'sum',
+                        'DATE': 'first'
+                    }).reset_index().sort_values('YIL_AY')
+                    
+                    monthly_data['Toplam_Pazar'] = monthly_data[pf_col] + monthly_data[rakip_col]
+                    monthly_data['Pazar_Payi_%'] = (monthly_data[pf_col] / monthly_data['Toplam_Pazar'].replace(0, 1)) * 100
+                    monthly_data['PF_Buyume_%'] = monthly_data[pf_col].pct_change() * 100
+                    
+                    # 4. BCG Analizi
+                    territory_for_bcg = territory_data.copy()
+                    territory_for_bcg.columns = ['Territory', 'Region', 'City', 'PF_Satis', 'Rakip_Satis', 'Toplam_Pazar', 'Pazar_Payi_%']
+                    territory_for_bcg['Goreceli_Pazar_Payi'] = territory_for_bcg['PF_Satis'] / territory_for_bcg['Rakip_Satis'].replace(0, 1)
+                    territory_for_bcg['Pazar_Buyume_%'] = 0  # Basit versiyon
+                    
+                    bcg_results = self.bcg_analyzer.analyze(territory_for_bcg)
+                    bcg_df = bcg_results.get("bcg_matrix", pd.DataFrame())
+                    
+                    # 5. Yatırım Stratejisi
+                    city_for_strategy = city_data.copy()
+                    city_for_strategy.columns = ['City', 'Region', 'PF_Satis', 'Rakip_Satis', 'Toplam_Pazar', 'Pazar_Payi_%']
+                    
+                    strategy_results = self.investment_strategy_analyzer.analyze(city_for_strategy)
+                    strategy_df = strategy_results.get("strategy_matrix", pd.DataFrame())
+                    
+                    # 6. ML Tahminleri
+                    forecast_data = pd.DataFrame()  # Basit versiyon
+                    
+                    # Excel dosyası oluştur
+                    output = BytesIO()
+                    
+                    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                        # Özet sayfası
+                        summary_data = {
+                            'Parametre': ['Ürün', 'Dönem', 'Territory Sayısı', 'Şehir Sayısı', 'Başlangıç Tarihi', 'Bitiş Tarihi'],
+                            'Değer': [
+                                st.session_state.current_product,
+                                st.session_state.date_filter[0].strftime('%Y-%m-%d') + ' - ' + st.session_state.date_filter[1].strftime('%Y-%m-%d') if st.session_state.date_filter else 'Tüm Veriler',
+                                territory_data['TERRITORIES'].nunique(),
+                                city_data['CITY_NORMALIZED'].nunique(),
+                                df['DATE'].min().strftime('%Y-%m-%d'),
+                                df['DATE'].max().strftime('%Y-%m-%d')
+                            ]
+                        }
+                        summary_df = pd.DataFrame(summary_data)
+                        summary_df.to_excel(writer, sheet_name='Özet', index=False)
+                        
+                        # Territory Analizi
+                        territory_data.to_excel(writer, sheet_name='Territory_Analizi', index=False)
+                        
+                        # Şehir Analizi
+                        city_data.to_excel(writer, sheet_name='Şehir_Analizi', index=False)
+                        
+                        # Zaman Serisi
+                        monthly_data.to_excel(writer, sheet_name='Zaman_Serisi', index=False)
+                        
+                        # BCG Matrix
+                        if len(bcg_df) > 0:
+                            bcg_df.to_excel(writer, sheet_name='BCG_Matrix', index=False)
+                        
+                        # Yatırım Stratejisi
+                        if len(strategy_df) > 0:
+                            strategy_df.to_excel(writer, sheet_name='Yatırım_Stratejisi', index=False)
+                        
+                        # ML Tahminleri
+                        if len(forecast_data) > 0:
+                            forecast_data.to_excel(writer, sheet_name='ML_Tahminleri', index=False)
+                    
+                    st.success("✅ Rapor başarıyla oluşturuldu!")
+                    
+                    # İndirme butonu
+                    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                    filename = f"ticari_portfoy_raporu_{st.session_state.current_product}_{timestamp}.xlsx"
+                    
+                    st.download_button(
+                        label="💾 Raporu İndir",
+                        data=output.getvalue(),
+                        file_name=filename,
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        use_container_width=True
+                    )
+                    
+                except Exception as e:
+                    st.error(f"Rapor oluşturma hatası: {str(e)}")
+    
+    def _format_number(self, num: float) -> str:
+        """Sayıları okunabilir formatta göster"""
+        if pd.isna(num):
+            return "0"
         
-        # Quick Export Options
-        st.markdown("---")
-        st.subheader("🚀 Hızlı Export Seçenekleri")
+        try:
+            num = float(num)
+            if num == 0:
+                return "0"
+            elif abs(num) >= 1_000_000_000:
+                return f"{num/1_000_000_000:,.1f}B"
+            elif abs(num) >= 1_000_000:
+                return f"{num/1_000_000:,.1f}M"
+            elif abs(num) >= 1_000:
+                return f"{num/1_000:,.1f}K"
+            else:
+                return f"{num:,.0f}"
+        except:
+            return str(num)
+    
+    def _style_dataframe(self, 
+                         df: pd.DataFrame, 
+                         color_column: str = None,
+                         gradient_columns: List[str] = None) -> pd.DataFrame:
+        """
+        DataFrame'e stil uygular
         
-        col_exp1, col_exp2, col_exp3 = st.columns(3)
+        Args:
+            df (pd.DataFrame): Stil uygulanacak DataFrame
+            color_column (str): Renklendirilecek kolon
+            gradient_columns (List[str]): Gradyan uygulanacak kolonlar
+            
+        Returns:
+            pd.DataFrame: Stil uygulanmış DataFrame
+        """
+        if gradient_columns is None:
+            gradient_columns = []
         
-        with col_exp1:
-            if st.button("📈 Grafikleri PNG Olarak Kaydet", use_container_width=True):
-                st.info("Grafikler sağ üst köşedeki kamera ikonundan kaydedilebilir")
+        # Sayısal kolonları formatla
+        styled_df = df.copy()
         
-        with col_exp2:
-            if st.button("📋 Verileri CSV Olarak İndir", use_container_width=True):
-                city_data = calculate_city_performance(df_filtered, selected_product, date_filter)
-                csv = city_data.to_csv(index=False)
-                st.download_button(
-                    label="📥 CSV İndir",
-                    data=csv,
-                    file_name=f"portfoy_verisi_{selected_product}.csv",
-                    mime="text/csv",
-                    use_container_width=True
-                )
+        for col in styled_df.columns:
+            if col in df.columns and df[col].dtype in ['int64', 'float64', 'int32', 'float32']:
+                if any(keyword in col.lower() for keyword in ['%', 'yüzde', 'pay', 'oran', 'büyüme']):
+                    # Yüzdelik format
+                    styled_df[col] = df[col].apply(lambda x: f"{x:,.1f}%" if pd.notnull(x) else "")
+                else:
+                    # Sayısal format
+                    try:
+                        styled_df[col] = df[col].apply(lambda x: self._format_number(x) if pd.notnull(x) else "")
+                    except:
+                        styled_df[col] = df[col].astype(str)
         
-        with col_exp3:
-            if st.button("📊 Özet Dashboard PDF", use_container_width=True):
-                st.info("PDF export için lütfen tarayıcınızın yazdırma özelliğini kullanın")
+        # Pandas Styler oluştur
+        styler = styled_df.style
+        
+        # Temel stil
+        styler = styler.set_properties(**{
+            'background-color': 'rgba(30, 41, 59, 0.7)',
+            'color': self.config.COLOR_PALETTE['text_primary'],
+            'border': f'1px solid {self.config.COLOR_PALETTE["primary_light"]}',
+            'text-align': 'center'
+        })
+        
+        # Başlık satırı
+        styler = styler.set_table_styles([{
+            'selector': 'thead th',
+            'props': [
+                ('background-color', self.config.COLOR_PALETTE['primary_medium']),
+                ('color', 'white'),
+                ('font-weight', '700'),
+                ('border', f'1px solid {self.config.COLOR_PALETTE["primary_light"]}'),
+                ('padding', '10px 8px')
+            ]
+        }])
+        
+        # Hücreler
+        styler = styler.set_table_styles([{
+            'selector': 'td',
+            'props': [
+                ('padding', '8px 6px')
+            ]
+        }])
+        
+        # Gradyan uygula
+        for col in gradient_columns:
+            if col in df.columns and df[col].dtype in ['int64', 'float64']:
+                try:
+                    col_data = df[col].astype(float)
+                    min_val = col_data.min()
+                    max_val = col_data.max()
+                    
+                    if min_val != max_val:
+                        styler = styler.background_gradient(
+                            subset=[col],
+                            cmap='RdYlGn',
+                            vmin=min_val,
+                            vmax=max_val,
+                            gmap=col_data
+                        )
+                except:
+                    pass
+        
+        # Renk sütunu
+        if color_column and color_column in df.columns:
+            def color_cells(val):
+                try:
+                    num_val = float(val)
+                    if num_val >= 70:
+                        return f'background-color: rgba(16, 185, 129, 0.3); color: {self.config.COLOR_PALETTE["success_medium"]}; font-weight: 600'
+                    elif num_val >= 40:
+                        return f'background-color: rgba(245, 158, 11, 0.3); color: {self.config.COLOR_PALETTE["warning_medium"]}; font-weight: 600'
+                    else:
+                        return f'background-color: rgba(239, 68, 68, 0.3); color: {self.config.COLOR_PALETTE["danger_medium"]}; font-weight: 600'
+                except:
+                    return ''
+            
+            styler = styler.map(color_cells, subset=[color_column])
+        
+        # Alternatif satır renkleri
+        styler = styler.set_table_styles([{
+            'selector': 'tbody tr:nth-child(even)',
+            'props': [('background-color', 'rgba(30, 41, 59, 0.5)')]
+        }, {
+            'selector': 'tbody tr:nth-child(odd)',
+            'props': [('background-color', 'rgba(30, 41, 59, 0.3)')]
+        }])
+        
+        return styler
+
+
+# =============================================================================
+# ANA UYGULAMA GİRİŞ NOKTASI
+# =============================================================================
+
+def main():
+    """
+    Ana uygulama giriş noktası
+    """
+    # Uyarıları gizle
+    warnings.filterwarnings('ignore')
+    
+    # Logging konfigürasyonu
+    logging.basicConfig(level=logging.ERROR)
+    
+    try:
+        # Uygulamayı başlat
+        app = StrategicPortfolioAnalyzer()
+        app.run()
+        
+    except Exception as e:
+        st.error(f"Uygulama hatası: {str(e)}")
+        logging.error(f"Uygulama hatası: {e}", exc_info=True)
+
 
 if __name__ == "__main__":
-    # Initialize session state for drill-down
-    if 'map_level' not in st.session_state:
-        st.session_state.map_level = "BÖLGE"
-    
     main()
-
-
-
