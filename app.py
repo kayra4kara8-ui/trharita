@@ -336,6 +336,7 @@ FIX_CITY_MAP = {
     "ESKISEHIR": "ESKİŞEHİR",
     "ESKİŞEHİR": "ESKİŞEHİR",
     "GÃ1⁄4MÃ1⁄4SHANE": "GÜMÜŞHANE",
+    "GÃ¼MÃ¼SHANE": "GÜMÜŞHANE",
     "GÜMÜŞHANE": "GÜMÜŞHANE",
     "HAKKARI": "HAKKARİ",
     "HAKKARİ": "HAKKARİ",
@@ -347,6 +348,7 @@ FIX_CITY_MAP = {
     "IĞDIR": "IĞDIR",
     "KARABÃ1⁄4K": "KARABÜK",
     "KARABÜK": "KARABÜK",
+    "KARABÃ¼K": "KARABÜK",
     "KINKKALE": "KIRIKKALE",
     "KIRIKKALE": "KIRIKKALE",
     "KIRSEHIR": "KIRŞEHİR",
@@ -3560,5 +3562,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
