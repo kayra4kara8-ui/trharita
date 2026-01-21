@@ -266,19 +266,38 @@ REGION_COLORS = {
 }
 
 # PERFORMANS RENKLERİ - Profesyonel / Kurumsal
+
+
 PERFORMANCE_COLORS = {
-    "high": "#1F7A5A",       # Koyu Yeşil – Yüksek Performans
-    "medium": "#C48A2A",     # Altın Sarısı – Orta Performans
-    "low": "#B23A3A",        # Bordo – Düşük Performans
+    # --- Performans Seviyeleri ---
+    # McKinsey stilinde "Yüksek" genellikle standart yeşil değil, 
+    # sofistike bir Teal (Çam Yeşili/Turkuaz) tonudur.
+    "high": "#00788C",       # McKinsey Teal – Yüksek Performans
+    
+    # "Orta" için parlak sarı yerine, okunabilirliği yüksek 
+    # Bronz veya Toprak Turuncusu (Ochre) tercih edilir.
+    "medium": "#D48318",     # Bronz Turuncu – Orta Performans
+    
+    # "Düşük" için cırtlak kırmızı yerine, ciddi bir 
+    # Berry (Böğürtlen) veya Kiremit kırmızısı kullanılır.
+    "low": "#C22F36",        # Kiremit Kırmızısı – Düşük Performans
 
-    "positive": "#1F7A5A",   # Koyu Yeşil – Pozitif
-    "negative": "#B23A3A",   # Bordo – Negatif
-    "neutral": "#6B7280",    # Kurumsal Gri – Nötr
+    # --- Durumlar (Sentiment) ---
+    "positive": "#00788C",   # McKinsey Teal – Pozitif
+    "negative": "#C22F36",   # Kiremit Kırmızısı – Negatif
+    
+    # Nötr renkler metalik ve soğuk gri tonlarıdır.
+    "neutral": "#8A96A0",    # Soğuk Çelik Grisi – Nötr
 
-    "warning": "#C48A2A",    # Altın – Uyarı
-    "info": "#1E40AF",       # Lacivert – Bilgi
-    "success": "#166534",    # Koyu Yeşil – Başarı
-    "danger": "#991B1B"      # Koyu Kırmızı – Risk / Tehlike
+    # --- Bildirim ve Uyarılar ---
+    "warning": "#D48318",    # Bronz – Uyarı
+    
+    # "Info" rengi, markanın imzası olan o çok koyu, 
+    # otoriter lacivert olmalıdır.
+    "info": "#051C2C",       # McKinsey Deep Blue – Bilgi (İmza Renk)
+    
+    "success": "#2E8B57",    # Deniz Yeşili (SeaGreen) – Başarı (Alternatif Ton)
+    "danger": "#8B0000"      # Koyu Bordo – Kritik Risk
 }
 
 # TREND ANALİZİ RENKLERİ
@@ -3564,6 +3583,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
