@@ -267,18 +267,21 @@ REGION_COLORS = {
 
 # PERFORMANS RENKLERİ - Profesyonel / Kurumsal
 PERFORMANCE_COLORS = {
-    "high": "#1F7A5A",       # Koyu Yeşil – Yüksek Performans
-    "medium": "#C48A2A",     # Altın Sarısı – Orta Performans
-    "low": "#B23A3A",        # Bordo – Düşük Performans
+    # Performans
+    "high": "#2A9D8F",       # Okyanus Yeşili (Sakin ve güvenli)
+    "medium": "#E9C46A",     # Kum Sarısı (Rahatsız etmeyen uyarı)
+    "low": "#E76F51",        # Terracotta / Kiremit (Sıcak ama agresif değil)
 
-    "positive": "#1F7A5A",   # Koyu Yeşil – Pozitif
-    "negative": "#B23A3A",   # Bordo – Negatif
-    "neutral": "#6B7280",    # Kurumsal Gri – Nötr
+    # Durum
+    "positive": "#2A9D8F",
+    "negative": "#E76F51",
+    "neutral": "#8D99AE",    # Metalik Gri
 
-    "warning": "#C48A2A",    # Altın – Uyarı
-    "info": "#1E40AF",       # Lacivert – Bilgi
-    "success": "#166534",    # Koyu Yeşil – Başarı
-    "danger": "#991B1B"      # Koyu Kırmızı – Risk / Tehlike
+    # Diğer
+    "warning": "#F4A261",    # Şeftali Turuncusu
+    "info": "#264653",       # Koyu Petrol Yeşili/Mavisi (Ana metin rengi olabilir)
+    "success": "#2A9D8F",
+    "danger": "#D62828"      # Mat Kırmızı
 }
 
 # TREND ANALİZİ RENKLERİ
@@ -3564,6 +3567,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
