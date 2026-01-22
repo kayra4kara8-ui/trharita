@@ -252,15 +252,15 @@ st.markdown("""
 # =============================================================================
 # Monochromatic Blue - Kurumsal Mavi ve Slate Gri Tema
 REGION_COLORS = {
-    "MARMARA": "#1e3a8a",              # Koyu Navy Blue
-    "BATI ANADOLU": "#1d4ed8",         # Royal Blue
-    "EGE": "#2563EB",                  # Parlak Mavi
-    "İÇ ANADOLU": "#3B82F6",           # Vivid Blue
-    "GÜNEY DOĞU ANADOLU": "#60A5FA",   # Açık Mavi
-    "KUZEY ANADOLU": "#93C5FD",        # Light Blue
-    "KARADENİZ": "#93C5FD",            # Light Blue
-    "AKDENİZ": "#BFDBFE",              # Very Light Blue
-    "DOĞU ANADOLU": "#DBEAFE",         # Pale Blue
+    "MARMARA": "#0EA5E9",              # Sky Blue - Deniz ve boğazlar
+    "BATI ANADOLU": "#14B8A6",         # Turkuaz-yeşil arası
+    "EGE": "#FCD34D",                  # BAL SARI
+    "İÇ ANADOLU": "#F59E0B",           # Amber - Kuru bozkır
+    "GÜNEY DOĞU ANADOLU": "#E07A5F",   # Terracotta 
+    "KUZEY ANADOLU": "#059669",        # Emerald - Yemyeşil ormanlar
+    "KARADENİZ": "#059669",            # Emerald
+    "AKDENİZ": "#8B5CF6",              # Violet - Akdeniz
+    "DOĞU ANADOLU": "#7C3AED",         # Purple - Yüksek dağlar
     "DİĞER": "#64748B"                 # Slate Gray
 }
 
@@ -3580,4 +3580,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
