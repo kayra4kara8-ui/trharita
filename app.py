@@ -496,7 +496,7 @@ CITY_NORMALIZE_CLEAN = {
     'NİĞDE': 'Nigde',
     'ORDU': 'Ordu',
     'OSMANIYE': 'Osmaniye',
-    'OSMANİYE': 'Osmaniye",
+    'OSMANİYE': 'Osmaniye',
     'RIZE': 'Rize',
     'RİZE': 'Rize',
     'SAKARYA': 'Sakarya',
@@ -3580,3 +3580,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
