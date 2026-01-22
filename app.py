@@ -250,71 +250,69 @@ st.markdown("""
 # =============================================================================
 # SADE RENK PALETİ
 # =============================================================================
-# Sade ve profesyonel bölge renkleri
+# Monochromatic Blue - Kurumsal Mavi ve Slate Gri Tema
 REGION_COLORS = {
-    "MARMARA": "#0EA5E9",              # Sky Blue - Deniz ve boğazlar
-    "BATI ANADOLU": "#14B8A6",         # Turkuaz-yeşil arası
-    "EGE": "#FCD34D",                  # BAL SARI
-    "İÇ ANADOLU": "#F59E0B",           # Amber - Kuru bozkır
-    "GÜNEY DOĞU ANADOLU": "#E07A5F",   # Terracotta 
-    "KUZEY ANADOLU": "#059669",        # Emerald - Yemyeşil ormanlar
-    "KARADENİZ": "#059669",            # Emerald
-    "AKDENİZ": "#8B5CF6",              # Violet - Akdeniz
-    "DOĞU ANADOLU": "#7C3AED",         # Purple - Yüksek dağlar
+    "MARMARA": "#1e3a8a",              # Koyu Navy Blue
+    "BATI ANADOLU": "#1d4ed8",         # Royal Blue
+    "EGE": "#2563EB",                  # Parlak Mavi
+    "İÇ ANADOLU": "#3B82F6",           # Vivid Blue
+    "GÜNEY DOĞU ANADOLU": "#60A5FA",   # Açık Mavi
+    "KUZEY ANADOLU": "#93C5FD",        # Light Blue
+    "KARADENİZ": "#93C5FD",            # Light Blue
+    "AKDENİZ": "#BFDBFE",              # Very Light Blue
+    "DOĞU ANADOLU": "#DBEAFE",         # Pale Blue
     "DİĞER": "#64748B"                 # Slate Gray
 }
 
-# PERFORMANS RENKLERİ - Profesyonel / Kurumsal
+# PERFORMANS RENKLERİ - Kurumsal Mavi ve Slate Gri Tema
 PERFORMANCE_COLORS = {
     "high": "#2563EB",       # Parlak Mavi – Yüksek Performans
     "medium": "#F59E0B",     # Altın Sarısı – Orta Performans
     "low": "#64748B",        # Slate Gri – Düşük Performans
-
-    "positive": "#2563EB",   # Parlak Mavi – Pozitif
-    "negative": "#64748B",   # Slate Gri – Negatif
+    "positive": "#2563EB",   # Parlak Mavi – Pozitif (Eski Yeşil yerine)
+    "negative": "#64748B",   # Slate Gri – Negatif (Eski Kırmızı yerine)
     "neutral": "#94A3B8",    # Açık Gri – Nötr
-
     "warning": "#F59E0B",    # Altın – Uyarı
     "info": "#0EA5E9",       # Sky Blue – Bilgi
     "success": "#06B6D4",    # Cyan – Başarı
     "danger": "#64748B"      # Slate Gri – Risk / Tehlike
 }
 
-# TREND ANALİZİ RENKLERİ
+# TREND ANALİZİ RENKLERİ (Mavi tonlarına güncellendi)
 TREND_COLORS = {
-    "strong_up": "#10B981",      # Güçlü artış
-    "up": "#34D399",            # Artış
-    "flat": "#FBBF24",          # Sabit
-    "down": "#F87171",          # Düşüş
-    "strong_down": "#DC2626",    # Güçlü düşüş
-    "seasonal": "#8B5CF6",      # Mevsimsel
-    "cyclic": "#3B82F6"         # Döngüsel
+    "strong_up": "#06B6D4",      # Cyan - Güçlü artış
+    "up": "#3B82F6",            # Mavi - Artış
+    "flat": "#94A3B8",          # Gri - Sabit
+    "down": "#64748B",          # Slate Grey - Düşüş
+    "strong_down": "#475569",   # Dark Slate - Güçlü düşüş
+    "seasonal": "#0EA5E9",      # Sky Blue - Mevsimsel
+    "cyclic": "#2563EB"         # Blue - Döngüsel
 }
 
-# BCG MATRIX RENKLERİ
+# BCG MATRIX RENKLERİ (Mavi tonlarına güncellendi)
 BCG_COLORS = {
-    "⭐ Star": "#F59E0B",      # Turuncu
-    "🐄 Cash Cow": "#10B981",  # Yeşil
-    "❓ Question Mark": "#3B82F6",  # Mavi
-    "🐶 Dog": "#64748B"        # Gri
+    "⭐ Star": "#2563EB",      # Parlak Mavi
+    "🐄 Cash Cow": "#06B6D4",  # Cyan
+    "❓ Question Mark": "#0EA5E9",  # Sky Blue
+    "🐶 Dog": "#64748B"        # Slate Gray
 }
 
-# YATIRIM STRATEJİSİ RENKLERİ
+# YATIRIM STRATEJİSİ RENKLERİ (Mavi tonlarına güncellendi)
 STRATEGY_COLORS = {
-    "🚀 Agresif": "#EF4444",      # Kırmızı
-    "⚡ Hızlandırılmış": "#F59E0B",  # Turuncu
-    "🛡️ Koruma": "#10B981",        # Yeşil
-    "💎 Potansiyel": "#3B82F6",     # Mavi
-    "👁️ İzleme": "#64748B"         # Gri
+    "🚀 Agresif": "#2563EB",      # Parlak Mavi
+    "⚡ Hızlandırılmış": "#0EA5E9",  # Sky Blue
+    "🛡️ Koruma": "#06B6D4",        # Cyan
+    "💎 Potansiyel": "#3B82F6",     # Vivid Blue
+    "👁️ İzleme": "#64748B"         # Slate Gray
 }
 
-# GRADIENT SCALES for Visualizations
+# GRADIENT SCALES for Visualizations (Mavi tonlarına güncellendi)
 GRADIENT_SCALES = {
-    "blue_green": ["#3B82F6", "#06B6D4", "#10B981"],
-    "sequential_blue": ["#DBEAFE", "#BFDBFE", "#93C5FD", "#60A5FA", "#3B82F6"],
-    "diverging": ["#EF4444", "#F59E0B", "#10B981", "#3B82F6", "#8B5CF6"],
-    "temperature": ["#3B82F6", "#60A5FA", "#93C5FD", "#BFDBFE", "#DBEAFE"],
-    "trend": ["#DC2626", "#F87171", "#FBBF24", "#34D399", "#10B981"]
+    "blue_green": ["#1e3a8a", "#2563EB", "#0EA5E9", "#06B6D4"],
+    "sequential_blue": ["#DBEAFE", "#BFDBFE", "#93C5FD", "#60A5FA", "#3B82F6", "#2563EB", "#1d4ed8"],
+    "diverging": ["#64748B", "#94A3B8", "#BFDBFE", "#60A5FA", "#2563EB"],
+    "temperature": ["#1e3a8a", "#1d4ed8", "#2563EB", "#3B82F6", "#60A5FA"],
+    "trend": ["#475569", "#64748B", "#94A3B8", "#3B82F6", "#2563EB"]
 }
 
 # =============================================================================
@@ -498,7 +496,7 @@ CITY_NORMALIZE_CLEAN = {
     'NİĞDE': 'Nigde',
     'ORDU': 'Ordu',
     'OSMANIYE': 'Osmaniye',
-    'OSMANİYE': 'Osmaniye',
+    'OSMANİYE': 'Osmaniye",
     'RIZE': 'Rize',
     'RİZE': 'Rize',
     'SAKARYA': 'Sakarya',
@@ -973,7 +971,7 @@ def get_region_center(gdf_region):
 
 def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası", view_mode="Bölge Görünümü", filtered_pf_toplam=None):
     """
-    Modern Türkiye haritası - Eksik şehirler eklendi
+    Modern Türkiye haritası - Mavi Kurumsal Tema
     """
     if gdf is None:
         st.error("❌ GeoJSON yüklenemedi")
@@ -1028,7 +1026,7 @@ def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası",
     merged['Bölge'] = merged['Bölge'].fillna('DİĞER')
     merged['Region'] = merged['Bölge']
     
-    # Bölge renklerini ata
+    # Bölge renklerini ata (Yeni mavi tonları)
     merged['Region_Color'] = merged['Region'].map(REGION_COLORS).fillna('#64748B')
     
     # FİLTRELENMİŞ toplam
@@ -1090,7 +1088,7 @@ def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası",
             showlegend=False
         ))
     
-    # Modern etiketler - STANDART FORMAT: İsim<br>Adet (Yüzde%)
+    # KALICI ETİKETLER - FORMAT: "İSİM \n Adet (Pay %)"
     if view_mode == "Bölge Görünümü":
         label_lons, label_lats, label_texts = [], [], []
         
@@ -1105,7 +1103,7 @@ def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası",
                 label_lons.append(lon)
                 label_lats.append(lat)
                 label_texts.append(
-                    f"<b>{region}</b><br>"
+                    f"{region}<br>"
                     f"{format_number(total)} ({percent:.1f}%)"
                 )
         
@@ -1134,7 +1132,7 @@ def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası",
                 city_lons.append(centroid.x)
                 city_lats.append(centroid.y)
                 city_texts.append(
-                    f"<b>{row['name']}</b><br>"
+                    f"{row['name']}<br>"
                     f"{format_number(row['PF_Satis'])} ({percent:.1f}%)"
                 )
         
@@ -1146,7 +1144,8 @@ def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası",
             textfont=dict(
                 size=9, 
                 color='white',
-                family='Inter, sans-serif'
+                family='Inter, sans-serif',
+                weight='bold'
             ),
             hoverinfo='skip',
             showlegend=False
@@ -1654,7 +1653,7 @@ def create_advanced_time_series_chart(monthly_df, forecast_df=None):
             color='white',
             line=dict(width=2, color=PERFORMANCE_COLORS['success'])
         ),
-        fillcolor='rgba(16, 185, 129, 0.1)',
+        fillcolor='rgba(6, 182, 212, 0.1)',
         fill='tozeroy'
     ))
     
@@ -1869,7 +1868,7 @@ def create_comparative_period_chart(comparisons_df):
         x=comparisons_df['period'],
         y=comparisons_df['onceki_ortalama'],
         name='Önceki Ortalama',
-        marker_color='rgba(239, 68, 68, 0.6)',
+        marker_color='rgba(100, 116, 139, 0.6)',
         text=[format_number(x) for x in comparisons_df['onceki_ortalama']],
         textposition='auto',
     ))
@@ -1941,7 +1940,7 @@ def create_seasonality_chart(monthly_df):
         fill='toself',
         name='Aylık Ortalama Satış',
         line=dict(color=PERFORMANCE_COLORS['success'], width=2),
-        fillcolor='rgba(16, 185, 129, 0.3)'
+        fillcolor='rgba(6, 182, 212, 0.3)'
     ))
     
     fig.update_layout(
@@ -1978,7 +1977,7 @@ def create_volatility_chart(monthly_df):
         mode='lines',
         name='PF Satış',
         line=dict(color=PERFORMANCE_COLORS['success'], width=2),
-        fillcolor='rgba(16, 185, 129, 0.1)',
+        fillcolor='rgba(6, 182, 212, 0.1)',
         fill='tozeroy'
     ))
     
@@ -1992,7 +1991,7 @@ def create_volatility_chart(monthly_df):
             y=upper_band,
             mode='lines',
             name='+1 Std',
-            line=dict(color='rgba(239, 68, 68, 0.5)', width=1, dash='dash'),
+            line=dict(color='rgba(100, 116, 139, 0.5)', width=1, dash='dash'),
             showlegend=False
         ))
         
@@ -2001,9 +2000,9 @@ def create_volatility_chart(monthly_df):
             y=lower_band,
             mode='lines',
             name='-1 Std',
-            line=dict(color='rgba(239, 68, 68, 0.5)', width=1, dash='dash'),
+            line=dict(color='rgba(100, 116, 139, 0.5)', width=1, dash='dash'),
             fill='tonexty',
-            fillcolor='rgba(239, 68, 68, 0.1)',
+            fillcolor='rgba(100, 116, 139, 0.1)',
             showlegend=False
         ))
     
@@ -2112,7 +2111,7 @@ def create_modern_growth_chart(comp_data):
             line=dict(width=2, color=PERFORMANCE_COLORS['success'])
         ),
         fill='tozeroy',
-        fillcolor='rgba(16, 185, 129, 0.15)'
+        fillcolor='rgba(6, 182, 212, 0.15)'
     ))
     
     # Rakip Büyüme
@@ -2132,7 +2131,7 @@ def create_modern_growth_chart(comp_data):
             line=dict(width=2, color=PERFORMANCE_COLORS['danger'])
         ),
         fill='tozeroy',
-        fillcolor='rgba(239, 68, 68, 0.15)'
+        fillcolor='rgba(100, 116, 139, 0.15)'
     ))
     
     fig.add_hline(
@@ -2274,7 +2273,7 @@ def style_dataframe(df, color_column=None, gradient_columns=None):
     styled_df = styled_df.set_properties(**{
         'background-color': 'rgba(30, 41, 59, 0.7)',
         'color': '#e2e8f0',
-        'border': '1px solid rgba(59, 130, 246, 0.2)',
+        'border': '1px solid rgba(37, 99, 235, 0.3)',
         'font-family': 'Inter, sans-serif',
         'text-align': 'center'
     })
@@ -2283,10 +2282,10 @@ def style_dataframe(df, color_column=None, gradient_columns=None):
     styled_df = styled_df.set_table_styles([{
         'selector': 'thead th',
         'props': [
-            ('background-color', 'rgba(59, 130, 246, 0.3)'),
+            ('background-color', 'rgba(37, 99, 235, 0.3)'),
             ('color', 'white'),
             ('font-weight', '700'),
-            ('border', '1px solid rgba(59, 130, 246, 0.4)'),
+            ('border', '1px solid rgba(37, 99, 235, 0.4)'),
             ('padding', '12px 8px'),
             ('text-align', 'center')
         ]
@@ -2301,7 +2300,7 @@ def style_dataframe(df, color_column=None, gradient_columns=None):
         ]
     }])
     
-    # Gradient uygula
+    # Gradient uygula - TEK RENK (Mavi)
     for col in gradient_columns:
         if col in numeric_data.columns and numeric_data[col].dtype in ['int64', 'float64', 'int32', 'float32']:
             try:
@@ -2310,9 +2309,10 @@ def style_dataframe(df, color_column=None, gradient_columns=None):
                 max_val = col_data.max()
                 
                 if min_val != max_val:
+                    # Tek renkli mavi gradient kullan
                     styled_df = styled_df.background_gradient(
                         subset=[col], 
-                        cmap='RdYlGn',
+                        cmap='Blues',  # Kırmızı-Yeşil yerine Mavi gradient
                         vmin=min_val,
                         vmax=max_val,
                         gmap=col_data
@@ -2320,17 +2320,17 @@ def style_dataframe(df, color_column=None, gradient_columns=None):
             except:
                 pass
     
-    # Renk sütunu
+    # Renk sütunu - Mavi tonlarında
     if color_column and color_column in numeric_data.columns:
         def color_cells(val):
             try:
                 num_val = float(val)
                 if num_val >= 70:
-                    return 'background-color: rgba(16, 185, 129, 0.3); color: #10B981; font-weight: 600'
+                    return 'background-color: rgba(37, 99, 235, 0.3); color: #2563EB; font-weight: 600'
                 elif num_val >= 40:
                     return 'background-color: rgba(245, 158, 11, 0.3); color: #F59E0B; font-weight: 600'
                 else:
-                    return 'background-color: rgba(239, 68, 68, 0.3); color: #EF4444; font-weight: 600'
+                    return 'background-color: rgba(100, 116, 139, 0.3); color: #64748B; font-weight: 600'
             except:
                 return ''
         
@@ -3157,13 +3157,13 @@ def main():
                             
                             if best_mape < 10:
                                 confidence_level = "🟢 YÜKSEK"
-                                confidence_color = "#10B981"
+                                confidence_color = "#06B6D4"
                             elif best_mape < 20:
                                 confidence_level = "🟡 ORTA"
                                 confidence_color = "#F59E0B"
                             else:
                                 confidence_level = "🔴 DÜŞÜK"
-                                confidence_color = "#EF4444"
+                                confidence_color = "#64748B"
                             
                             st.markdown(f'<div style="background: rgba(30, 41, 59, 0.8); padding: 1.5rem; border-radius: 12px; border: 2px solid {confidence_color}; margin-top: 1rem;">'
                                        f'<h3 style="color: white; margin: 0 0 1rem 0;">🏆 En İyi Model</h3>'
@@ -3580,5 +3580,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
