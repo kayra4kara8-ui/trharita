@@ -1250,7 +1250,12 @@ def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası",
     
     # Etiket okunabilirliğini artırmak için text shadow efekti
     # DÜZELTME: update_traces doğru şekilde kullanılıyor
-   text_traces = [i for i, trace in enumerate(fig.data) if getattr(trace, 'mode', None) == 'text']
+# ... önceki kodlar (fig.update_layout kısmı bitince) ...
+
+    # Etiket okunabilirliğini artırmak için text shadow efekti
+    # DÜZELTME: getattr kullanılarak güvenli kontrol yapılıyor
+    text_traces = [i for i, trace in enumerate(fig.data) if getattr(trace, 'mode', None) == 'text']
+    
     for trace_idx in text_traces:
         fig.data[trace_idx].update(
             textfont=dict(
@@ -1261,7 +1266,6 @@ def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası",
         )
     
     return fig
-
 # =============================================================================
 # ML FEATURE ENGINEERING - GELİŞTİRİLMİŞ
 # =============================================================================
@@ -3628,4 +3632,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
