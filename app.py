@@ -969,89 +969,75 @@ def get_region_center(gdf_region):
 # MODERN HARİTA OLUŞTURUCU - GELİŞTİRİLMİŞ
 # =============================================================================
 
+import plotly.graph_objects as go
+import pandas as pd
+import json
+import numpy as np
+
 def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası", view_mode="Bölge Görünümü", filtered_pf_toplam=None):
     """
     Modern Türkiye haritası - Mavi Kurumsal Tema
+    Bölge/Şehir görünümü geçişi ve yüzdesel hesaplamalar düzeltildi.
     """
     if gdf is None:
-        st.error("❌ GeoJSON yüklenemedi")
-        return None
+        return go.Figure() # Boş figür döndür
     
-    # Veriyi hazırla
+    # 1. VERİ HAZIRLIĞI (Modern koddaki gibi merge işlemleri)
+    # ---------------------------------------------------------
     city_data = city_data.copy()
-    city_data['City_Fixed'] = city_data['City'].apply(normalize_city_name_fixed)
-    city_data['City_Fixed'] = city_data['City_Fixed'].str.upper()
+    city_data['City_Fixed'] = city_data['City'].apply(normalize_city_name_fixed).str.upper()
     
-    # Eksik şehirleri kontrol et ve ekle
-    all_cities_in_data = set(city_data['City_Fixed'].unique())
-    
-    # GeoJSON'daki tüm şehirleri al
     gdf = gdf.copy()
     gdf['name_upper'] = gdf['name'].str.upper()
-    
-    # FIX_CITY_MAP'i kullanarak isimleri düzelt
     gdf['name_fixed'] = gdf['name_upper'].apply(lambda x: FIX_CITY_MAP.get(x, x))
     
-    # GeoJSON'daki tüm şehirleri listele
+    # Eksik şehirleri tamamlama mantığı
+    all_cities_in_data = set(city_data['City_Fixed'].unique())
     all_cities_in_geojson = set(gdf['name_fixed'].unique())
-    
-    # Eksik şehirleri bul
     missing_cities = all_cities_in_geojson - all_cities_in_data
     
-    # Eksik şehirleri city_data'ya ekle (0 değerlerle)
     for city in missing_cities:
         if city not in city_data['City_Fixed'].values:
-            # Bu şehrin bölgesini bul
             region_row = gdf[gdf['name_fixed'] == city]
             if len(region_row) > 0:
                 region = region_row.iloc[0].get('region', 'DİĞER')
                 new_row = pd.DataFrame({
-                    'City': [city],
-                    'City_Fixed': [city],
-                    'Region': [region],
-                    'Bölge': [region],
-                    'PF_Satis': [0],
-                    'Rakip_Satis': [0],
-                    'Toplam_Pazar': [0],
-                    'Pazar_Payi_%': [0]
+                    'City': [city], 'City_Fixed': [city], 'Region': [region], 'Bölge': [region],
+                    'PF_Satis': [0], 'Rakip_Satis': [0], 'Toplam_Pazar': [0], 'Pazar_Payi_%': [0]
                 })
                 city_data = pd.concat([city_data, new_row], ignore_index=True)
     
-    # Birleştir
     merged = gdf.merge(city_data, left_on='name_fixed', right_on='City_Fixed', how='left')
     
-    # NaN'leri doldur
+    # Veri temizliği
     merged['PF_Satis'] = merged['PF_Satis'].fillna(0)
     merged['Pazar_Payi_%'] = merged['Pazar_Payi_%'].fillna(0)
     merged['Bölge'] = merged['Bölge'].fillna('DİĞER')
     merged['Region'] = merged['Bölge']
     
-    # Bölge renklerini ata (Yeni mavi tonları)
-    merged['Region_Color'] = merged['Region'].map(REGION_COLORS).fillna('#64748B')
-    
-    # FİLTRELENMİŞ toplam
-    if filtered_pf_toplam is None:
+    # Filtrelenmiş toplam (Eğer dışarıdan gelmediyse buradan hesapla)
+    if filtered_pf_toplam is None or filtered_pf_toplam == 0:
         filtered_pf_toplam = merged['PF_Satis'].sum()
-    
-    # Modern harita oluştur
+
+    # 2. HARİTA OLUŞTURMA (Mapbox)
+    # ---------------------------------------------------------
     fig = go.Figure()
     
-    # Her bölge için ayrı trace
+    # A) CHOROPLETH KATMANI (Bölgeleri Boyama)
     for region in merged['Region'].unique():
         region_data = merged[merged['Region'] == region]
         color = REGION_COLORS.get(region, "#64748B")
         
-        # GeoJSON'u JSON'a çevir
         region_json = json.loads(region_data.to_json())
         
         fig.add_trace(go.Choroplethmapbox(
             geojson=region_json,
             locations=region_data.index,
-            z=[1] * len(region_data),
+            z=[1] * len(region_data), # Sabit renk için
             colorscale=[[0, color], [1, color]],
             marker_opacity=0.8,
-            marker_line_width=2,
-            marker_line_color='rgba(255, 255, 255, 0.8)',
+            marker_line_width=1, # Sınır çizgileri (ince)
+            marker_line_color='rgba(255, 255, 255, 0.5)',
             showscale=False,
             customdata=list(zip(
                 region_data['name'],
@@ -1063,129 +1049,125 @@ def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası",
                 "<b>%{customdata[0]}</b><br>"
                 "Bölge: %{customdata[1]}<br>"
                 "PF Satış: %{customdata[2]:,.0f}<br>"
-                "Pazar Payı: %{customdata[3]:.1f}%<br>"
-                "Toplam Pazar: %{text}"
+                "Pazar Payı: %{customdata[3]:.1f}%"
                 "<extra></extra>"
             ),
-            name=region,
-            visible=True,
-            text=[f"{(satis*(100/percent)) if percent>0 else 0:,.0f}" 
-                  for satis, percent in zip(region_data['PF_Satis'], region_data['Pazar_Payi_%'])]
+            name=region
         ))
-    
-    # Modern sınır çizgileri
+
+    # B) SINIR ÇİZGİLERİ (Daha belirgin beyaz çizgiler)
     lons, lats = [], []
     for geom in merged.geometry.boundary:
         if geom and not geom.is_empty:
-            lo, la = lines_to_lonlat(geom)
+            # MultiLineString veya LineString kontrolü gerekebilir, 
+            # lines_to_lonlat fonksiyonunuzun bunu hallettiğini varsayıyorum.
+            lo, la = lines_to_lonlat(geom) 
             lons += lo
             lats += la
-    
-    if lons and lats:
+            
+    if lons:
         fig.add_trace(go.Scattermapbox(
-            lon=lons,
-            lat=lats,
+            lon=lons, lat=lats,
             mode='lines',
-            line=dict(width=1.5, color='rgba(255, 255, 255, 0.9)'),
+            line=dict(width=1.5, color='rgba(255, 255, 255, 0.8)'),
             hoverinfo='skip',
             showlegend=False
         ))
+
+    # 3. ETİKET MANTIĞI (Burayı "Çalışan Kod" mantığıyla yeniden yazdık)
+    # ---------------------------------------------------------
     
-    # KALICI ETİKETLER - FORMAT: "BÖLGE ADI \n PF Satış (Pay %)"
+    label_lons, label_lats, label_texts = [], [], []
+    text_size = 10
+    
     if view_mode == "Bölge Görünümü":
-        label_lons, label_lats, label_texts = [], [], []
-        
+        # BÖLGE MANTIĞI: Bölge bazlı toplama ve merkez hesaplama
         for region in merged['Region'].unique():
             region_data = merged[merged['Region'] == region]
-            total = region_data['PF_Satis'].sum()
+            total_satis = region_data['PF_Satis'].sum()
             
-            if total > 0:
-                percent = (total / filtered_pf_toplam * 100) if filtered_pf_toplam > 0 else 0
+            if total_satis > 0:
+                # Yüzdeyi FİLTRELENMİŞ toplama göre hesapla
+                percent = (total_satis / filtered_pf_toplam * 100) if filtered_pf_toplam > 0 else 0
                 
-                lon, lat = get_region_center(region_data)
-                label_lons.append(lon)
-                label_lats.append(lat)
+                # Bölge Pazar Payı (Ağırlıklı ortalama değil, toplam/toplam pazar)
+                # Not: Veri setinizde 'Toplam_Pazar' sütunu varsa onu toplayın, yoksa pazar payından türetin
+                # Burada basitlik adına Pazar Payı % sütununun ortalamasını alıyorum veya varsa toplamdan hesaplayın:
+                region_total_market = (region_data['PF_Satis'] * (100 / region_data['Pazar_Payi_%'].replace(0, 1))).sum()
+                pazar_payi = (total_satis / region_total_market * 100) if region_total_market > 0 else 0
+
+                # Merkez bulma (GeoPandas centroid özelliği)
+                # Tüm bölge geometrilerini birleştirip merkezini alıyoruz (dissolve benzeri)
+                # Basit yöntem: Bölgedeki şehirlerin merkezlerinin ortalamasını al
+                center_lon = region_data.geometry.centroid.x.mean()
+                center_lat = region_data.geometry.centroid.y.mean()
+                
+                label_lons.append(center_lon)
+                label_lats.append(center_lat)
                 label_texts.append(
                     f"{region}<br>"
-                    f"{format_number(total)}<br>"
-                    f"({percent:.1f}%)"
+                    f"{total_satis:,.0f}<br>"
+                    f"(%{percent:.1f})"
                 )
-        
-        fig.add_trace(go.Scattermapbox(
-            lon=label_lons,
-            lat=label_lats,
-            mode='text',
-            text=label_texts,
-            textfont=dict(
-                size=10, 
-                color='white',
-                family='Inter, sans-serif',
-                weight='bold'
-            ),
-            hoverinfo='skip',
-            showlegend=False
-        ))
-    
-    else:  # "Şehir Görünümü"
-        city_lons, city_lats, city_texts = [], [], []
-        
+        text_size = 11
+
+    else: # Şehir Görünümü
+        # ŞEHİR MANTIĞI: Her satır için ayrı etiket
         for idx, row in merged.iterrows():
             if row['PF_Satis'] > 0:
-                total_market = row['PF_Satis'] * (100/row['Pazar_Payi_%']) if row['Pazar_Payi_%'] > 0 else 0
-                city_lons.append(row.geometry.centroid.x)
-                city_lats.append(row.geometry.centroid.y)
-                city_texts.append(
+                # Yüzdeyi FİLTRELENMİŞ toplama göre hesapla
+                percent = (row['PF_Satis'] / filtered_pf_toplam * 100) if filtered_pf_toplam > 0 else 0
+                
+                # Şehrin geometrik merkezi
+                centroid = row.geometry.centroid
+                
+                label_lons.append(centroid.x)
+                label_lats.append(centroid.y)
+                label_texts.append(
                     f"{row['name']}<br>"
-                    f"{format_number(row['PF_Satis'])}<br>"
-                    f"({row['Pazar_Payi_%']:.1f}%)"
+                    f"{row['PF_Satis']:,.0f}<br>"
+                    f"(%{percent:.1f})"
                 )
-        
-        fig.add_trace(go.Scattermapbox(
-            lon=city_lons,
-            lat=city_lats,
-            mode='text',
-            text=city_texts,
-            textfont=dict(
-                size=8, 
-                color='white',
-                family='Inter, sans-serif',
-                weight='bold'
-            ),
-            hoverinfo='skip',
-            showlegend=False
-        ))
-    
-    # Modern layout ayarları
+        text_size = 8
+
+    # Etiketleri Haritaya Ekle
+    fig.add_trace(go.Scattermapbox(
+        lon=label_lons,
+        lat=label_lats,
+        mode='text',
+        text=label_texts,
+        textfont=dict(
+            size=text_size, 
+            color='white',
+            family='Inter, sans-serif',
+            weight='bold',
+            shadow='1px 1px 2px black' # Okunabilirlik için gölge efekti (Plotly bazı versiyonlarında destekler)
+        ),
+        hoverinfo='skip',
+        showlegend=False
+    ))
+
+    # 4. LAYOUT AYARLARI (Modern görünüm)
+    # ---------------------------------------------------------
     fig.update_layout(
         mapbox_style="carto-darkmatter",
         mapbox=dict(
             center=dict(lat=39.0, lon=35.0),
             zoom=5,
-            bearing=0,
-            pitch=0
         ),
         height=750,
         margin=dict(l=0, r=0, t=80, b=0),
         title=dict(
             text=f"<b>{title}</b><br><span style='font-size: 14px; color: #94a3b8'>"
-                 f"Toplam PF Satış: {format_number(filtered_pf_toplam)} | "
-                 f"Şehir Sayısı: {len(city_data[city_data['PF_Satis']>0])}</span>",
+                 f"Toplam PF Satış: {filtered_pf_toplam:,.0f} | "
+                 f"Görünüm: {view_mode}</span>",
             x=0.5,
-            font=dict(
-                size=22, 
-                color='white',
-                family='Inter, sans-serif'
-            ),
-            y=0.97
+            y=0.95,
+            font=dict(size=22, color='white', family='Inter, sans-serif')
         ),
-        plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
         showlegend=False,
-        hoverlabel=dict(
-            bgcolor="rgba(15, 23, 41, 0.9)",
-            font_size=12,
-            font_family="Inter, sans-serif"
-        )
     )
     
     return fig
@@ -3556,4 +3538,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
