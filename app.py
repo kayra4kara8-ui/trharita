@@ -972,7 +972,6 @@ def get_region_center(gdf_region):
 def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası", view_mode="Bölge Görünümü", filtered_pf_toplam=None):
     """
     Modern Türkiye haritası - Mavi Kurumsal Tema
-    GÜNCELLENMİŞ: Etiketler her zaman görünür ve okunabilir
     """
     if gdf is None:
         st.error("❌ GeoJSON yüklenemedi")
@@ -1092,7 +1091,7 @@ def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası",
             showlegend=False
         ))
     
-    # ETİKETLERİ EN SON EKLEYEREK EN ÜST KATMANDA GÖSTER
+    # KALICI ETİKETLER - FORMAT: "BÖLGE ADI \n PF Satış (Pay %)"
     if view_mode == "Bölge Görünümü":
         label_lons, label_lats, label_texts = [], [], []
         
@@ -1112,113 +1111,48 @@ def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası",
                     f"({percent:.1f}%)"
                 )
         
-        # GELİŞTİRİLMİŞ ETİKETLER - Arka plan ve gölge efekti
-        # Önce gölge efekti (arka plan)
         fig.add_trace(go.Scattermapbox(
             lon=label_lons,
             lat=label_lats,
             mode='text',
             text=label_texts,
             textfont=dict(
-                size=13, 
-                color='rgba(0, 0, 0, 0.4)',
-                family='Inter, sans-serif',
-                weight='bold'
-            ),
-            hoverinfo='skip',
-            showlegend=False,
-            textposition="top center"
-        ))
-        
-        # Sonra ana etiketler (beyaz)
-        fig.add_trace(go.Scattermapbox(
-            lon=label_lons,
-            lat=label_lats,
-            mode='text',
-            text=label_texts,
-            textfont=dict(
-                size=12, 
+                size=10, 
                 color='white',
                 family='Inter, sans-serif',
                 weight='bold'
             ),
             hoverinfo='skip',
-            showlegend=False,
-            textposition="top center"
+            showlegend=False
         ))
-        
+    
     else:  # "Şehir Görünümü"
-        city_label_lons, city_label_lats, city_label_texts = [], [], []
+        city_lons, city_lats, city_texts = [], [], []
         
         for idx, row in merged.iterrows():
             if row['PF_Satis'] > 0:
                 total_market = row['PF_Satis'] * (100/row['Pazar_Payi_%']) if row['Pazar_Payi_%'] > 0 else 0
-                city_label_lons.append(row.geometry.centroid.x + 0.15)  # Sağa kaydır
-                city_label_lats.append(row.geometry.centroid.y)
-                city_label_texts.append(
+                city_lons.append(row.geometry.centroid.x)
+                city_lats.append(row.geometry.centroid.y)
+                city_texts.append(
                     f"{row['name']}<br>"
                     f"{format_number(row['PF_Satis'])}<br>"
                     f"({row['Pazar_Payi_%']:.1f}%)"
                 )
         
-        # Şehir etiketleri - gölge efekti
         fig.add_trace(go.Scattermapbox(
-            lon=city_label_lons,
-            lat=city_label_lats,
+            lon=city_lons,
+            lat=city_lats,
             mode='text',
-            text=city_label_texts,
+            text=city_texts,
             textfont=dict(
-                size=10, 
-                color='rgba(0, 0, 0, 0.4)',
-                family='Inter, sans-serif',
-                weight='bold'
-            ),
-            hoverinfo='skip',
-            showlegend=False,
-            textposition="middle right"
-        ))
-        
-        # Şehir etiketleri - ana katman
-        fig.add_trace(go.Scattermapbox(
-            lon=city_label_lons,
-            lat=city_label_lats,
-            mode='text',
-            text=city_label_texts,
-            textfont=dict(
-                size=9, 
+                size=8, 
                 color='white',
                 family='Inter, sans-serif',
                 weight='bold'
             ),
             hoverinfo='skip',
-            showlegend=False,
-            textposition="middle right"
-        ))
-        
-        # Şehir noktaları (en son ekleyerek en üstte göster)
-        city_lons, city_lats, city_names = [], [], []
-        
-        for idx, row in merged.iterrows():
-            if row['PF_Satis'] > 0:
-                city_lons.append(row.geometry.centroid.x)
-                city_lats.append(row.geometry.centroid.y)
-                city_names.append(row['name'])
-        
-        fig.add_trace(go.Scattermapbox(
-            lon=city_lons,
-            lat=city_lats,
-            mode='markers',
-            marker=dict(
-                size=9,
-                color=PERFORMANCE_COLORS['success'],
-                opacity=0.9,
-                symbol='circle',
-                line=dict(width=2, color='white')
-            ),
-            text=city_names,
-            hoverinfo='text',
-            showlegend=False,
-            name='Şehirler'
+            showlegend=False
         ))
     
     # Modern layout ayarları
@@ -1235,8 +1169,7 @@ def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası",
         title=dict(
             text=f"<b>{title}</b><br><span style='font-size: 14px; color: #94a3b8'>"
                  f"Toplam PF Satış: {format_number(filtered_pf_toplam)} | "
-                 f"Şehir Sayısı: {len(city_data[city_data['PF_Satis']>0])} | "
-                 f"Görünüm: {view_mode}</span>",
+                 f"Şehir Sayısı: {len(city_data[city_data['PF_Satis']>0])}</span>",
             x=0.5,
             font=dict(
                 size=22, 
@@ -1252,9 +1185,7 @@ def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası",
             bgcolor="rgba(15, 23, 41, 0.9)",
             font_size=12,
             font_family="Inter, sans-serif"
-        ),
-        # Harita etkileşim ayarları
-        dragmode='zoom'
+        )
     )
     
     return fig
@@ -3625,3 +3556,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
