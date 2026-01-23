@@ -971,7 +971,8 @@ def get_region_center(gdf_region):
 
 def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası", view_mode="Bölge Görünümü", filtered_pf_toplam=None):
     """
-    Modern Türkiye haritası - Düzeltilmiş Etiketleme, Zoom ve Uirevision
+    Modern Türkiye haritası - Sabit Etiketleme ve Görünüm Düzeltmesi
+    Revize: Etiketlerin harita üzerinde sürekli görünmesini sağlar.
     """
     if gdf is None:
         st.error("❌ GeoJSON yüklenemedi")
@@ -1019,48 +1020,26 @@ def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası",
     if filtered_pf_toplam is None:
         filtered_pf_toplam = merged['PF_Satis'].sum()
 
-    # 2. ODALANMA (CENTER & ZOOM) HESAPLAMA
-    # ---------------------------------------------------------
-    # Sadece verisi olan (satış > 0) alanlara odaklanalım
-    active_mask = merged['PF_Satis'] > 0
-    if active_mask.any():
-        active_geoms = merged[active_mask].geometry
-        # Tüm aktif geometrilerin merkezini bul
-        # Basit bir ortalama alarak merkez buluyoruz
-        minx, miny, maxx, maxy = active_geoms.total_bounds
-        center_lon = (minx + maxx) / 2
-        center_lat = (miny + maxy) / 2
-        
-        # Zoom seviyesini bounds genişliğine göre kabaca ayarla
-        dist = max(maxx - minx, maxy - miny)
-        if dist < 2: zoom_level = 7
-        elif dist < 5: zoom_level = 6
-        else: zoom_level = 5.2
-    else:
-        # Varsayılan Türkiye Merkezi
-        center_lat = 39.0
-        center_lon = 35.5
-        zoom_level = 5
-
-    # 3. HARİTA KATMANLARI
+    # 2. HARİTA OLUŞTURMA (KATMANLAR)
     # ---------------------------------------------------------
     fig = go.Figure()
     
-    # A) Choropleth (Renkli Bölgeler) - Taban Katmanı
+    # A) RENKLİ BÖLGE KATMANI (CHOROPLETH)
+    # ---------------------------------------------------------
     for region in merged['Region'].unique():
         region_data = merged[merged['Region'] == region]
         color = REGION_COLORS.get(region, "#64748B")
         
+        # GeoJSON dönüşümü
         region_json = json.loads(region_data.to_json())
         
-        # Hover için detaylı HTML metni
+        # Hover için HTML formatı (Sadece üzerine gelince görünür)
         hover_texts = []
         for _, row in region_data.iterrows():
             txt = (f"<b>{row['name']}</b><br>"
-                   f"Bölge: {row['Region']}<br>"
-                   f"PF Satış: {format_number(row['PF_Satis'])}<br>"
-                   f"Toplam Pazar: {format_number(row['Toplam_Pazar'])}<br>"
-                   f"Pazar Payı: %{row['Pazar_Payi_%']:.1f}")
+                   f"PF: {format_number(row['PF_Satis'])}<br>"
+                   f"Pazar: {format_number(row['Toplam_Pazar'])}<br>"
+                   f"Pay: %{row['Pazar_Payi_%']:.1f}")
             hover_texts.append(txt)
 
         fig.add_trace(go.Choroplethmapbox(
@@ -1077,101 +1056,116 @@ def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası",
             hovertext=hover_texts
         ))
 
-    # B) Sınır Çizgileri
+    # B) SINIR ÇİZGİLERİ
+    # ---------------------------------------------------------
     lons, lats = [], []
     for geom in merged.geometry.boundary:
         if geom and not geom.is_empty:
             lo, la = lines_to_lonlat(geom)
             lons += lo
             lats += la
-    
+            
     fig.add_trace(go.Scattermapbox(
         lon=lons, lat=lats,
         mode='lines',
-        line=dict(width=1, color='rgba(255,255,255,0.6)'),
+        line=dict(width=1, color='rgba(255,255,255,0.5)'),
         hoverinfo='skip',
         showlegend=False
     ))
 
-    # C) ETİKETLER (LABELS)
-    # Scattermapbox 'text' modunda HTML style (bold, color) desteklemez.
-    # Bu yüzden temiz, düz metin kullanıyoruz (\n ile alt satır).
-    
-    label_lons = []
-    label_lats = []
-    label_texts = []
+    # C) ETİKETLER (SABİT YAZILAR)
+    # ---------------------------------------------------------
+    label_lons, label_lats, label_texts = [], [], []
     
     if view_mode == "Bölge Görünümü":
-        # Bölgelerin merkezine tek bir etiket koy
+        # Bölgelerin ortalamasını alarak merkez bul (daha güvenli ve hızlı)
         for region in merged['Region'].unique():
             r_data = merged[merged['Region'] == region]
+            
+            # Bölge toplamları
             total_pf = r_data['PF_Satis'].sum()
             total_pazar = r_data['Toplam_Pazar'].sum()
-            share = (total_pf / total_pazar * 100) if total_pazar > 0 else 0
             
-            # Sadece verisi olan bölgeleri etiketle
+            # Sadece verisi olan bölgelere etiket koy
             if total_pazar > 0:
-                lon, lat = get_region_center(r_data)
-                
-                # Düz metin formatı
-                txt = f"{region}\nPF: {format_number(total_pf)}\nPay: %{share:.1f}"
-                
-                label_lons.append(lon)
-                label_lats.append(lat)
-                label_texts.append(txt)
+                # Bölgedeki şehirlerin orta noktası
+                try:
+                    center_lon = r_data.geometry.centroid.x.mean()
+                    center_lat = r_data.geometry.centroid.y.mean()
+                    
+                    # Düz metin (\n ile alt satır) - HTML KULLANMA!
+                    # "Marmara \n PF: 1.2M \n Pay: %22" gibi
+                    share = (total_pf / total_pazar * 100)
+                    txt = f"{region}\nPF: {format_number(total_pf)}\n%{share:.1f}"
+                    
+                    label_lons.append(center_lon)
+                    label_lats.append(center_lat)
+                    label_texts.append(txt)
+                except:
+                    continue
         
-        mode_settings = 'text' # Sadece yazı
-        text_pos = 'middle center'
-        font_size = 11
+        text_size = 12
+        marker_size = 0  # Bölge modunda nokta olmasın, sadece yazı olsun diye 0 yapabilirsiniz veya küçük bir nokta bırakabilirsiniz
 
-    else: # Şehir Görünümü
-        # Her şehrin merkezine etiket koy
+    else:  # Şehir Görünümü
         for idx, row in merged.iterrows():
+            # Sadece kayda değer satışı veya pazarı olanları etiketle
             if row['PF_Satis'] > 0 or row['Toplam_Pazar'] > 0:
-                lon = row.geometry.centroid.x
-                lat = row.geometry.centroid.y
-                
-                # Şehir ismi ve önemli metrikler
-                txt = f"{row['name']}\nPF: {format_number(row['PF_Satis'])}\n%{row['Pazar_Payi_%']:.1f}"
-                
-                label_lons.append(lon)
-                label_lats.append(lat)
-                label_texts.append(txt)
+                try:
+                    lon = row.geometry.centroid.x
+                    lat = row.geometry.centroid.y
+                    
+                    # Düz metin formatı
+                    txt = f"{row['name']}\n{format_number(row['PF_Satis'])}"
+                    
+                    label_lons.append(lon)
+                    label_lats.append(lat)
+                    label_texts.append(txt)
+                except:
+                    continue
         
-        mode_settings = 'markers+text' # Nokta + Yazı
-        text_pos = 'bottom center' # Yazı noktanın altında
-        font_size = 9
+        text_size = 10
+        marker_size = 5
 
-    # Etiket Katmanı
-    fig.add_trace(go.Scattermapbox(
-        lon=label_lons,
-        lat=label_lats,
-        mode=mode_settings,
-        text=label_texts,
-        textposition=text_pos,
-        marker=dict(size=6, color='white', opacity=0.8), # Şehir modunda noktalar görünür
-        textfont=dict(
-            size=font_size,
-            color='white',
-            family="Inter, sans-serif"
-        ),
-        hoverinfo='skip', # Üzerine gelince tekrar açılmasın, zaten yazıyor
-        showlegend=False
-    ))
+    # Etiketleri Haritaya Ekle
+    if label_lons:
+        fig.add_trace(go.Scattermapbox(
+            lon=label_lons,
+            lat=label_lats,
+            mode='markers+text',  # Hem nokta hem yazı
+            text=label_texts,
+            textposition='bottom center', # Yazı noktanın altında
+            marker=dict(size=marker_size, color='white', opacity=0.8),
+            textfont=dict(
+                size=text_size,
+                color='white', # Yazı rengi beyaz (koyu harita üzerinde okunur)
+                family='Inter, sans-serif'
+            ),
+            hoverinfo='skip', # Üzerine gelince tekrar popup açma, zaten yazıyor
+            showlegend=False
+        ))
 
-    # 4. LAYOUT AYARLARI
+    # 3. LAYOUT AYARLARI
     # ---------------------------------------------------------
+    # Otomatik Zoom Hesapla
+    if len(label_lons) > 0:
+        center_lat = sum(label_lats) / len(label_lats)
+        center_lon = sum(label_lons) / len(label_lons)
+        zoom = 5.5 if view_mode == "Şehir Görünümü" else 5.0
+    else:
+        center_lat = 39.0
+        center_lon = 35.0
+        zoom = 5.0
+
     fig.update_layout(
         mapbox_style="carto-darkmatter",
         mapbox=dict(
             center=dict(lat=center_lat, lon=center_lon),
-            zoom=zoom_level,
+            zoom=zoom,
             bearing=0,
             pitch=0
         ),
-        # 'uirevision' parametresi çok önemlidir. 
-        # view_mode değiştiğinde (örn: Bölge -> Şehir), Plotly'nin kamerayı resetlemesini sağlar.
-        uirevision=view_mode, 
+        uirevision=view_mode, # Mod değişince haritayı resetle
         height=750,
         margin=dict(l=0, r=0, t=80, b=0),
         title=dict(
@@ -1187,7 +1181,6 @@ def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası",
     )
     
     return fig
-
 # =============================================================================
 # ML FEATURE ENGINEERING - GELİŞTİRİLMİŞ
 # =============================================================================
@@ -3554,5 +3547,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
