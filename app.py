@@ -969,10 +969,7 @@ def get_region_center(gdf_region):
 # MODERN HARİTA OLUŞTURUCU - GELİŞTİRİLMİŞ
 # =============================================================================
 
-import plotly.graph_objects as go
-import pandas as pd
-import json
-import numpy as np
+
 
 def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası", view_mode="Bölge Görünümü", filtered_pf_toplam=None):
     """
@@ -3538,5 +3535,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
