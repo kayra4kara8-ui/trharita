@@ -1,4 +1,4 @@
-""""🎯 GELİŞMİŞ TİCARİ PORTFÖY ANALİZ SİSTEMİ
+"""🎯 GELİŞMİŞ TİCARİ PORTFÖY ANALİZ SİSTEMİ
 Territory Bazlı Performans, ML Tahminleme, Türkiye Haritası ve Rekabet Analizi
 
 GELİŞTİRİLMİŞ ÖZELLİKLER:
@@ -966,12 +966,12 @@ def get_region_center(gdf_region):
     return centroid.x, centroid.y
 
 # =============================================================================
-# GELİŞTİRİLMİŞ HARİTA FONKSİYONU
+# MODERN HARİTA OLUŞTURUCU - GELİŞTİRİLMİŞ
 # =============================================================================
 
 def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası", view_mode="Bölge Görünümü", filtered_pf_toplam=None):
     """
-    Geliştirilmiş Türkiye haritası - Kalıcı etiketler ile
+    Modern Türkiye haritası - Mavi Kurumsal Tema
     """
     if gdf is None:
         st.error("❌ GeoJSON yüklenemedi")
@@ -1023,7 +1023,6 @@ def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası",
     # NaN'leri doldur
     merged['PF_Satis'] = merged['PF_Satis'].fillna(0)
     merged['Pazar_Payi_%'] = merged['Pazar_Payi_%'].fillna(0)
-    merged['Toplam_Pazar'] = merged['Toplam_Pazar'].fillna(0)
     merged['Bölge'] = merged['Bölge'].fillna('DİĞER')
     merged['Region'] = merged['Bölge']
     
@@ -1058,19 +1057,20 @@ def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası",
                 region_data['name'],
                 region_data['Region'],
                 region_data['PF_Satis'],
-                region_data['Toplam_Pazar'],
                 region_data['Pazar_Payi_%']
             )),
             hovertemplate=(
                 "<b>%{customdata[0]}</b><br>"
                 "Bölge: %{customdata[1]}<br>"
                 "PF Satış: %{customdata[2]:,.0f}<br>"
-                "Toplam Pazar: %{customdata[3]:,.0f}<br>"
-                "Pazar Payı: %{customdata[4]:.1f}%<br>"
+                "Pazar Payı: %{customdata[3]:.1f}%<br>"
+                "Toplam Pazar: %{text}"
                 "<extra></extra>"
             ),
             name=region,
-            visible=True
+            visible=True,
+            text=[f"{(satis*(100/percent)) if percent>0 else 0:,.0f}" 
+                  for satis, percent in zip(region_data['PF_Satis'], region_data['Pazar_Payi_%'])]
         ))
     
     # Modern sınır çizgileri
@@ -1091,144 +1091,85 @@ def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası",
             showlegend=False
         ))
     
-    # KALICI ETİKETLER - GELİŞTİRİLMİŞ VERSİYON
+    # KALICI ETİKETLER - FORMAT: "BÖLGE ADI \n PF Satış (Pay %)"
     if view_mode == "Bölge Görünümü":
-        # Bölge bazlı etiketler
         label_lons, label_lats, label_texts = [], [], []
         
         for region in merged['Region'].unique():
             region_data = merged[merged['Region'] == region]
+            total = region_data['PF_Satis'].sum()
             
-            # Sadece satışı olan bölgeleri göster
-            if len(region_data) > 0:
-                total_pf = region_data['PF_Satis'].sum()
-                total_market = region_data['Toplam_Pazar'].sum()
-                avg_share = region_data['Pazar_Payi_%'].mean()
+            if total > 0:
+                percent = (total / filtered_pf_toplam * 100) if filtered_pf_toplam > 0 else 0
                 
-                if total_pf > 0:  # Sadece satışı olan bölgeler
-                    lon, lat = get_region_center(region_data)
-                    label_lons.append(lon)
-                    label_lats.append(lat)
-                    
-                    # Formatlanmış etiket metni
-                    label_texts.append(
-                        f"<b>{region}</b><br>"
-                        f"PF: {format_number(total_pf)}<br>"
-                        f"Pazar: {format_number(total_market)}<br>"
-                        f"%{avg_share:.1f}"
-                    )
+                lon, lat = get_region_center(region_data)
+                label_lons.append(lon)
+                label_lats.append(lat)
+                label_texts.append(
+                    f"{region}<br>"
+                    f"{format_number(total)}<br>"
+                    f"({percent:.1f}%)"
+                )
         
-        # Kalıcı bölge etiketleri
         fig.add_trace(go.Scattermapbox(
             lon=label_lons,
             lat=label_lats,
             mode='text',
             text=label_texts,
             textfont=dict(
-                size=11, 
+                size=10, 
                 color='white',
                 family='Inter, sans-serif',
                 weight='bold'
             ),
-            textposition="top center",
             hoverinfo='skip',
             showlegend=False
         ))
-        
-        # Harita zoom seviyesi - Bölge görünümü için
-        map_zoom = 4.8
-        map_center = dict(lat=39.0, lon=35.0)
-        
+    
     else:  # "Şehir Görünümü"
-        # Şehir bazlı etiketler
         city_lons, city_lats, city_texts = [], [], []
         
-        # Sadece önemli satışı olan şehirleri göster
         for idx, row in merged.iterrows():
             if row['PF_Satis'] > 0:
-                # Satış eşik değeri - toplam PF'nin %1'inden fazla olan şehirler
-                if row['PF_Satis'] > (filtered_pf_toplam * 0.01):
-                    total_market = row['Toplam_Pazar']
-                    
-                    city_lons.append(row.geometry.centroid.x)
-                    city_lats.append(row.geometry.centroid.y)
-                    
-                    # Formatlanmış şehir etiketi
-                    city_texts.append(
-                        f"<b>{row['name']}</b><br>"
-                        f"PF: {format_number(row['PF_Satis'])}<br>"
-                        f"Pazar: {format_number(total_market)}<br>"
-                        f"%{row['Pazar_Payi_%']:.1f}"
-                    )
+                total_market = row['PF_Satis'] * (100/row['Pazar_Payi_%']) if row['Pazar_Payi_%'] > 0 else 0
+                city_lons.append(row.geometry.centroid.x)
+                city_lats.append(row.geometry.centroid.y)
+                city_texts.append(
+                    f"{row['name']}<br>"
+                    f"{format_number(row['PF_Satis'])}<br>"
+                    f"({row['Pazar_Payi_%']:.1f}%)"
+                )
         
-        # Kalıcı şehir etiketleri
         fig.add_trace(go.Scattermapbox(
             lon=city_lons,
             lat=city_lats,
             mode='text',
             text=city_texts,
             textfont=dict(
-                size=9, 
+                size=8, 
                 color='white',
                 family='Inter, sans-serif',
                 weight='bold'
             ),
-            textposition="top center",
             hoverinfo='skip',
             showlegend=False
         ))
-        
-        # Daha fazla şehir gösterimi için ek trace (küçük şehirler)
-        small_city_lons, small_city_lats, small_city_texts = [], [], []
-        
-        for idx, row in merged.iterrows():
-            if row['PF_Satis'] > 0:
-                # Küçük şehirler için (toplam PF'nin %1'inden az)
-                if row['PF_Satis'] <= (filtered_pf_toplam * 0.01) and row['PF_Satis'] > (filtered_pf_toplam * 0.001):
-                    small_city_lons.append(row.geometry.centroid.x)
-                    small_city_lats.append(row.geometry.centroid.y)
-                    small_city_texts.append(
-                        f"{row['name']}<br>"
-                        f"{format_number(row['PF_Satis'])}"
-                    )
-        
-        if small_city_lons:
-            fig.add_trace(go.Scattermapbox(
-                lon=small_city_lons,
-                lat=small_city_lats,
-                mode='text',
-                text=small_city_texts,
-                textfont=dict(
-                    size=8, 
-                    color='rgba(255, 255, 255, 0.85)',
-                    family='Inter, sans-serif',
-                    weight='normal'
-                ),
-                textposition="top center",
-                hoverinfo='skip',
-                showlegend=False
-            ))
-        
-        # Harita zoom seviyesi - Şehir görünümü için
-        map_zoom = 5.2
-        map_center = dict(lat=39.0, lon=35.0)
     
-    # Modern layout ayarları - Geliştirilmiş okunabilirlik
+    # Modern layout ayarları
     fig.update_layout(
         mapbox_style="carto-darkmatter",
         mapbox=dict(
-            center=map_center,
-            zoom=map_zoom,
+            center=dict(lat=39.0, lon=35.0),
+            zoom=5,
             bearing=0,
             pitch=0
         ),
         height=750,
         margin=dict(l=0, r=0, t=80, b=0),
         title=dict(
-            text=f"<b>{title}</b><br>"
-                 f"<span style='font-size: 14px; color: #94a3b8'>"
+            text=f"<b>{title}</b><br><span style='font-size: 14px; color: #94a3b8'>"
                  f"Toplam PF Satış: {format_number(filtered_pf_toplam)} | "
-                 f"Aktif Şehirler: {len(merged[merged['PF_Satis']>0])}</span>",
+                 f"Şehir Sayısı: {len(city_data[city_data['PF_Satis']>0])}</span>",
             x=0.5,
             font=dict(
                 size=22, 
@@ -1241,31 +1182,14 @@ def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası",
         paper_bgcolor='rgba(0,0,0,0)',
         showlegend=False,
         hoverlabel=dict(
-            bgcolor="rgba(15, 23, 41, 0.95)",
+            bgcolor="rgba(15, 23, 41, 0.9)",
             font_size=12,
-            font_family="Inter, sans-serif",
-            font_color="white"
+            font_family="Inter, sans-serif"
         )
     )
     
-    # Etiket okunabilirliğini artırmak için text shadow efekti
-    # DÜZELTME: update_traces doğru şekilde kullanılıyor
-# ... önceki kodlar (fig.update_layout kısmı bitince) ...
-
-    # Etiket okunabilirliğini artırmak için text shadow efekti
-    # DÜZELTME: getattr kullanılarak güvenli kontrol yapılıyor
-    text_traces = [i for i, trace in enumerate(fig.data) if getattr(trace, 'mode', None) == 'text']
-    
-    for trace_idx in text_traces:
-        fig.data[trace_idx].update(
-            textfont=dict(
-                color='white',
-                family='Inter, sans-serif',
-                size=11 if view_mode == "Bölge Görünümü" else 9
-            )
-        )
-    
     return fig
+
 # =============================================================================
 # ML FEATURE ENGINEERING - GELİŞTİRİLMİŞ
 # =============================================================================
@@ -3069,7 +2993,7 @@ def main():
         
         # Özet İstatistikler
         st.markdown("---")
-        st.subheader("📊 Territory Performans Özetı")
+        st.subheader("📊 Territory Performans Özeti")
         
         col_sum1, col_sum2, col_sum3, col_sum4 = st.columns(4)
         
@@ -3632,5 +3556,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-
 
