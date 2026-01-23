@@ -971,216 +971,225 @@ def get_region_center(gdf_region):
 
 def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası", view_mode="Bölge Görünümü", filtered_pf_toplam=None):
     """
-    Modern Türkiye haritası - Sabit Etiketleme ve Görünüm Düzeltmesi
-    Revize: Etiketlerin harita üzerinde sürekli görünmesini sağlar.
+    Modern Türkiye haritası - Mavi Kurumsal Tema
     """
     if gdf is None:
         st.error("❌ GeoJSON yüklenemedi")
         return None
     
-    # 1. VERİ HAZIRLIĞI
-    # ---------------------------------------------------------
+    # Veriyi hazırla
     city_data = city_data.copy()
     city_data['City_Fixed'] = city_data['City'].apply(normalize_city_name_fixed)
     city_data['City_Fixed'] = city_data['City_Fixed'].str.upper()
     
-    # GeoJSON verisiyle birleştirme
+    # Eksik şehirleri kontrol et ve ekle
+    all_cities_in_data = set(city_data['City_Fixed'].unique())
+    
+    # GeoJSON'daki tüm şehirleri al
     gdf = gdf.copy()
     gdf['name_upper'] = gdf['name'].str.upper()
+    
+    # FIX_CITY_MAP'i kullanarak isimleri düzelt
     gdf['name_fixed'] = gdf['name_upper'].apply(lambda x: FIX_CITY_MAP.get(x, x))
     
-    # Eksik şehirleri tamamlama
-    all_cities_in_data = set(city_data['City_Fixed'].unique())
+    # GeoJSON'daki tüm şehirleri listele
     all_cities_in_geojson = set(gdf['name_fixed'].unique())
+    
+    # Eksik şehirleri bul
     missing_cities = all_cities_in_geojson - all_cities_in_data
     
+    # Eksik şehirleri city_data'ya ekle (0 değerlerle)
     for city in missing_cities:
         if city not in city_data['City_Fixed'].values:
+            # Bu şehrin bölgesini bul
             region_row = gdf[gdf['name_fixed'] == city]
             if len(region_row) > 0:
                 region = region_row.iloc[0].get('region', 'DİĞER')
                 new_row = pd.DataFrame({
-                    'City': [city], 'City_Fixed': [city],
-                    'Region': [region], 'Bölge': [region],
-                    'PF_Satis': [0], 'Rakip_Satis': [0],
-                    'Toplam_Pazar': [0], 'Pazar_Payi_%': [0]
+                    'City': [city],
+                    'City_Fixed': [city],
+                    'Region': [region],
+                    'Bölge': [region],
+                    'PF_Satis': [0],
+                    'Rakip_Satis': [0],
+                    'Toplam_Pazar': [0],
+                    'Pazar_Payi_%': [0]
                 })
                 city_data = pd.concat([city_data, new_row], ignore_index=True)
     
-    # Merge işlemi
+    # Birleştir
     merged = gdf.merge(city_data, left_on='name_fixed', right_on='City_Fixed', how='left')
     
-    # NaN temizliği
+    # NaN'leri doldur
     merged['PF_Satis'] = merged['PF_Satis'].fillna(0)
-    merged['Toplam_Pazar'] = merged['Toplam_Pazar'].fillna(0)
     merged['Pazar_Payi_%'] = merged['Pazar_Payi_%'].fillna(0)
     merged['Bölge'] = merged['Bölge'].fillna('DİĞER')
     merged['Region'] = merged['Bölge']
     
+    # Bölge renklerini ata (Yeni mavi tonları)
+    merged['Region_Color'] = merged['Region'].map(REGION_COLORS).fillna('#64748B')
+    
+    # FİLTRELENMİŞ toplam
     if filtered_pf_toplam is None:
         filtered_pf_toplam = merged['PF_Satis'].sum()
-
-    # 2. HARİTA OLUŞTURMA (KATMANLAR)
-    # ---------------------------------------------------------
+    
+    # Modern harita oluştur
     fig = go.Figure()
     
-    # A) RENKLİ BÖLGE KATMANI (CHOROPLETH)
-    # ---------------------------------------------------------
+    # Her bölge için ayrı trace
     for region in merged['Region'].unique():
         region_data = merged[merged['Region'] == region]
         color = REGION_COLORS.get(region, "#64748B")
         
-        # GeoJSON dönüşümü
+        # GeoJSON'u JSON'a çevir
         region_json = json.loads(region_data.to_json())
         
-        # Hover için HTML formatı (Sadece üzerine gelince görünür)
-        hover_texts = []
-        for _, row in region_data.iterrows():
-            txt = (f"<b>{row['name']}</b><br>"
-                   f"PF: {format_number(row['PF_Satis'])}<br>"
-                   f"Pazar: {format_number(row['Toplam_Pazar'])}<br>"
-                   f"Pay: %{row['Pazar_Payi_%']:.1f}")
-            hover_texts.append(txt)
-
         fig.add_trace(go.Choroplethmapbox(
             geojson=region_json,
             locations=region_data.index,
             z=[1] * len(region_data),
             colorscale=[[0, color], [1, color]],
-            marker_opacity=0.7,
-            marker_line_width=1,
-            marker_line_color='rgba(255,255,255,0.3)',
+            marker_opacity=0.8,
+            marker_line_width=2,
+            marker_line_color='rgba(255, 255, 255, 0.8)',
             showscale=False,
+            customdata=list(zip(
+                region_data['name'],
+                region_data['Region'],
+                region_data['PF_Satis'],
+                region_data['Pazar_Payi_%']
+            )),
+            hovertemplate=(
+                "<b>%{customdata[0]}</b><br>"
+                "Bölge: %{customdata[1]}<br>"
+                "PF Satış: %{customdata[2]:,.0f}<br>"
+                "Pazar Payı: %{customdata[3]:.1f}%<br>"
+                "Toplam Pazar: %{text}"
+                "<extra></extra>"
+            ),
             name=region,
-            hoverinfo='text',
-            hovertext=hover_texts
+            visible=True,
+            text=[f"{(satis*(100/percent)) if percent>0 else 0:,.0f}" 
+                  for satis, percent in zip(region_data['PF_Satis'], region_data['Pazar_Payi_%'])]
         ))
-
-    # B) SINIR ÇİZGİLERİ
-    # ---------------------------------------------------------
+    
+    # Modern sınır çizgileri
     lons, lats = [], []
     for geom in merged.geometry.boundary:
         if geom and not geom.is_empty:
             lo, la = lines_to_lonlat(geom)
             lons += lo
             lats += la
-            
-    fig.add_trace(go.Scattermapbox(
-        lon=lons, lat=lats,
-        mode='lines',
-        line=dict(width=1, color='rgba(255,255,255,0.5)'),
-        hoverinfo='skip',
-        showlegend=False
-    ))
-
-    # C) ETİKETLER (SABİT YAZILAR)
-    # ---------------------------------------------------------
-    label_lons, label_lats, label_texts = [], [], []
     
+    if lons and lats:
+        fig.add_trace(go.Scattermapbox(
+            lon=lons,
+            lat=lats,
+            mode='lines',
+            line=dict(width=1.5, color='rgba(255, 255, 255, 0.9)'),
+            hoverinfo='skip',
+            showlegend=False
+        ))
+    
+    # KALICI ETİKETLER - FORMAT: "BÖLGE ADI \n PF Satış (Pay %)"
     if view_mode == "Bölge Görünümü":
-        # Bölgelerin ortalamasını alarak merkez bul (daha güvenli ve hızlı)
+        label_lons, label_lats, label_texts = [], [], []
+        
         for region in merged['Region'].unique():
-            r_data = merged[merged['Region'] == region]
+            region_data = merged[merged['Region'] == region]
+            total = region_data['PF_Satis'].sum()
             
-            # Bölge toplamları
-            total_pf = r_data['PF_Satis'].sum()
-            total_pazar = r_data['Toplam_Pazar'].sum()
-            
-            # Sadece verisi olan bölgelere etiket koy
-            if total_pazar > 0:
-                # Bölgedeki şehirlerin orta noktası
-                try:
-                    center_lon = r_data.geometry.centroid.x.mean()
-                    center_lat = r_data.geometry.centroid.y.mean()
-                    
-                    # Düz metin (\n ile alt satır) - HTML KULLANMA!
-                    # "Marmara \n PF: 1.2M \n Pay: %22" gibi
-                    share = (total_pf / total_pazar * 100)
-                    txt = f"{region}\nPF: {format_number(total_pf)}\n%{share:.1f}"
-                    
-                    label_lons.append(center_lon)
-                    label_lats.append(center_lat)
-                    label_texts.append(txt)
-                except:
-                    continue
+            if total > 0:
+                percent = (total / filtered_pf_toplam * 100) if filtered_pf_toplam > 0 else 0
+                
+                lon, lat = get_region_center(region_data)
+                label_lons.append(lon)
+                label_lats.append(lat)
+                label_texts.append(
+                    f"{region}<br>"
+                    f"{format_number(total)}<br>"
+                    f"({percent:.1f}%)"
+                )
         
-        text_size = 12
-        marker_size = 0  # Bölge modunda nokta olmasın, sadece yazı olsun diye 0 yapabilirsiniz veya küçük bir nokta bırakabilirsiniz
-
-    else:  # Şehir Görünümü
-        for idx, row in merged.iterrows():
-            # Sadece kayda değer satışı veya pazarı olanları etiketle
-            if row['PF_Satis'] > 0 or row['Toplam_Pazar'] > 0:
-                try:
-                    lon = row.geometry.centroid.x
-                    lat = row.geometry.centroid.y
-                    
-                    # Düz metin formatı
-                    txt = f"{row['name']}\n{format_number(row['PF_Satis'])}"
-                    
-                    label_lons.append(lon)
-                    label_lats.append(lat)
-                    label_texts.append(txt)
-                except:
-                    continue
-        
-        text_size = 10
-        marker_size = 5
-
-    # Etiketleri Haritaya Ekle
-    if label_lons:
         fig.add_trace(go.Scattermapbox(
             lon=label_lons,
             lat=label_lats,
-            mode='markers+text',  # Hem nokta hem yazı
+            mode='text',
             text=label_texts,
-            textposition='bottom center', # Yazı noktanın altında
-            marker=dict(size=marker_size, color='white', opacity=0.8),
             textfont=dict(
-                size=text_size,
-                color='white', # Yazı rengi beyaz (koyu harita üzerinde okunur)
-                family='Inter, sans-serif'
+                size=10, 
+                color='white',
+                family='Inter, sans-serif',
+                weight='bold'
             ),
-            hoverinfo='skip', # Üzerine gelince tekrar popup açma, zaten yazıyor
+            hoverinfo='skip',
             showlegend=False
         ))
-
-    # 3. LAYOUT AYARLARI
-    # ---------------------------------------------------------
-    # Otomatik Zoom Hesapla
-    if len(label_lons) > 0:
-        center_lat = sum(label_lats) / len(label_lats)
-        center_lon = sum(label_lons) / len(label_lons)
-        zoom = 5.5 if view_mode == "Şehir Görünümü" else 5.0
-    else:
-        center_lat = 39.0
-        center_lon = 35.0
-        zoom = 5.0
-
+    
+    else:  # "Şehir Görünümü"
+        city_lons, city_lats, city_texts = [], [], []
+        
+        for idx, row in merged.iterrows():
+            if row['PF_Satis'] > 0:
+                total_market = row['PF_Satis'] * (100/row['Pazar_Payi_%']) if row['Pazar_Payi_%'] > 0 else 0
+                city_lons.append(row.geometry.centroid.x)
+                city_lats.append(row.geometry.centroid.y)
+                city_texts.append(
+                    f"{row['name']}<br>"
+                    f"{format_number(row['PF_Satis'])}<br>"
+                    f"({row['Pazar_Payi_%']:.1f}%)"
+                )
+        
+        fig.add_trace(go.Scattermapbox(
+            lon=city_lons,
+            lat=city_lats,
+            mode='text',
+            text=city_texts,
+            textfont=dict(
+                size=8, 
+                color='white',
+                family='Inter, sans-serif',
+                weight='bold'
+            ),
+            hoverinfo='skip',
+            showlegend=False
+        ))
+    
+    # Modern layout ayarları
     fig.update_layout(
         mapbox_style="carto-darkmatter",
         mapbox=dict(
-            center=dict(lat=center_lat, lon=center_lon),
-            zoom=zoom,
+            center=dict(lat=39.0, lon=35.0),
+            zoom=5,
             bearing=0,
             pitch=0
         ),
-        uirevision=view_mode, # Mod değişince haritayı resetle
         height=750,
         margin=dict(l=0, r=0, t=80, b=0),
         title=dict(
             text=f"<b>{title}</b><br><span style='font-size: 14px; color: #94a3b8'>"
-                 f"Toplam PF Satış: {format_number(filtered_pf_toplam)}</span>",
+                 f"Toplam PF Satış: {format_number(filtered_pf_toplam)} | "
+                 f"Şehir Sayısı: {len(city_data[city_data['PF_Satis']>0])}</span>",
             x=0.5,
-            y=0.97,
-            font=dict(size=22, color='white', family='Inter')
+            font=dict(
+                size=22, 
+                color='white',
+                family='Inter, sans-serif'
+            ),
+            y=0.97
         ),
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)',
         showlegend=False,
+        hoverlabel=dict(
+            bgcolor="rgba(15, 23, 41, 0.9)",
+            font_size=12,
+            font_family="Inter, sans-serif"
+        )
     )
     
     return fig
+
 # =============================================================================
 # ML FEATURE ENGINEERING - GELİŞTİRİLMİŞ
 # =============================================================================
@@ -3547,6 +3556,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
 
