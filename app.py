@@ -971,8 +971,11 @@ def get_region_center(gdf_region):
 
 def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası", view_mode="Bölge Görünümü", filtered_pf_toplam=None):
     """
-    Modern Türkiye haritası - Geliştirilmiş Etiketleme ve Görünüm
-    Revize: Etiketler sürekli açık, detaylı metrikler (PF, Pazar, Pay) eklendi.
+    Modern Türkiye haritası - Düzeltilmiş Etiketleme ve Zoom
+    DÜZELTMELER:
+    1. HTML etiketleri kaldırıldı (Scattermapbox text mode desteklemediği için).
+    2. Seçilen bölgeye otomatik zoom ve odaklanma özelliği eklendi.
+    3. Etiketler düz metin olarak ve okunaklı formatta düzenlendi.
     """
     if gdf is None:
         st.error("❌ GeoJSON yüklenemedi")
@@ -989,7 +992,7 @@ def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası",
     gdf['name_upper'] = gdf['name'].str.upper()
     gdf['name_fixed'] = gdf['name_upper'].apply(lambda x: FIX_CITY_MAP.get(x, x))
     
-    # Eksik şehirleri tamamlama (0 değer ile)
+    # Eksik şehirleri tamamlama
     all_cities_in_data = set(city_data['City_Fixed'].unique())
     all_cities_in_geojson = set(gdf['name_fixed'].unique())
     missing_cities = all_cities_in_geojson - all_cities_in_data
@@ -1020,6 +1023,18 @@ def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası",
     if filtered_pf_toplam is None:
         filtered_pf_toplam = merged['PF_Satis'].sum()
 
+    # Otomatik Zoom ve Merkez Hesaplama
+    # Eğer filtrelenmiş veri varsa (TÜMÜ değilse), o verilerin merkezine odaklan
+    active_data = merged[merged['PF_Satis'] > 0]
+    if len(active_data) > 0 and len(active_data) < 81: # Belirli bir bölge veya şehir grubu
+        center_lat = active_data.geometry.centroid.y.mean()
+        center_lon = active_data.geometry.centroid.x.mean()
+        zoom_level = 6
+    else: # Tüm Türkiye
+        center_lat = 39.0
+        center_lon = 35.0
+        zoom_level = 5
+
     # 2. HARİTA OLUŞTURMA (KATMANLAR)
     # ---------------------------------------------------------
     fig = go.Figure()
@@ -1031,11 +1046,10 @@ def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası",
         
         region_json = json.loads(region_data.to_json())
         
-        # Hover Text Hazırlığı
+        # Hover Text (Mouse ile üzerine gelince - HTML destekler)
         hover_texts = []
         for _, row in region_data.iterrows():
             txt = (f"<b>{row['name']}</b><br>"
-                   f"Bölge: {row['Region']}<br>"
                    f"PF Satış: {format_number(row['PF_Satis'])}<br>"
                    f"Toplam Pazar: {format_number(row['Toplam_Pazar'])}<br>"
                    f"Pazar Payı: %{row['Pazar_Payi_%']:.1f}")
@@ -1055,7 +1069,7 @@ def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası",
             hovertext=hover_texts
         ))
     
-    # B) SINIR ÇİZGİLERİ (BEYAZ)
+    # B) SINIR ÇİZGİLERİ
     lons, lats = [], []
     for geom in merged.geometry.boundary:
         if geom and not geom.is_empty:
@@ -1071,30 +1085,23 @@ def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası",
         showlegend=False
     ))
     
-    # C) ETİKETLER (LABELS) - SÜREKLİ GÖRÜNÜR METİN KATMANI
+    # C) ETİKETLER - HTML KULLANMADAN DÜZ METİN (ÖNEMLİ!)
     label_lons, label_lats, label_texts = [], [], []
     text_size = 10
     
     if view_mode == "Bölge Görünümü":
-        # Bölge bazlı gruplama ve etiket oluşturma
         for region in merged['Region'].unique():
             r_data = merged[merged['Region'] == region]
-            
-            # Bölge metrikleri
             total_pf = r_data['PF_Satis'].sum()
             total_pazar = r_data['Toplam_Pazar'].sum()
             share = (total_pf / total_pazar * 100) if total_pazar > 0 else 0
             
-            if total_pazar > 0: # Sadece verisi olan bölgeleri göster
+            if total_pazar > 0:
                 lon, lat = get_region_center(r_data)
                 
-                # HTML formatlı etiket
-                label_text = (
-                    f"<b>{region}</b><br>"
-                    f"<span style='color:#67e8f9'>PF: {format_number(total_pf)}</span><br>"
-                    f"<span style='color:#94a3b8'>Pazar: {format_number(total_pazar)}</span><br>"
-                    f"<span style='color:#fcd34d'>Pay: %{share:.1f}</span>"
-                )
+                # HTML YOK - Sadece metin
+                # Mapbox text sadece metin destekler, HTML render etmez
+                label_text = f"{region}\nPF: {format_number(total_pf)}\nPazar: {format_number(total_pazar)}\nPay: %{share:.1f}"
                 
                 label_lons.append(lon)
                 label_lats.append(lat)
@@ -1103,20 +1110,13 @@ def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası",
 
     else:  # Şehir Görünümü
         for idx, row in merged.iterrows():
-            # Sadece pazarı veya satışı olan şehirleri etiketle
             if row['Toplam_Pazar'] > 0 or row['PF_Satis'] > 0:
                 lon = row.geometry.centroid.x
                 lat = row.geometry.centroid.y
-                
-                # Şehir kısaltma (yer kazanmak için)
                 city_name = row['name']
                 
-                label_text = (
-                    f"<b>{city_name}</b><br>"
-                    f"PF: {format_number(row['PF_Satis'])}<br>"
-                    f"Pazar: {format_number(row['Toplam_Pazar'])}<br>"
-                    f"<b>%{row['Pazar_Payi_%']:.1f}</b>"
-                )
+                # HTML YOK - Sadece metin
+                label_text = f"{city_name}\nPF: {format_number(row['PF_Satis'])}\nPay: %{row['Pazar_Payi_%']:.1f}"
                 
                 label_lons.append(lon)
                 label_lats.append(lat)
@@ -1134,7 +1134,7 @@ def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası",
             color='white',
             family='Inter, sans-serif'
         ),
-        hoverinfo='skip', # Zaten sürekli görünüyor
+        hoverinfo='skip',
         showlegend=False
     ))
 
@@ -1143,8 +1143,8 @@ def create_modern_turkey_map(city_data, gdf, title="Türkiye Satış Haritası",
     fig.update_layout(
         mapbox_style="carto-darkmatter",
         mapbox=dict(
-            center=dict(lat=39.0, lon=35.0),
-            zoom=5.5 if view_mode == "Şehir Görünümü" else 5, # Şehir modunda biraz daha yakınlaş
+            center=dict(lat=center_lat, lon=center_lon), # Dinamik merkez
+            zoom=zoom_level, # Dinamik zoom
             bearing=0,
             pitch=0
         ),
@@ -3529,6 +3529,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
