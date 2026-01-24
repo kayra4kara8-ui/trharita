@@ -892,63 +892,71 @@ def evaluate_strategic_alignment(bcg_category, strategy_distribution):
     return alignment_score, status, explanation, action_plan
 
 
-def create_strategic_alignment_chart(alignment_df):
+def create_strategic_heatmap_chart(alignment_df):
     """
-    Stratejik hizalanma analizini görselleştir
-    
-    Parameters:
-    -----------
-    alignment_df : DataFrame
-        Stratejik hizalanma analiz sonuçları
-    
-    Returns:
-    --------
-    plotly.graph_objects.Figure
+    BCG vs Stratejik Durum için Heatmap - Çalışan minimal versiyon
     """
     if alignment_df.empty:
         return None
     
-    # Stratejik durumlara göre grupla
-    status_counts = alignment_df['Stratejik_Durum'].value_counts()
-    
-    fig = go.Figure()
-    
-    fig.add_trace(go.Bar(
-        x=status_counts.index,
-        y=status_counts.values,
-        marker_color=[STRATEGIC_ALIGNMENT_COLORS.get(x, "#64748B") for x in status_counts.index],
-        text=status_counts.values,
-        textposition='auto',
-        marker=dict(
-            line=dict(width=2, color='rgba(255, 255, 255, 0.8)'),
-            opacity=0.85
-        ),
-        hovertemplate='<b>%{x}</b><br>Brick Sayısı: %{y}<br><extra></extra>'
-    ))
-    
-    fig.update_layout(
-        title=dict(
-            text='<b>Stratejik Hizalanma Durum Dağılımı</b>',
-            font=dict(size=22, color='white', family='Inter')
-        ),
-        xaxis_title='<b>Stratejik Durum</b>',
-        yaxis_title='<b>Brick Sayısı</b>',
-        height=500,
-        plot_bgcolor='rgba(0,0,0,0)',
-        paper_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='#e2e8f0', family='Inter'),
-        xaxis=dict(
-            tickangle=-45,
-            gridcolor='rgba(59, 130, 246, 0.1)',
-            tickfont=dict(size=12)
-        ),
-        yaxis=dict(
-            gridcolor='rgba(59, 130, 246, 0.1)'
-        ),
-        margin=dict(b=100)  # Alt boşluk artırıldı
-    )
-    
-    return fig
+    try:
+        # BCG kategorileri
+        bcg_categories = ["⭐ Star", "🐄 Cash Cow", "❓ Question Mark", "🐶 Dog"]
+        
+        # Stratejik durumlar
+        strategic_statuses = sorted(alignment_df['Stratejik_Durum'].unique())
+        
+        # Heatmap verisini oluştur
+        heatmap_data = []
+        
+        for bcg in bcg_categories:
+            row_data = []
+            for status in strategic_statuses:
+                count = len(alignment_df[(alignment_df['BCG_Kategori'] == bcg) & 
+                                         (alignment_df['Stratejik_Durum'] == status)])
+                row_data.append(count)
+            heatmap_data.append(row_data)
+        
+        # SADECE gerekli parametrelerle
+        fig = go.Figure(data=go.Heatmap(
+            z=heatmap_data,
+            x=strategic_statuses,
+            y=bcg_categories,
+            colorscale="Blues",
+            text=heatmap_data,
+            texttemplate='%{text}',
+            textfont={"size": 16, "color": "white"},
+            hovertemplate='<b>BCG:</b> %{y}<br><b>Durum:</b> %{x}<br><b>Brick Sayısı:</b> %{z}<extra></extra>'
+        ))
+        
+        # Sade layout
+        fig.update_layout(
+            title=dict(
+                text='<b>BCG vs Stratejik Durum Heatmap Analizi</b>',
+                font=dict(size=22, color='white', family='Inter')
+            ),
+            height=500,
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            font=dict(color='#e2e8f0', family='Inter'),
+            xaxis=dict(
+                title='<b>Stratejik Durum</b>',
+                tickangle=-45,
+                gridcolor='rgba(59, 130, 246, 0.1)'
+            ),
+            yaxis=dict(
+                title='<b>BCG Kategorisi</b>',
+                gridcolor='rgba(59, 130, 246, 0.1)'
+            ),
+            margin=dict(t=80, b=100, l=100, r=50)
+        )
+        
+        return fig
+        
+    except Exception as e:
+        # Hata durumunda basit bir placeholder döndür
+        st.warning(f"Heatmap oluşturulamadı: {str(e)}")
+        return None
 
 
 def create_strategic_heatmap_chart(alignment_df):
@@ -4996,6 +5004,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
