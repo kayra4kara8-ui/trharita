@@ -1,6 +1,3 @@
-
-
-
 # Streamlit ve temel
 streamlit>=1.28.0
 pandas>=2.0.0
@@ -35,3 +32,6 @@ chardet>=5.2.0
 # Tarih işlemleri
 python-dateutil>=2.8.2
 pytz>=2023.3
+
+# Ek
+xlrd>=2.0.1
