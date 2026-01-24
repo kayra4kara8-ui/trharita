@@ -1,10 +1,10 @@
 """🎯 GELİŞMİŞ TİCARİ PORTFÖY ANALİZ SİSTEMİ
-Territory Bazlı Performans, ML Tahminleme, Türkiye Haritası ve Rekabet Analizi
+Brick Bazlı Performans, ML Tahminleme, Türkiye Haritası ve Rekabet Analizi
 
 GELİŞTİRİLMİŞ ÖZELLİKLER:
 - 🗺️ Türkiye il bazlı harita görselleştirme (GELİŞTİRİLMİŞ VERSİYON)
-- 🤖 GERÇEK Machine Learning (Linear Regression, Ridge, Random Forest)
-- 📊 GELİŞMİŞ Zaman Serisi Analizi (3 aylık, 6 aylık ortalamalar, mevsimsellik analizi)
+- 🤖 Machine Learning (Linear Regression, Ridge, Random Forest)
+- 📊 Zaman Serisi Analizi (3 aylık, 6 aylık ortalamalar, mevsimsellik analizi)
 - 📈 Gelişmiş rakip analizi ve trend karşılaştırması
 - 🎯 Dinamik zaman aralığı filtreleme
 - 📉 Trend analizi ve performans metrikleri
@@ -674,10 +674,10 @@ def hex_to_rgba(hex_color, alpha=0.3):
 
 def analyze_strategy_discrepancies(df, product, date_filter=None):
     """
-    Şehir bazlı vs Territory bazlı performans farklılıklarını analiz eder.
+    Şehir bazlı vs Brick bazlı performans farklılıklarını analiz eder.
     
     Bu analiz:
-    1. Şehirde iyi ama territory'de kötü olanları tespit eder
+    1. Şehirde iyi ama Brick'de kötü olanları tespit eder
     2. BCG kategorisi ile Yatırım stratejisi uyumsuzluklarını bulur
     3. Stratejik öneriler geliştirir
     """
@@ -710,84 +710,84 @@ def analyze_strategy_discrepancies(df, product, date_filter=None):
     except:
         city_analysis['Sehir_Performans'] = 'Orta'
     
-    # 2. TERRITORY BAZLI ANALİZ
-    territory_analysis = df_filtered.groupby(['TERRITORIES', 'REGION', 'MANAGER']).agg({
+    # 2. Brick BAZLI ANALİZ
+    Brick_analysis = df_filtered.groupby(['TERRITORIES', 'REGION', 'MANAGER']).agg({
         cols['pf']: 'sum',
         cols['rakip']: 'sum',
         'CITY_NORMALIZED': 'nunique'  # Kaç şehir kapsıyor
     }).reset_index()
     
-    territory_analysis.columns = ['Territory', 'Region', 'Manager', 'PF_Satis', 'Rakip_Satis', 'Sehir_Sayisi']
-    territory_analysis['Toplam_Pazar'] = territory_analysis['PF_Satis'] + territory_analysis['Rakip_Satis']
-    territory_analysis['Pazar_Payi_%'] = safe_divide(territory_analysis['PF_Satis'], territory_analysis['Toplam_Pazar']) * 100
+    Brick_analysis.columns = ['Brick', 'Region', 'Manager', 'PF_Satis', 'Rakip_Satis', 'Sehir_Sayisi']
+    Brick_analysis['Toplam_Pazar'] = Brick_analysis['PF_Satis'] + Brick_analysis['Rakip_Satis']
+    Brick_analysis['Pazar_Payi_%'] = safe_divide(Brick_analysis['PF_Satis'], Brick_analysis['Toplam_Pazar']) * 100
     
-    # Territory için performans segmentasyonu
+    # Brick için performans segmentasyonu
     try:
-        territory_analysis['Territory_Performans'] = pd.qcut(
-            territory_analysis['Pazar_Payi_%'],
+        Brick_analysis['Brick_Performans'] = pd.qcut(
+            Brick_analysis['Pazar_Payi_%'],
             q=3,
             labels=['Düşük', 'Orta', 'Yüksek'],
             duplicates='drop'
         )
     except:
-        territory_analysis['Territory_Performans'] = 'Orta'
+        Brick_analysis['Brick_Performans'] = 'Orta'
     
-    # Territory başına ortalama performans
-    territory_analysis['Ortalama_Sehir_Pay_%'] = 0
-    territory_analysis['Iyi_Performans_Sehir_Orani_%'] = 0
+    # Brick başına ortalama performans
+    Brick_analysis['Ortalama_Sehir_Pay_%'] = 0
+    Brick_analysis['Iyi_Performans_Sehir_Orani_%'] = 0
     
-    # 3. ŞEHİR-TERRITORY EŞLEŞTİRMESİ
-    city_territory_map = df_filtered.groupby(['CITY_NORMALIZED', 'TERRITORIES']).first().reset_index()[['CITY_NORMALIZED', 'TERRITORIES']]
+    # 3. ŞEHİR-Brick EŞLEŞTİRMESİ
+    city_Brick_map = df_filtered.groupby(['CITY_NORMALIZED', 'TERRITORIES']).first().reset_index()[['CITY_NORMALIZED', 'TERRITORIES']]
     
     results = []
     
-    for idx, territory_row in territory_analysis.iterrows():
-        territory_name = territory_row['Territory']
+    for idx, Brick_row in Brick_analysis.iterrows():
+        Brick_name = Brick_row['Brick']
         
-        # Bu territory'nin kapsadığı şehirleri bul
-        territory_cities = city_territory_map[city_territory_map['TERRITORIES'] == territory_name]['CITY_NORMALIZED'].unique()
+        # Bu Brick'nin kapsadığı şehirleri bul
+        Brick_cities = city_Brick_map[city_Brick_map['TERRITORIES'] == Brick_name]['CITY_NORMALIZED'].unique()
         
-        if len(territory_cities) > 0:
+        if len(Brick_cities) > 0:
             # Bu şehirlerin performansını al
-            city_perf_in_territory = city_analysis[city_analysis['City'].isin(territory_cities)].copy()
+            city_perf_in_Brick = city_analysis[city_analysis['City'].isin(Brick_cities)].copy()
             
-            if len(city_perf_in_territory) > 0:
+            if len(city_perf_in_Brick) > 0:
                 # Ortalama pazar payı
-                avg_city_share = city_perf_in_territory['Pazar_Payi_%'].mean()
+                avg_city_share = city_perf_in_Brick['Pazar_Payi_%'].mean()
                 
                 # İyi performanslı şehir oranı
-                good_cities = city_perf_in_territory[city_perf_in_territory['Sehir_Performans'] == 'Yüksek']
-                good_city_ratio = (len(good_cities) / len(city_perf_in_territory)) * 100 if len(city_perf_in_territory) > 0 else 0
+                good_cities = city_perf_in_Brick[city_perf_in_Brick['Sehir_Performans'] == 'Yüksek']
+                good_city_ratio = (len(good_cities) / len(city_perf_in_Brick)) * 100 if len(city_perf_in_Brick) > 0 else 0
                 
-                territory_analysis.at[idx, 'Ortalama_Sehir_Pay_%'] = avg_city_share
-                territory_analysis.at[idx, 'Iyi_Performans_Sehir_Orani_%'] = good_city_ratio
+                Brick_analysis.at[idx, 'Ortalama_Sehir_Pay_%'] = avg_city_share
+                Brick_analysis.at[idx, 'Iyi_Performans_Sehir_Orani_%'] = good_city_ratio
                 
                 # Performans uyumsuzluğunu tespit et
-                territory_perf = territory_row['Territory_Performans']
+                Brick_perf = Brick_row['Brick_Performans']
                 
                 # STRATEJİK UYUMSUZLUK ANALİZİ
-                if good_city_ratio >= 50 and territory_perf in ['Düşük', 'Orta']:
-                    # Şehirler iyi ama territory kötü - YÖNETİM PROBLEMİ
+                if good_city_ratio >= 50 and Brick_perf in ['Düşük', 'Orta']:
+                    # Şehirler iyi ama Brick kötü - YÖNETİM PROBLEMİ
                     discrepancy_type = "Yönetim Sorunu"
-                    explanation = f"{good_city_ratio:.1f}% şehir yüksek performansta ama territory düşük. Muhtemel sebep: zayıf koordinasyon veya kaynak dağılımı."
+                    explanation = f"{good_city_ratio:.1f}% şehir yüksek performansta ama Brick düşük. Muhtemel sebep: zayıf koordinasyon veya kaynak dağılımı."
                     action = "Manager performansını gözden geçir, kaynakları yeniden dağıt"
                     
-                elif good_city_ratio < 30 and territory_perf == 'Yüksek':
-                    # Şehirler kötü ama territory iyi - YANILTICI BAŞARI
+                elif good_city_ratio < 30 and Brick_perf == 'Yüksek':
+                    # Şehirler kötü ama Brick iyi - YANILTICI BAŞARI
                     discrepancy_type = "Yanıltıcı Başarı"
-                    explanation = "Territory genelinde yüksek performans, ancak çoğu şehir düşük performansta. Büyük şehirlerin başarısı diğerlerini gizliyor olabilir."
+                    explanation = "Brick genelinde yüksek performans, ancak çoğu şehir düşük performansta. Büyük şehirlerin başarısı diğerlerini gizliyor olabilir."
                     action = "Şehir bazlı detaylı analiz yap, büyük şehirlere odaklan"
                     
-                elif good_city_ratio >= 70 and territory_perf == 'Yüksek':
-                    # Hem şehirler hem territory iyi - BAŞARILI OPERASYON
+                elif good_city_ratio >= 70 and Brick_perf == 'Yüksek':
+                    # Hem şehirler hem Brick iyi - BAŞARILI OPERASYON
                     discrepancy_type = "Başarılı Operasyon"
-                    explanation = "Hem şehir bazlı hem de territory bazlı yüksek performans. Sağlam yönetim ve etkili strateji."
-                    action = "Model olarak kullan, başarı faktörlerini diğer territory'lere aktar"
+                    explanation = "Hem şehir bazlı hem de Brick bazlı yüksek performans. Sağlam yönetim ve etkili strateji."
+                    action = "Model olarak kullan, başarı faktörlerini diğer Brick'lere aktar"
                     
-                elif good_city_ratio < 30 and territory_perf in ['Düşük', 'Orta']:
-                    # Hem şehirler hem territory kötü - STRATEJİK PROBLEM
+                elif good_city_ratio < 30 and Brick_perf in ['Düşük', 'Orta']:
+                    # Hem şehirler hem Brick kötü - STRATEJİK PROBLEM
                     discrepancy_type = "Stratejik Problem"
-                    explanation = "Hem şehir bazlı hem de territory bazlı düşük performans. Temel strateji veya pazar dinamiklerinde problem olabilir."
+                    explanation = "Hem şehir bazlı hem de Brick bazlı düşük performans. Temel strateji veya pazar dinamiklerinde problem olabilir."
                     action = "Temel stratejiyi yeniden değerlendir, pazar koşullarını analiz et"
                     
                 else:
@@ -796,12 +796,12 @@ def analyze_strategy_discrepancies(df, product, date_filter=None):
                     action = "Mevcut stratejiyi sürdür, küçük iyileştirmeler yap"
                 
                 results.append({
-                    'Territory': territory_name,
-                    'Region': territory_row['Region'],
-                    'Manager': territory_row['Manager'],
-                    'Sehir_Sayisi': len(territory_cities),
-                    'Territory_Pazar_Payi_%': territory_row['Pazar_Payi_%'],
-                    'Territory_Performans': territory_perf,
+                    'Brick': Brick_name,
+                    'Region': Brick_row['Region'],
+                    'Manager': Brick_row['Manager'],
+                    'Sehir_Sayisi': len(Brick_cities),
+                    'Brick_Pazar_Payi_%': Brick_row['Pazar_Payi_%'],
+                    'Brick_Performans': Brick_perf,
                     'Ortalama_Sehir_Pay_%': avg_city_share,
                     'Iyi_Performans_Sehir_Orani_%': good_city_ratio,
                     'Uyumsuzluk_Tipi': discrepancy_type,
@@ -816,8 +816,8 @@ def analyze_strategy_discrepancies(df, product, date_filter=None):
     bcg_df = calculate_bcg_matrix(df_filtered, product, date_filter)
     if not bcg_df.empty:
         results_df = results_df.merge(
-            bcg_df[['Territory', 'BCG_Kategori']],
-            on='Territory',
+            bcg_df[['Brick', 'BCG_Kategori']],
+            on='Brick',
             how='left'
         )
         
@@ -827,13 +827,13 @@ def analyze_strategy_discrepancies(df, product, date_filter=None):
             discrepancy = row.get('Uyumsuzluk_Tipi', 'Nötr')
             
             if bcg == "⭐ Star" and discrepancy in ["Yönetim Sorunu", "Stratejik Problem"]:
-                return "Kritik: Star territory'de yönetim problemi"
+                return "Kritik: Star Brick'de yönetim problemi"
             elif bcg == "🐄 Cash Cow" and discrepancy == "Yanıltıcı Başarı":
                 return "Risk: Cash Cow başarısı yapay olabilir"
             elif bcg == "❓ Question Mark" and discrepancy == "Başarılı Operasyon":
                 return "Fırsat: Question Mark aslında Star olabilir"
             elif bcg == "🐶 Dog" and discrepancy == "Başarılı Operasyon":
-                return "Yeniden Değerlendirme: Dog territory beklenenden iyi"
+                return "Yeniden Değerlendirme: Dog Brick beklenenden iyi"
             else:
                 return "Uyumlu"
         
@@ -842,17 +842,17 @@ def analyze_strategy_discrepancies(df, product, date_filter=None):
     # 5. YATIRIM STRATEJİSİ İLE KARŞILAŞTIRMA
     city_investment = calculate_investment_strategy(city_analysis)
     
-    # Territory için yatırım stratejisi özeti
+    # Brick için yatırım stratejisi özeti
     investment_summary = []
-    for territory in results_df['Territory'].unique():
-        territory_cities = city_territory_map[city_territory_map['TERRITORIES'] == territory]['CITY_NORMALIZED'].unique()
-        territory_investment = city_investment[city_investment['City'].isin(territory_cities)]
+    for Brick in results_df['Brick'].unique():
+        Brick_cities = city_Brick_map[city_Brick_map['TERRITORIES'] == Brick]['CITY_NORMALIZED'].unique()
+        Brick_investment = city_investment[city_investment['City'].isin(Brick_cities)]
         
-        if len(territory_investment) > 0:
-            strategy_dist = territory_investment['Yatırım_Stratejisi'].value_counts(normalize=True) * 100
+        if len(Brick_investment) > 0:
+            strategy_dist = Brick_investment['Yatırım_Stratejisi'].value_counts(normalize=True) * 100
             
             investment_summary.append({
-                'Territory': territory,
+                'Brick': Brick,
                 'Agresif_%': strategy_dist.get('🚀 Agresif', 0),
                 'Hizlandirilmis_%': strategy_dist.get('⚡ Hızlandırılmış', 0),
                 'Koruma_%': strategy_dist.get('🛡️ Koruma', 0),
@@ -862,7 +862,7 @@ def analyze_strategy_discrepancies(df, product, date_filter=None):
     
     if investment_summary:
         investment_df = pd.DataFrame(investment_summary)
-        results_df = results_df.merge(investment_df, on='Territory', how='left')
+        results_df = results_df.merge(investment_df, on='Brick', how='left')
         
         # Yatırım stratejisi önerisi
         def suggest_investment_strategy(row):
@@ -876,7 +876,7 @@ def analyze_strategy_discrepancies(df, product, date_filter=None):
             elif discrepancy == "Stratejik Problem":
                 return "Strateji Revizyonu: Temel yaklaşımı yeniden değerlendir"
             elif discrepancy == "Başarılı Operasyon":
-                return "Ölçeklendirme: Başarılı modeli diğer territory'lere yay"
+                return "Ölçeklendirme: Başarılı modeli diğer Brick'lere yay"
             else:
                 # BCG'ye göre strateji
                 if bcg == "⭐ Star":
@@ -925,11 +925,11 @@ def create_strategy_discrepancy_chart(analysis_df):
     
     fig.update_layout(
         title=dict(
-            text='<b>Territory Performans Uyumsuzluk Analizi</b>',
+            text='<b>Brick Performans Uyumsuzluk Analizi</b>',
             font=dict(size=22, color='white', family='Inter')
         ),
         xaxis_title='<b>Uyumsuzluk Tipi</b>',
-        yaxis_title='<b>Territory Sayısı</b>',
+        yaxis_title='<b>Brick Sayısı</b>',
         height=500,
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)',
@@ -1051,7 +1051,7 @@ def calculate_intra_region_performance(df, product, selected_region, date_filter
     
     Bölge içindeki:
     - Şehirlerin PF Satış Dağılımı
-    - Territory Performansları
+    - Brick Performansları
     - Manager Performansları
     - Zaman İçinde Gelişim
     """
@@ -1081,33 +1081,33 @@ def calculate_intra_region_performance(df, product, selected_region, date_filter
     
     city_analysis = city_analysis.sort_values('PF_Satis', ascending=False)
     
-    # 2. TERRITORY BAZLI ANALİZ
-    territory_analysis = df_region.groupby('TERRITORIES').agg({
+    # 2. Brick BAZLI ANALİZ
+    Brick_analysis = df_region.groupby('TERRITORIES').agg({
         cols['pf']: 'sum',
         cols['rakip']: 'sum',
         'MANAGER': 'first',
-        'CITY_NORMALIZED': lambda x: ', '.join(sorted(set(x)))  # Territory'nin kapsadığı şehirler
+        'CITY_NORMALIZED': lambda x: ', '.join(sorted(set(x)))  # Brick'nin kapsadığı şehirler
     }).reset_index()
     
-    territory_analysis.columns = ['Territory', 'PF_Satis', 'Rakip_Satis', 'Manager', 'Kapsadigi_Sehirler']
-    territory_analysis['Toplam_Pazar'] = territory_analysis['PF_Satis'] + territory_analysis['Rakip_Satis']
-    territory_analysis['Pazar_Payi_%'] = safe_divide(territory_analysis['PF_Satis'], territory_analysis['Toplam_Pazar']) * 100
-    territory_analysis['Bolge_Ici_Pay_%'] = safe_divide(territory_analysis['PF_Satis'], region_total_pf) * 100
+    Brick_analysis.columns = ['Brick', 'PF_Satis', 'Rakip_Satis', 'Manager', 'Kapsadigi_Sehirler']
+    Brick_analysis['Toplam_Pazar'] = Brick_analysis['PF_Satis'] + Brick_analysis['Rakip_Satis']
+    Brick_analysis['Pazar_Payi_%'] = safe_divide(Brick_analysis['PF_Satis'], Brick_analysis['Toplam_Pazar']) * 100
+    Brick_analysis['Bolge_Ici_Pay_%'] = safe_divide(Brick_analysis['PF_Satis'], region_total_pf) * 100
     
-    territory_analysis = territory_analysis.sort_values('PF_Satis', ascending=False)
+    Brick_analysis = Brick_analysis.sort_values('PF_Satis', ascending=False)
     
     # 3. MANAGER BAZLI ANALİZ
     manager_analysis = df_region.groupby('MANAGER').agg({
         cols['pf']: 'sum',
         cols['rakip']: 'sum',
-        'TERRITORIES': 'nunique',  # Kaç territory yönetiyor
+        'TERRITORIES': 'nunique',  # Kaç Brick yönetiyor
         'CITY_NORMALIZED': 'nunique'  # Kaç şehirde çalışıyor
     }).reset_index()
     
-    manager_analysis.columns = ['Manager', 'PF_Satis', 'Rakip_Satis', 'Territory_Sayisi', 'Sehir_Sayisi']
+    manager_analysis.columns = ['Manager', 'PF_Satis', 'Rakip_Satis', 'Brick_Sayisi', 'Sehir_Sayisi']
     manager_analysis['Toplam_Pazar'] = manager_analysis['PF_Satis'] + manager_analysis['Rakip_Satis']
     manager_analysis['Pazar_Payi_%'] = safe_divide(manager_analysis['PF_Satis'], manager_analysis['Toplam_Pazar']) * 100
-    manager_analysis['Ortalama_Territory_Performansi'] = safe_divide(manager_analysis['PF_Satis'], manager_analysis['Territory_Sayisi'])
+    manager_analysis['Ortalama_Brick_Performansi'] = safe_divide(manager_analysis['PF_Satis'], manager_analysis['Brick_Sayisi'])
     
     manager_analysis = manager_analysis.sort_values('PF_Satis', ascending=False)
     
@@ -1124,19 +1124,19 @@ def calculate_intra_region_performance(df, product, selected_region, date_filter
     # Büyüme oranları
     monthly_analysis['PF_Buyume_%'] = monthly_analysis['PF_Satis'].pct_change() * 100
     
-    return city_analysis, territory_analysis, manager_analysis, monthly_analysis
+    return city_analysis, Brick_analysis, manager_analysis, monthly_analysis
 
 # =============================================================================
 # GELİŞTİRİLMİŞ ZAMAN SERİSİ ANALİZ FONKSİYONLARI
 # =============================================================================
 
-def calculate_advanced_time_series(df, product, territory=None, date_filter=None):
+def calculate_advanced_time_series(df, product, Brick=None, date_filter=None):
     """GELİŞTİRİLMİŞ Zaman serisi analizi"""
     cols = get_product_columns(product)
     
     df_filtered = df.copy()
-    if territory and territory != "TÜMÜ":
-        df_filtered = df_filtered[df_filtered['TERRITORIES'] == territory]
+    if Brick and Brick != "TÜMÜ":
+        df_filtered = df_filtered[df_filtered['TERRITORIES'] == Brick]
     
     if date_filter:
         df_filtered = df_filtered[(df_filtered['DATE'] >= date_filter[0]) & 
@@ -1888,8 +1888,8 @@ def calculate_city_performance(df, product, date_filter=None):
     
     return city_perf
 
-def calculate_territory_performance(df, product, date_filter=None):
-    """Territory bazlı performans"""
+def calculate_Brick_performance(df, product, date_filter=None):
+    """Brick bazlı performans"""
     cols = get_product_columns(product)
     
     if date_filter:
@@ -1900,7 +1900,7 @@ def calculate_territory_performance(df, product, date_filter=None):
         cols['rakip']: 'sum'
     }).reset_index()
     
-    terr_perf.columns = ['Territory', 'Region', 'City', 'Manager', 'PF_Satis', 'Rakip_Satis']
+    terr_perf.columns = ['Brick', 'Region', 'City', 'Manager', 'PF_Satis', 'Rakip_Satis']
     terr_perf['Toplam_Pazar'] = terr_perf['PF_Satis'] + terr_perf['Rakip_Satis']
     terr_perf['Pazar_Payi_%'] = safe_divide(terr_perf['PF_Satis'], terr_perf['Toplam_Pazar']) * 100
     
@@ -1940,7 +1940,7 @@ def calculate_bcg_matrix(df, product, date_filter=None):
     else:
         df_filtered = df.copy()
     
-    terr_perf = calculate_territory_performance(df_filtered, product)
+    terr_perf = calculate_Brick_performance(df_filtered, product)
     
     df_sorted = df_filtered.sort_values('DATE')
     mid_point = len(df_sorted) // 2
@@ -1955,7 +1955,7 @@ def calculate_bcg_matrix(df, product, date_filter=None):
         else:
             growth_rate[terr] = 0
     
-    terr_perf['Pazar_Buyume_%'] = terr_perf['Territory'].map(growth_rate).fillna(0)
+    terr_perf['Pazar_Buyume_%'] = terr_perf['Brick'].map(growth_rate).fillna(0)
     
     median_share = terr_perf['Goreceli_Pazar_Payi'].median()
     median_growth = terr_perf['Pazar_Buyume_%'].median()
@@ -2236,15 +2236,15 @@ def create_intra_region_manager_chart(manager_analysis):
         )
     ))
     
-    # Territory başına performans (ikinci eksen)
+    # Brick başına performans (ikinci eksen)
     fig.add_trace(go.Scatter(
         x=manager_analysis['Manager'],
-        y=manager_analysis['Ortalama_Territory_Performansi'],
-        name='Territory Başına Ort.',
+        y=manager_analysis['Ortalama_Brick_Performansi'],
+        name='Brick Başına Ort.',
         mode='lines+markers+text',
         line=dict(color=PERFORMANCE_COLORS['warning'], width=3),
         marker=dict(size=8, color='white', line=dict(width=2, color=PERFORMANCE_COLORS['warning'])),
-        text=[format_number(x) for x in manager_analysis['Ortalama_Territory_Performansi']],
+        text=[format_number(x) for x in manager_analysis['Ortalama_Brick_Performansi']],
         textposition='top center',
         yaxis="y2"
     ))
@@ -2257,7 +2257,7 @@ def create_intra_region_manager_chart(manager_analysis):
         xaxis_title='<b>Manager</b>',
         yaxis_title='<b>Toplam PF Satış</b>',
         yaxis2=dict(
-            title='<b>Territory Başına Ort.</b>',
+            title='<b>Brick Başına Ort.</b>',
             overlaying='y',
             side='right',
             showgrid=False
@@ -2940,7 +2940,7 @@ def create_modern_bcg_chart(bcg_df):
         size='PF_Satis',
         color='BCG_Kategori',
         color_discrete_map=BCG_COLORS,
-        hover_name='Territory',
+        hover_name='Brick',
         hover_data={
             'Region': True,
             'PF_Satis': ':,.0f',
@@ -3111,12 +3111,74 @@ def style_dataframe(df, color_column=None, gradient_columns=None):
 # =============================================================================
 
 def main():
-    # Başlık ve açıklama
-    st.markdown('<h1 class="main-header">🎯 GELİŞMİŞ TİCARİ PORTFÖY ANALİZ SİSTEMİ</h1>', unsafe_allow_html=True)
-    st.markdown('<div style="text-align: center; font-size: 1.2rem; color: #94a3b8; margin-bottom: 3rem;">'
-                '<span style="color: #0EA5E9; font-weight: 600;"> ML Tahminleme • Gelişmiş Zaman Serisi Analizi • Modern Harita • Rakip Analizi</br>'
-                '<span style="color: #0EA5E9; font-weight: 600;"> • Bölge Karşılaştırmalı Analiz • Bölge İçi Detaylı Performans Analizi • BCG & Yatırım Stratejisi Uyumsuzluk Analizi</span>'
-                '</div>', unsafe_allow_html=True)
+    # Ultra-Sade Enterprise UI
+    st.markdown("""
+        <style>
+        .header-box {
+            text-align: center;
+            padding: 3rem 1rem;
+            background: #001219; /* Orijinal koyu lacivert */
+            margin-bottom: 2rem;
+        }
+
+        .main-title {
+            font-family: 'Inter', sans-serif;
+            color: #FFFFFF;
+            font-size: 2.6rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin: 0;
+            text-transform: uppercase;
+        }
+
+        .highlight {
+            color: #0EA5E9; /* Orijinal parlak mavi */
+        }
+
+        .divider {
+            height: 1px;
+            width: 100px;
+            background: rgba(14, 165, 233, 0.3);
+            margin: 1.5rem auto;
+        }
+
+        .capabilities {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            color: #64748b;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        .cap-item {
+            color: #0EA5E9;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # UI Render
+    st.markdown("""
+        <div class="header-box">
+            <h1 class="main-title">
+                TİCARİ <span class="highlight">PORTFÖY ANALİZ SİSTEMİ</span>
+            </h1>
+            <div class="divider"></div>
+            <div class="capabilities">
+                <span>ML TAHMİNLEME</span>
+                <span style="opacity: 0.3">|</span>
+                <span>ZAMAN SERİSİ</span>
+                <span style="opacity: 0.3">|</span>
+                <span>MODERN HARİTA</span>
+                <span style="opacity: 0.3">|</span>
+                <span>RAKİP ANALİZİ</span>
+                <span style="opacity: 0.3">|</span>
+                <span class="cap-item">BÖLGE PERFORMANS ANALİZİ</span>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
     
     # SIDEBAR
     with st.sidebar:
@@ -3191,7 +3253,7 @@ def main():
                    '<h4 style="color: #e2e8f0; margin: 0 0 1rem 0;">🔍 FİLTRELER</h4>', unsafe_allow_html=True)
         
         territories = ["TÜMÜ"] + sorted(df['TERRITORIES'].unique())
-        selected_territory = st.selectbox("Territory", territories)
+        selected_Brick = st.selectbox("Brick", territories)
         
         regions = ["TÜMÜ"] + sorted(df['REGION'].unique())
         selected_region = st.selectbox("Bölge", regions)
@@ -3203,8 +3265,8 @@ def main():
         
         # Veri filtreleme
         df_filtered = df.copy()
-        if selected_territory != "TÜMÜ":
-            df_filtered = df_filtered[df_filtered['TERRITORIES'] == selected_territory]
+        if selected_Brick != "TÜMÜ":
+            df_filtered = df_filtered[df_filtered['TERRITORIES'] == selected_Brick]
         if selected_region != "TÜMÜ":
             df_filtered = df_filtered[df_filtered['REGION'] == selected_region]
         if selected_manager != "TÜMÜ":
@@ -3241,7 +3303,7 @@ def main():
     tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs([
         "📊 Genel Bakış",
         "🗺️ Modern Harita",
-        "🏢 Territory Analizi",
+        "🏢 Brick Analizi",
         "📈 Gelişmiş Zaman Serisi",
         "🎯 Rakip Analizi",
         "⭐ BCG & Strateji",
@@ -3279,14 +3341,14 @@ def main():
             st.metric("📊 Pazar Payı", format_percentage(market_share), 
                      f"{format_percentage(100-market_share)} rakip")
         with col4:
-            st.metric("🏢 Active Territory", str(active_territories), 
+            st.metric("🏢 Active Brick", str(active_territories), 
                      f"{df_period['MANAGER'].nunique()} manager")
         
         st.markdown("---")
         
-        # Top 10 Territory
-        st.subheader("🏆 Top 10 Territory Performansı")
-        terr_perf = calculate_territory_performance(df_filtered, selected_product, date_filter)
+        # Top 10 Brick
+        st.subheader("🏆 Top 10 Brick Performansı")
+        terr_perf = calculate_Brick_performance(df_filtered, selected_product, date_filter)
         top10 = terr_perf.head(10)
         
         # Toplam Pazar % ekle
@@ -3302,7 +3364,7 @@ def main():
             rakip_texts = [format_number(x) for x in top10['Rakip_Satis']]
             
             fig_top10.add_trace(go.Bar(
-                x=top10['Territory'],
+                x=top10['Brick'],
                 y=top10['PF_Satis'],
                 name='PF Satış',
                 marker_color=PERFORMANCE_COLORS['success'],
@@ -3314,7 +3376,7 @@ def main():
             ))
             
             fig_top10.add_trace(go.Bar(
-                x=top10['Territory'],
+                x=top10['Brick'],
                 y=top10['Rakip_Satis'],
                 name='Rakip Satış',
                 marker_color=PERFORMANCE_COLORS['danger'],
@@ -3327,10 +3389,10 @@ def main():
             
             fig_top10.update_layout(
                 title=dict(
-                    text='<b>Top 10 Territory - PF vs Rakip</b>',
+                    text='<b>Top 10 Brick - PF vs Rakip</b>',
                     font=dict(size=18, color='white')
                 ),
-                xaxis_title='<b>Territory</b>',
+                xaxis_title='<b>Brick</b>',
                 yaxis_title='<b>Satış</b>',
                 barmode='group',
                 height=500,
@@ -3357,8 +3419,8 @@ def main():
             fig_pie = px.pie(
                 top5,
                 values='PF_Satis',
-                names='Territory',
-                title='<b>Top 5 Territory Dağılımı</b>',
+                names='Brick',
+                title='<b>Top 5 Brick Dağılımı</b>',
                 color_discrete_sequence=GRADIENT_SCALES['blue_green'],
                 hole=0.4
             )
@@ -3387,12 +3449,12 @@ def main():
         
         # Detaylı Tablo
         st.markdown("---")
-        st.subheader("📋 Top 10 Territory Detayları")
+        st.subheader("📋 Top 10 Brick Detayları")
         
-        display_cols = ['Territory', 'Region', 'City', 'Manager', 'PF_Satis', 'Toplam_Pazar', 'Toplam_Pazar_%', 'Pazar_Payi_%', 'Agirlik_%']
+        display_cols = ['Brick', 'Region', 'City', 'Manager', 'PF_Satis', 'Toplam_Pazar', 'Toplam_Pazar_%', 'Pazar_Payi_%', 'Agirlik_%']
         
         top10_display = top10[display_cols].copy()
-        top10_display.columns = ['Territory', 'Region', 'City', 'Manager', 'PF Satış', 'Toplam Pazar', 'Toplam Pazar %', 'Pazar Payı %', 'Ağırlık %']
+        top10_display.columns = ['Brick', 'Region', 'City', 'Manager', 'PF Satış', 'Toplam Pazar', 'Toplam Pazar %', 'Pazar Payı %', 'Ağırlık %']
         top10_display.index = range(1, len(top10_display) + 1)
         
         styled_df = style_dataframe(
@@ -3610,14 +3672,14 @@ def main():
                 height=400
             )
     
-    # TAB 3: TERRITORY ANALİZİ
+    # TAB 3: Brick ANALİZİ
     with tab3:
-        st.header("🏢 Territory Bazlı Detaylı Analiz")
+        st.header("🏢 Brick Bazlı Detaylı Analiz")
         
-        terr_perf = calculate_territory_performance(df_filtered, selected_product, date_filter)
+        terr_perf = calculate_Brick_performance(df_filtered, selected_product, date_filter)
         
         if terr_perf.empty:
-            st.warning("⚠️ Seçilen filtrelerde territory verisi bulunamadı")
+            st.warning("⚠️ Seçilen filtrelerde Brick verisi bulunamadı")
         else:
             # TOPLAM PAZAR YÜZDESİ HESAPLA
             total_market_all = terr_perf['Toplam_Pazar'].sum()
@@ -3641,7 +3703,7 @@ def main():
                 )
             
             with col_filter2:
-                show_n = st.slider("Gösterilecek Territory Sayısı", 10, 100, 25, 5)
+                show_n = st.slider("Gösterilecek Brick Sayısı", 10, 100, 25, 5)
             
             terr_sorted = terr_perf.sort_values(sort_by, ascending=False).head(show_n)
             
@@ -3657,7 +3719,7 @@ def main():
                 fig_bar = go.Figure()
                 
                 fig_bar.add_trace(go.Bar(
-                    x=terr_sorted['Territory'],
+                    x=terr_sorted['Brick'],
                     y=terr_sorted['PF_Satis'],
                     name='PF Satış',
                     marker_color=PERFORMANCE_COLORS['success'],
@@ -3669,7 +3731,7 @@ def main():
                 ))
                 
                 fig_bar.add_trace(go.Bar(
-                    x=terr_sorted['Territory'],
+                    x=terr_sorted['Brick'],
                     y=terr_sorted['Rakip_Satis'],
                     name='Rakip Satış',
                     marker_color=PERFORMANCE_COLORS['danger'],
@@ -3682,10 +3744,10 @@ def main():
                 
                 fig_bar.update_layout(
                     title=dict(
-                        text=f'<b>Top {show_n} Territory - PF vs Rakip</b>',
+                        text=f'<b>Top {show_n} Brick - PF vs Rakip</b>',
                         font=dict(size=18, color='white')
                     ),
-                    xaxis_title='<b>Territory</b>',
+                    xaxis_title='<b>Brick</b>',
                     yaxis_title='<b>Satış</b>',
                     barmode='group',
                     height=600,
@@ -3717,7 +3779,7 @@ def main():
                     size='Toplam_Pazar',
                     color='Region',
                     color_discrete_map=REGION_COLORS,
-                    hover_name='Territory',
+                    hover_name='Brick',
                     hover_data={
                         'Region': True,
                         'PF_Satis': ':,.0f',
@@ -3726,7 +3788,7 @@ def main():
                         'Toplam_Pazar_%': ':.1f'
                     },
                     size_max=50,
-                    title=f'<b>Territory Performans Haritası</b>'
+                    title=f'<b>Brick Performans Haritası</b>'
                 )
                 
                 fig_scatter.update_layout(
@@ -3752,38 +3814,38 @@ def main():
             
             st.markdown("---")
             
-            # Detaylı Territory Listesi
-            st.subheader(f"📋 Detaylı Territory Listesi (Top {show_n})")
+            # Detaylı Brick Listesi
+            st.subheader(f"📋 Detaylı Brick Listesi (Top {show_n})")
             
             display_cols = [
-                'Territory', 'Region', 'City', 'Manager',
+                'Brick', 'Region', 'City', 'Manager',
                 'PF_Satis', 'Rakip_Satis', 'Toplam_Pazar', 'Toplam_Pazar_%',
                 'Pazar_Payi_%', 'Goreceli_Pazar_Payi', 'Agirlik_%'
             ]
             
             terr_display = terr_sorted[display_cols].copy()
             terr_display.columns = [
-                'Territory', 'Region', 'City', 'Manager',
+                'Brick', 'Region', 'City', 'Manager',
                 'PF Satış', 'Rakip Satış', 'Toplam Pazar', 'Toplam Pazar %',
                 'Pazar Payı %', 'Göreceli Pay', 'Ağırlık %'
             ]
             terr_display.index = range(1, len(terr_display) + 1)
             
-            styled_territory = style_dataframe(
+            styled_Brick = style_dataframe(
                 terr_display,
                 color_column='Pazar Payı %',
                 gradient_columns=['Toplam Pazar %', 'Ağırlık %', 'Göreceli Pay']
             )
             
             st.dataframe(
-                styled_territory,
+                styled_Brick,
                 use_container_width=True,
                 height=600
             )
             
             # Özet İstatistikler
             st.markdown("---")
-            st.subheader("📊 Territory Performans Özeti")
+            st.subheader("📊 Brick Performans Özeti")
             
             col_sum1, col_sum2, col_sum3, col_sum4 = st.columns(4)
             
@@ -3815,10 +3877,10 @@ def main():
         col_ts1, col_ts2 = st.columns(2)
         
         with col_ts1:
-            territory_for_ts = st.selectbox(
-                "Territory Seçin",
+            Brick_for_ts = st.selectbox(
+                "Brick Seçin",
                 ["TÜMÜ"] + sorted(df_filtered['TERRITORIES'].unique()),
-                key='ts_territory'
+                key='ts_Brick'
             )
         
         with col_ts2:
@@ -3828,7 +3890,7 @@ def main():
             )
         
         # Gelişmiş zaman serisi hesapla
-        monthly_df = calculate_advanced_time_series(df_filtered, selected_product, territory_for_ts, date_filter)
+        monthly_df = calculate_advanced_time_series(df_filtered, selected_product, Brick_for_ts, date_filter)
         
         if len(monthly_df) == 0:
             st.warning("⚠️ Seçilen filtrelerde veri bulunamadı")
@@ -4231,10 +4293,10 @@ def main():
             st.markdown("---")
             st.subheader("📋 BCG Kategori Detayları")
             
-            display_cols_bcg = ['Territory', 'Region', 'BCG_Kategori', 'PF_Satis', 'Pazar_Payi_%', 'Goreceli_Pazar_Payi', 'Pazar_Buyume_%']
+            display_cols_bcg = ['Brick', 'Region', 'BCG_Kategori', 'PF_Satis', 'Pazar_Payi_%', 'Goreceli_Pazar_Payi', 'Pazar_Buyume_%']
             
             bcg_display = bcg_df[display_cols_bcg].copy()
-            bcg_display.columns = ['Territory', 'Region', 'BCG', 'PF Satış', 'Pazar Payı %', 'Göreceli Pay', 'Büyüme %']
+            bcg_display.columns = ['Brick', 'Region', 'BCG', 'PF Satış', 'Pazar Payı %', 'Göreceli Pay', 'Büyüme %']
             bcg_display = bcg_display.sort_values('PF Satış', ascending=False)
             bcg_display.index = range(1, len(bcg_display) + 1)
             
@@ -4313,7 +4375,7 @@ def main():
             
             if selected_intra_region != "Seçiniz":
                 # Bölge içi detaylı analiz
-                city_analysis, territory_analysis, manager_analysis, monthly_analysis = calculate_intra_region_performance(
+                city_analysis, Brick_analysis, manager_analysis, monthly_analysis = calculate_intra_region_performance(
                     df_filtered, selected_product, selected_intra_region, date_filter
                 )
                 
@@ -4422,33 +4484,33 @@ def main():
                         st.subheader("👨‍💼 Manager Detayları")
                         
                         manager_display = manager_analysis.copy()
-                        manager_display = manager_display[['Manager', 'PF_Satis', 'Pazar_Payi_%', 'Territory_Sayisi', 'Ortalama_Territory_Performansi']]
-                        manager_display.columns = ['Manager', 'PF Satış', 'Pazar Payı %', 'Territory Sayısı', 'Territory Başına Ort.']
+                        manager_display = manager_display[['Manager', 'PF_Satis', 'Pazar_Payi_%', 'Brick_Sayisi', 'Ortalama_Brick_Performansi']]
+                        manager_display.columns = ['Manager', 'PF Satış', 'Pazar Payı %', 'Brick Sayısı', 'Brick Başına Ort.']
                         manager_display.index = range(1, len(manager_display) + 1)
                         
                         styled_manager = style_dataframe(
                             manager_display,
                             color_column='Pazar Payı %',
-                            gradient_columns=['PF Satış', 'Territory Başına Ort.']
+                            gradient_columns=['PF Satış', 'Brick Başına Ort.']
                         )
                         
                         st.dataframe(styled_manager, use_container_width=True, height=400)
                     
-                    # Territory detayları
-                    st.subheader("🏢 Territory Detayları")
+                    # Brick detayları
+                    st.subheader("🏢 Brick Detayları")
                     
-                    territory_display = territory_analysis.copy()
-                    territory_display = territory_display[['Territory', 'Manager', 'Kapsadigi_Sehirler', 'PF_Satis', 'Pazar_Payi_%', 'Bolge_Ici_Pay_%']]
-                    territory_display.columns = ['Territory', 'Manager', 'Kapsadığı Şehirler', 'PF Satış', 'Pazar Payı %', 'Bölge İçi Pay %']
-                    territory_display.index = range(1, len(territory_display) + 1)
+                    Brick_display = Brick_analysis.copy()
+                    Brick_display = Brick_display[['Brick', 'Manager', 'Kapsadigi_Sehirler', 'PF_Satis', 'Pazar_Payi_%', 'Bolge_Ici_Pay_%']]
+                    Brick_display.columns = ['Brick', 'Manager', 'Kapsadığı Şehirler', 'PF Satış', 'Pazar Payı %', 'Bölge İçi Pay %']
+                    Brick_display.index = range(1, len(Brick_display) + 1)
                     
-                    styled_territory_intra = style_dataframe(
-                        territory_display,
+                    styled_Brick_intra = style_dataframe(
+                        Brick_display,
                         color_column='Pazar Payı %',
                         gradient_columns=['PF Satış', 'Bölge İçi Pay %']
                     )
                     
-                    st.dataframe(styled_territory_intra, use_container_width=True, height=400)
+                    st.dataframe(styled_Brick_intra, use_container_width=True, height=400)
                 else:
                     st.warning(f"⚠️ {selected_intra_region} bölgesinde veri bulunamadı")
             
@@ -4476,20 +4538,20 @@ def main():
     
     # TAB 8: PERFORMANS UYUMSUZLUK ANALİZİ
     with tab8:
-        st.header("🔄 Şehir vs Territory Performans Uyumsuzluk Analizi")
+        st.header("🔄 Şehir vs Brick Performans Uyumsuzluk Analizi")
         
         st.markdown("""
         <div style="background: rgba(30, 41, 59, 0.7); padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem;">
             <h3 style="color: #e2e8f0; margin-top: 0;">📋 Analiz Açıklaması</h3>
             <p style="color: #94a3b8;">
-            Bu analiz, şehir bazlı performans ile territory bazlı performans arasındaki uyumsuzlukları tespit eder.
-            Özellikle <b>"şehirde iyi ama territory'de kötü"</b> durumlarını ortaya çıkararak yönetim problemlerini belirler.
+            Bu analiz, şehir bazlı performans ile Brick bazlı performans arasındaki uyumsuzlukları tespit eder.
+            Özellikle <b>"şehirde iyi ama Brick'de kötü"</b> durumlarını ortaya çıkararak yönetim problemlerini belirler.
             </p>
             <ul style="color: #cbd5e1; margin-left: 1.5rem;">
-                <li><span style="color: #EF4444;">🔴 Yönetim Sorunu:</span> Şehirler iyi ama territory kötü</li>
-                <li><span style="color: #F59E0B;">🟡 Yanıltıcı Başarı:</span> Territory iyi ama şehirler kötü</li>
-                <li><span style="color: #8B5CF6;">🟣 Stratejik Problem:</span> Hem şehirler hem territory kötü</li>
-                <li><span style="color: #10B981;">🟢 Başarılı Operasyon:</span> Hem şehirler hem territory iyi</li>
+                <li><span style="color: #EF4444;">🔴 Yönetim Sorunu:</span> Şehirler iyi ama Brick kötü</li>
+                <li><span style="color: #F59E0B;">🟡 Yanıltıcı Başarı:</span> Brick iyi ama şehirler kötü</li>
+                <li><span style="color: #8B5CF6;">🟣 Stratejik Problem:</span> Hem şehirler hem Brick kötü</li>
+                <li><span style="color: #10B981;">🟢 Başarılı Operasyon:</span> Hem şehirler hem Brick iyi</li>
             </ul>
         </div>
         """, unsafe_allow_html=True)
@@ -4512,7 +4574,7 @@ def main():
             high_priority = len(discrepancy_analysis[discrepancy_analysis['Oncelik_Seviyesi'] == 1])
             
             with col_disc1:
-                st.metric("🏢 Toplam Territory", str(total_territories))
+                st.metric("🏢 Toplam Brick", str(total_territories))
             
             with col_disc2:
                 st.metric("🔴 Yönetim Sorunu", str(management_issues), 
@@ -4553,7 +4615,7 @@ def main():
             
             if not critical_cases.empty:
                 for idx, row in critical_cases.iterrows():
-                    with st.expander(f"🔴 {row['Territory']} - {row['Uyumsuzluk_Tipi']}"):
+                    with st.expander(f"🔴 {row['Brick']} - {row['Uyumsuzluk_Tipi']}"):
                         col_crit1, col_crit2, col_crit3 = st.columns(3)
                         
                         with col_crit1:
@@ -4579,8 +4641,8 @@ def main():
             st.subheader("📋 Detaylı Analiz Tablosu")
             
             display_cols = [
-                'Territory', 'Region', 'Manager', 'Sehir_Sayisi',
-                'Territory_Pazar_Payi_%', 'Territory_Performans',
+                'Brick', 'Region', 'Manager', 'Sehir_Sayisi',
+                'Brick_Pazar_Payi_%', 'Brick_Performans',
                 'Ortalama_Sehir_Pay_%', 'Iyi_Performans_Sehir_Orani_%',
                 'Uyumsuzluk_Tipi', 'BCG_Kategori', 'Onerilen_Yatirim_Stratejisi'
             ]
@@ -4591,12 +4653,12 @@ def main():
             
             # Kolon isimlerini düzenle
             col_names = {
-                'Territory': 'Territory',
+                'Brick': 'Brick',
                 'Region': 'Bölge',
                 'Manager': 'Manager',
                 'Sehir_Sayisi': 'Şehir Sayısı',
-                'Territory_Pazar_Payi_%': 'Territory Pay %',
-                'Territory_Performans': 'Territory Performans',
+                'Brick_Pazar_Payi_%': 'Brick Pay %',
+                'Brick_Performans': 'Brick Performans',
                 'Ortalama_Sehir_Pay_%': 'Ort. Şehir Pay %',
                 'Iyi_Performans_Sehir_Orani_%': 'İyi Şehir Oranı %',
                 'Uyumsuzluk_Tipi': 'Uyumsuzluk Tipi',
@@ -4610,7 +4672,7 @@ def main():
             styled_analysis = style_dataframe(
                 analysis_display,
                 color_column='Uyumsuzluk Tipi',
-                gradient_columns=['Territory Pay %', 'Ort. Şehir Pay %', 'İyi Şehir Oranı %']
+                gradient_columns=['Brick Pay %', 'Ort. Şehir Pay %', 'İyi Şehir Oranı %']
             )
             
             st.dataframe(
@@ -4654,7 +4716,7 @@ def main():
                 Rapor aşağıdaki sayfaları içerecektir:
             </p>
             <ul style="color: #cbd5e1; margin-left: 1.5rem;">
-                <li>Territory Performans (Toplam Pazar % ile)</li>
+                <li>Brick Performans (Toplam Pazar % ile)</li>
                 <li>Gelişmiş Zaman Serisi Analizi</li>
                 <li>Trend Analizi Sonuçları</li>
                 <li>ML Tahmin Sonuçları</li>
@@ -4672,7 +4734,7 @@ def main():
             with st.spinner("Rapor hazırlanıyor..."):
                 try:
                     # Tüm analizleri hesapla
-                    terr_perf = calculate_territory_performance(df_filtered, selected_product, date_filter)
+                    terr_perf = calculate_Brick_performance(df_filtered, selected_product, date_filter)
                     total_market_all = terr_perf['Toplam_Pazar'].sum()
                     terr_perf['Toplam_Pazar_%'] = safe_divide(terr_perf['Toplam_Pazar'], total_market_all) * 100
                     
@@ -4692,7 +4754,7 @@ def main():
                     
                     output = BytesIO()
                     with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                        terr_perf.to_excel(writer, sheet_name='Territory Performans', index=False)
+                        terr_perf.to_excel(writer, sheet_name='Brick Performans', index=False)
                         monthly_df.to_excel(writer, sheet_name='Zaman Serisi', index=False)
                         
                         # Trend analizi sonuçları
@@ -4735,7 +4797,7 @@ def main():
                         # Özet sayfası
                         summary_data = {
                             'Metrik': ['Ürün', 'Dönem', 'Toplam PF Satış', 'Toplam Pazar', 'Pazar Payı', 
-                                      'Territory Sayısı', 'Trend Durumu', 'Mevsimsellik', 'Volatilite', 'Lider Bölge', 'Lider Şehir'],
+                                      'Brick Sayısı', 'Trend Durumu', 'Mevsimsellik', 'Volatilite', 'Lider Bölge', 'Lider Şehir'],
                             'Değer': [
                                 selected_product,
                                 date_option,
@@ -4768,5 +4830,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
