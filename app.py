@@ -989,17 +989,6 @@ def create_strategic_heatmap_chart(alignment_df):
     all_values = [val for sublist in heatmap_data for val in sublist]
     max_val = max(all_values) if all_values else 0
     
-    # Colorbar ayarlarını dinamik yap
-    colorbar_settings = dict(
-        title="Brick Sayısı",
-        titleside="right"
-    )
-    
-    # Sadece max değer 0'dan büyükse özel tick ekle (Hata Önleyici Kısım)
-    if max_val > 0:
-        colorbar_settings["tickvals"] = [0, max_val]
-        colorbar_settings["ticktext"] = ["Az", "Çok"]
-    
     fig = go.Figure(data=go.Heatmap(
         z=heatmap_data,
         x=strategic_statuses,
@@ -1010,7 +999,12 @@ def create_strategic_heatmap_chart(alignment_df):
         textfont={"size": 16, "color": "white"},
         hovertemplate='<b>BCG:</b> %{y}<br><b>Durum:</b> %{x}<br><b>Brick Sayısı:</b> %{z}<extra></extra>',
         showscale=True,
-        colorbar=colorbar_settings  # Düzeltilmiş ayarları kullanıyoruz
+        colorbar=dict(
+            title="Brick Sayısı",
+            titleside="right",
+            tickvals=[0, max_val] if max_val > 0 else None,
+            ticktext=["Az", "Çok"] if max_val > 0 else None
+        )
     ))
     
     fig.update_layout(
@@ -5016,5 +5010,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
