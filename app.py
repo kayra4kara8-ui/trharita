@@ -2793,70 +2793,70 @@ def style_dataframe(df, color_column=None, gradient_columns=None):
 # =============================================================================
 
 def main():
-    # Kurumsal Renk Paleti ve Modern Stil
+    # Profesyonel UI Stil Tanımlamaları
     st.markdown("""
         <style>
-        /* Ana Konteyner */
-        .header-wrapper {
-            background: #001219; /* Görseldeki koyu arka plan tonu */
-            padding: 3rem 1rem;
-            border-radius: 15px;
+        .header-container {
             text-align: center;
-            border: 1px solid rgba(14, 165, 233, 0.1);
+            padding: 2.5rem 0;
+            background: #001219; /* Orijinal koyu arka plan */
+            border-bottom: 1px solid rgba(14, 165, 233, 0.2);
+            margin-bottom: 2rem;
         }
 
-        /* Ana Başlık: Daha temiz ve ince-kalın dengeli */
         .main-title {
             font-family: 'Inter', sans-serif;
             color: #FFFFFF;
-            font-size: 2.8rem;
-            font-weight: 200; /* İnce font modern durur */
-            letter-spacing: 2px;
-            margin-bottom: 0.5rem;
+            font-size: 2.4rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin-bottom: 1rem;
             text-transform: uppercase;
         }
 
-        .main-title b {
-            font-weight: 800; /* Vurgu için kalın */
-            color: #FFFFFF;
+        .highlight-text {
+            color: #0EA5E9; /* Orijinal mavi tonu */
         }
 
-        /* Alt Başlık: İsimleri sadeleştirdik */
-        .subtitle {
-            color: #0EA5E9; /* Görseldeki mavi tonu */
-            font-size: 1.1rem;
-            font-weight: 500;
-            letter-spacing: 1px;
-            opacity: 0.9;
-        }
-
-        /* Dekoratif Alt Çizgi */
-        .divider {
-            height: 2px;
-            width: 60px;
-            background: #0EA5E9;
-            margin: 1.5rem auto;
-            border-radius: 10px;
-        }
-
-        /* Özellikler: Minimalist ikonik yaklaşım */
-        .feature-line {
+        .sub-nav {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
             color: #94a3b8;
-            font-size: 0.85rem;
-            word-spacing: 5px;
+            font-size: 0.9rem;
+            font-weight: 500;
             text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .nav-item {
+            color: #0EA5E9;
+            transition: all 0.3s ease;
+        }
+
+        .bullet {
+            color: #334155;
         }
         </style>
     """, unsafe_allow_html=True)
 
-    # Uygulama Alanı
-    st.markdown(f"""
-        <div class="header-wrapper">
-            <div class="subtitle">STRATEJİK VERİ YÖNETİMİ</div>
-            <h1 class="main-title">BÖLGE <b>PERFORMANS ANALİZİ</b></h1>
-            <div class="divider"></div>
-            <div class="feature-line">
-                ML TAHMİNLEME • ZAMAN SERİSİ • MODERN HARİTA • RAKİP ANALİZİ
+    # İçerik Alanı
+    st.markdown("""
+        <div class="header-container">
+            <h1 class="main-title">
+                🎯 GELİŞMİŞ TİCARİ <span class="highlight-text">PORTFÖY ANALİZ SİSTEMİ</span>
+            </h1>
+            <div class="sub-nav">
+                <span class="nav-item">ML Tahminleme</span>
+                <span class="bullet">•</span>
+                <span class="nav-item">Zaman Serisi</span>
+                <span class="bullet">•</span>
+                <span class="nav-item">Modern Harita</span>
+                <span class="bullet">•</span>
+                <span class="nav-item">Rakip Analizi</span>
+                <span class="bullet">•</span>
+                <span class="nav-item">Bölge Performans Analizi</span>
             </div>
         </div>
     """, unsafe_allow_html=True)
@@ -4337,6 +4337,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
