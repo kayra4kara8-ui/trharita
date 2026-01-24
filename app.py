@@ -2796,8 +2796,8 @@ def main():
     # Başlık ve açıklama
     st.markdown('<h1 class="main-header">🎯 GELİŞMİŞ TİCARİ PORTFÖY ANALİZ SİSTEMİ</h1>', unsafe_allow_html=True)
     st.markdown('<div style="text-align: center; font-size: 1.2rem; color: #94a3b8; margin-bottom: 3rem;">'
-                'GERÇEK ML Tahminleme • Gelişmiş Zaman Serisi Analizi • Modern Harita • Rakip Analizi<br>'
-                '<span style="color: #0EA5E9; font-weight: 600;">YENİ: Bölge Karşılaştırmalı Analiz • Bölge İçi Detaylı Performans Analizi</span>'
+                '<span style="color: #0EA5E9; font-weight: 600;"> ML Tahminleme • Gelişmiş Zaman Serisi Analizi • Modern Harita • Rakip Analizi</span>'
+                '<span style="color: #0EA5E9; font-weight: 600;"> Bölge Karşılaştırmalı Analiz • Bölge İçi Detaylı Performans Analizi</span>'
                 '</div>', unsafe_allow_html=True)
     
     # SIDEBAR
@@ -4276,5 +4276,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
