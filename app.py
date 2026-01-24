@@ -520,10 +520,10 @@ CITY_NORMALIZE_CLEAN = {
     'SİNOP': 'Sinop',
     'SIVAS': 'Sivas',
     'SİVAS': 'Sivas',
-    'SANLIURFA': 'Sanliurfa',
+    'SANLIURFA": "Sanliurfa',
     'ŞANLIURFA': 'Sanliurfa',
-    'SIRNAK': 'Sirnak',
-    'ŞIRNAK': 'Sirnak',
+    'SIRNAK": "Sirnak',
+    'ŞIRNAK": "Sirnak',
     'TEKIRDAG': 'Tekirdag',
     'TEKİRDAĞ': 'Tekirdag',
     'TOKAT': 'Tokat',
@@ -951,9 +951,9 @@ def create_strategic_alignment_chart(alignment_df):
     return fig
 
 
-def create_strategic_matrix_chart(alignment_df):
+def create_strategic_heatmap_chart(alignment_df):
     """
-    Stratejik hizalanma matris grafiği (BCG vs Strateji)
+    BCG vs Stratejik Durum için Heatmap (Isı Haritası)
     
     Parameters:
     -----------
@@ -967,62 +967,78 @@ def create_strategic_matrix_chart(alignment_df):
     if alignment_df.empty:
         return None
     
-    fig = go.Figure()
-    
     # BCG kategorileri
     bcg_categories = ["⭐ Star", "🐄 Cash Cow", "❓ Question Mark", "🐶 Dog"]
     
-    # Her BCG kategorisi için stratejik durum dağılımı
-    for status in alignment_df['Stratejik_Durum'].unique():
-        status_data = alignment_df[alignment_df['Stratejik_Durum'] == status]
-        
-        # BCG kategorilerine göre grupla
-        bcg_counts = []
-        for bcg in bcg_categories:
-            count = len(status_data[status_data['BCG_Kategori'] == bcg])
-            bcg_counts.append(count)
-        
-        fig.add_trace(go.Bar(
-            x=bcg_categories,
-            y=bcg_counts,
-            name=status,
-            marker_color=STRATEGIC_ALIGNMENT_COLORS.get(status, "#64748B"),
-            opacity=0.8,
-            hovertemplate='<b>%{x}</b><br>%{y} Brick<br>Durum: %{fullData.name}<extra></extra>'
-        ))
+    # Stratejik durumlar
+    strategic_statuses = sorted(alignment_df['Stratejik_Durum'].unique())
+    
+    # Heatmap verisini oluştur
+    heatmap_data = []
+    
+    for bcg in bcg_categories:
+        row_data = []
+        for status in strategic_statuses:
+            count = len(alignment_df[(alignment_df['BCG_Kategori'] == bcg) & 
+                                     (alignment_df['Stratejik_Durum'] == status)])
+            row_data.append(count)
+        heatmap_data.append(row_data)
+    
+    # Renk skalası (mavi tonları)
+    colorscale = [
+        [0, '#0f172a'],      # En koyu
+        [0.2, '#1e293b'],
+        [0.4, '#334155'],
+        [0.6, '#475569'],
+        [0.8, '#64748b'],
+        [1, '#94a3b8']       # En açık
+    ]
+    
+    fig = go.Figure(data=go.Heatmap(
+        z=heatmap_data,
+        x=strategic_statuses,
+        y=bcg_categories,
+        colorscale=colorscale,
+        text=heatmap_data,
+        texttemplate='%{text}',
+        textfont={"size": 16, "color": "white"},
+        hovertemplate='<b>BCG:</b> %{y}<br><b>Durum:</b> %{x}<br><b>Brick Sayısı:</b> %{z}<extra></extra>',
+        showscale=True,
+        colorbar=dict(
+            title="Brick Sayısı",
+            titleside="right",
+            tickvals=[0, max([max(row) for row in heatmap_data])],
+            ticktext=["Az", "Çok"]
+        )
+    ))
     
     fig.update_layout(
         title=dict(
-            text='<b>BCG vs Stratejik Hizalanma Matrisi</b>',
+            text='<b>BCG vs Stratejik Durum Heatmap Analizi</b>',
             font=dict(size=22, color='white', family='Inter')
         ),
-        xaxis_title='<b>BCG Kategorisi</b>',
-        yaxis_title='<b>Brick Sayısı</b>',
-        barmode='stack',
-        height=600,
+        height=500,
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)',
         font=dict(color='#e2e8f0', family='Inter'),
-        legend=dict(
-            title='<b>Stratejik Durum</b>',
-            bgcolor='rgba(30, 41, 59, 0.8)',
-            bordercolor='rgba(59, 130, 246, 0.3)',
-            borderwidth=1
-        ),
         xaxis=dict(
+            title='<b>Stratejik Durum</b>',
+            tickangle=-45,
             gridcolor='rgba(59, 130, 246, 0.1)'
         ),
         yaxis=dict(
+            title='<b>BCG Kategorisi</b>',
             gridcolor='rgba(59, 130, 246, 0.1)'
-        )
+        ),
+        margin=dict(t=80, b=100, l=100, r=50)
     )
     
     return fig
 
 
-def create_sunburst_alignment_chart(alignment_df):
+def create_strategic_alignment_score_chart(alignment_df):
     """
-    Stratejik hizalanma için sunburst diagram
+    Stratejik Hizalanma Skorları Dağılımı
     
     Parameters:
     -----------
@@ -1036,68 +1052,54 @@ def create_sunburst_alignment_chart(alignment_df):
     if alignment_df.empty:
         return None
     
-    # Hiyerarşik veri yapısı oluştur
-    hierarchical_data = []
+    # Skor dağılımı
+    scores = alignment_df['Stratejik_Hizalanma_Skoru']
     
-    for _, row in alignment_df.iterrows():
-        # Üst seviye: Stratejik Durum
-        hierarchical_data.append({
-            'labels': row['Stratejik_Durum'],
-            'parents': '',
-            'values': 1,
-            'ids': f"status_{row['Stratejik_Durum']}",
-            'color': '#1E3A8A'
-        })
-        
-        # Orta seviye: BCG Kategorisi
-        hierarchical_data.append({
-            'labels': row['BCG_Kategori'],
-            'parents': row['Stratejik_Durum'],
-            'values': 1,
-            'ids': f"bcg_{row['BCG_Kategori']}_{row['Stratejik_Durum']}",
-            'color': '#0EA5E9' if row['BCG_Kategori'] == "⭐ Star" else 
-                    '#06B6D4' if row['BCG_Kategori'] == "🐄 Cash Cow" else
-                    '#3B82F6' if row['BCG_Kategori'] == "❓ Question Mark" else
-                    '#64748B'
-        })
-        
-        # Alt seviye: Brick
-        hierarchical_data.append({
-            'labels': row['Brick'],
-            'parents': row['BCG_Kategori'],
-            'values': row['Stratejik_Hizalanma_Skoru'],  # Skor büyüklüğü
-            'ids': f"Brick_{row['Brick']}",
-            'color': '#3B82F6'
-        })
+    fig = go.Figure()
     
-    # DataFrame'e çevir
-    hierarchy_df = pd.DataFrame(hierarchical_data)
-    
-    fig = go.Figure(go.Sunburst(
-        labels=hierarchy_df['labels'],
-        parents=hierarchy_df['parents'],
-        values=hierarchy_df['values'],
-        ids=hierarchy_df['ids'],
-        branchvalues='total',
-        maxdepth=3,
+    fig.add_trace(go.Histogram(
+        x=scores,
+        nbinsx=20,
+        name='Skor Dağılımı',
+        marker_color=PERFORMANCE_COLORS['info'],
+        opacity=0.8,
         marker=dict(
-            colors=hierarchy_df['color'],
-            line=dict(width=2, color='rgba(255, 255, 255, 0.8)')
+            line=dict(width=1, color='rgba(255, 255, 255, 0.8)')
         ),
-        hovertemplate='<b>%{label}</b><br>Skor: %{value:.1f}<br>Ebeveyn: %{parent}<extra></extra>',
-        textinfo='label+value'
+        hovertemplate='<b>Skor Aralığı:</b> %{x}<br><b>Brick Sayısı:</b> %{y}<extra></extra>'
     ))
+    
+    # Ortalama çizgisi
+    mean_score = scores.mean()
+    fig.add_vline(
+        x=mean_score,
+        line_dash="dash",
+        line_color=PERFORMANCE_COLORS['warning'],
+        line_width=2,
+        annotation_text=f"Ortalama: {mean_score:.1f}",
+        annotation_position="top right",
+        annotation_font=dict(color=PERFORMANCE_COLORS['warning'])
+    )
     
     fig.update_layout(
         title=dict(
-            text='<b>Stratejik Hizalanma Hiyerarşisi (Sunburst)</b>',
+            text='<b>Stratejik Hizalanma Skorları Dağılımı</b>',
             font=dict(size=22, color='white', family='Inter')
         ),
-        height=700,
+        xaxis_title='<b>Hizalanma Skoru</b>',
+        yaxis_title='<b>Brick Sayısı</b>',
+        height=500,
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)',
         font=dict(color='#e2e8f0', family='Inter'),
-        margin=dict(t=50, b=20, l=20, r=20)
+        xaxis=dict(
+            range=[0, 100],
+            gridcolor='rgba(59, 130, 246, 0.1)'
+        ),
+        yaxis=dict(
+            gridcolor='rgba(59, 130, 246, 0.1)'
+        ),
+        bargap=0.1
     )
     
     return fig
@@ -3334,7 +3336,7 @@ def main():
                 <span style="opacity: 0.3">|</span>
                 <span>RAKİP ANALİZİ</span>
                 <span style="opacity: 0.3">|</span>
-                <span class="cap-item">STRATEJİK DOKU UYUMU ANALİZİ</span>
+                <span class="cap-item">🔍 STRATEJİK DOKU UYUMU ANALİZİ</span>
             </div>
         </div>
     """, unsafe_allow_html=True)
@@ -3464,7 +3466,7 @@ def main():
         "🗺️ Modern Harita",
         "🏢 Brick Analizi",
         "📈 Zaman Serisi",
-        "📌 Rakip Analizi",
+        "🎯 Rakip Analizi",
         "⭐ BCG & Strateji",
         "🏆 Bölge Karşılaştırması",
         "🎯 Stratejik Doku Uyumu Analizi",  # İSİM DEĞİŞTİ - PROFESYONEL
@@ -4770,16 +4772,16 @@ def main():
                     st.plotly_chart(status_chart, use_container_width=True)
             
             with col_viz2:
-                st.subheader("🎯 BCG vs Strateji Matrisi")
-                matrix_chart = create_strategic_matrix_chart(alignment_analysis)
-                if matrix_chart:
-                    st.plotly_chart(matrix_chart, use_container_width=True)
+                st.subheader("📈 Hizalanma Skorları Dağılımı")
+                score_chart = create_strategic_alignment_score_chart(alignment_analysis)
+                if score_chart:
+                    st.plotly_chart(score_chart, use_container_width=True)
             
-            # Sunburst grafiği
-            st.subheader("🔄 Stratejik Hiyerarşi (Sunburst)")
-            sunburst_chart = create_sunburst_alignment_chart(alignment_analysis.head(20))  # İlk 20 Brick
-            if sunburst_chart:
-                st.plotly_chart(sunburst_chart, use_container_width=True)
+            # Heatmap grafiği
+            st.subheader("🎯 BCG vs Strateji Heatmap Analizi")
+            heatmap_chart = create_strategic_heatmap_chart(alignment_analysis)
+            if heatmap_chart:
+                st.plotly_chart(heatmap_chart, use_container_width=True)
             
             st.markdown("---")
             
@@ -5014,6 +5016,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
