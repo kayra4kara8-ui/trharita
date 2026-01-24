@@ -1032,7 +1032,7 @@ def create_tissue_coherence_chart(analysis_df):
         )
     )
     
-    return fig fig
+    return fig
 
 # =============================================================================
 # YENİ ANALİZ FONKSİYONLARI
