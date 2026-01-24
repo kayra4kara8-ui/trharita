@@ -4522,41 +4522,47 @@ def main():
             )
     
     # TAB 8: STRATEJİK DOKU UYUMU ANALİZİ
+    # TAB 8: PERFORMANS UYUMSUZLUK ANALİZİ
     with tab8:
-        st.header("🔍 Stratejik Doku Uyumu Analizi")
+        st.header("🔄 Şehir vs Brick Performans Uyumsuzluk Analizi")
         
+        # --- DÜZELTİLMİŞ KOD BAŞLANGICI ---
         st.markdown("""
-        <div style="background: rgba(30, 41, 59, 0.7); padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem;">
-            <h3 style="color: #e2e8f0; margin-top: 0;">🧬 Analiz Mantığı: Mikro-Makro Uyumu</h3>
-            <p style="color: #94a3b8;">
-            Bu analiz, bir organizmanın sağlıklı büyümesi gibi, Brick'lerin (organlar) ve şehirlerin (hücreler) 
-            birbiriyle uyumlu çalışıp çalışmadığını inceler. Sağlıklı büyüme için mikro (şehir) ve makro (Brick) 
-            performansının uyumlu olması gereklidir.
+        <div style="background: rgba(15, 23, 41, 0.6); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.2); margin-bottom: 2rem;">
+            <h3 style="color: #ffffff; margin-top: 0; font-size: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem; margin-bottom: 1rem;">
+                🧬 Analiz Mantığı: Mikro-Makro Uyumu
+            </h3>
+            <p style="color: #cbd5e1; font-size: 0.95rem; line-height: 1.6; margin-bottom: 1.5rem;">
+                Bu analiz, bir organizmanın sağlıklı büyümesi gibi, Brick'lerin (organlar) ve şehirlerin (hücreler) birbiriyle uyumlu çalışıp çalışmadığını inceler. 
+                Sağlıklı büyüme için mikro (şehir) ve makro (Brick) performansının uyumlu olması gereklidir.
             </p>
             
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-top: 1rem;">
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                
                 <div style="background: rgba(16, 185, 129, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #10B981;">
-                    <h4 style="color: #10B981; margin: 0 0 0.5rem 0;">🎯 Uyumlu Büyüme</h4>
-                    <p style="color: #cbd5e1; margin: 0; font-size: 0.9rem;">Hem şehirler hem Brick yüksek performansta</p>
+                    <h4 style="color: #10B981; margin: 0 0 0.5rem 0; font-size: 1.1rem;">🎯 Uyumlu Büyüme</h4>
+                    <p style="color: #e2e8f0; margin: 0; font-size: 0.9rem;">Hem şehirler hem Brick yüksek performansta</p>
                 </div>
-                
+
                 <div style="background: rgba(239, 68, 68, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #EF4444;">
-                    <h4 style="color: #EF4444; margin: 0 0 0.5rem 0;">⚠️ Yönetim Zafiyeti</h4>
-                    <p style="color: #cbd5e1; margin: 0; font-size: 0.9rem;">Şehirler iyi ama Brick kötü - Koordinasyon eksik</p>
+                    <h4 style="color: #EF4444; margin: 0 0 0.5rem 0; font-size: 1.1rem;">⚠️ Yönetim Zafiyeti</h4>
+                    <p style="color: #e2e8f0; margin: 0; font-size: 0.9rem;">Şehirler iyi ama Brick kötü - Koordinasyon eksik</p>
                 </div>
-                
+
                 <div style="background: rgba(245, 158, 11, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #F59E0B;">
-                    <h4 style="color: #F59E0B; margin: 0 0 0.5rem 0;">🎭 Yanıltıcı Başarı</h4>
-                    <p style="color: #cbd5e1; margin: 0; font-size: 0.9rem;">Brick iyi ama şehirler kötü - Büyük şehir etkisi</p>
+                    <h4 style="color: #F59E0B; margin: 0 0 0.5rem 0; font-size: 1.1rem;">🎭 Yanıltıcı Başarı</h4>
+                    <p style="color: #e2e8f0; margin: 0; font-size: 0.9rem;">Brick iyi ama şehirler kötü - Büyük şehir etkisi</p>
                 </div>
-                
-                <div style="background: rgba(139, 92, 246, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #8B5CF6;">
-                    <h4 style="color: #8B5CF6; margin: 0 0 0.5rem 0;">🔄 Stratejik Revizyon</h4>
-                    <p style="color: #cbd5e1; margin: 0; font-size: 0.9rem;">Her ikisi de kötü - Temel strateji sorunu</p>
+
+                <div style="background: rgba(59, 130, 246, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #3B82F6;">
+                    <h4 style="color: #3B82F6; margin: 0 0 0.5rem 0; font-size: 1.1rem;">🔄 Stratejik Revizyon</h4>
+                    <p style="color: #e2e8f0; margin: 0; font-size: 0.9rem;">Her ikisi de kötü - Temel strateji sorunu</p>
                 </div>
+
             </div>
         </div>
         """, unsafe_allow_html=True)
+        # --- DÜZELTİLMİŞ KOD BİTİŞİ ---
         
         # Analizi çalıştır
         with st.spinner("Stratejik Doku Uyumu analizi yapılıyor..."):
@@ -4867,3 +4873,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
