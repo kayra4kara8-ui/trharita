@@ -734,7 +734,7 @@ def calculate_intra_region_performance(df, product, selected_region, date_filter
     Bölge içindeki:
     - Şehirlerin PF Satış Dağılımı
     - Brick Performansları
-    - Manager Performansları
+    - Müdür Performansları
     - Zaman İçinde Gelişim
     """
     cols = get_product_columns(product)
@@ -767,31 +767,31 @@ def calculate_intra_region_performance(df, product, selected_region, date_filter
     Brick_analysis = df_region.groupby('TERRITORIES').agg({
         cols['pf']: 'sum',
         cols['rakip']: 'sum',
-        'MANAGER': 'first',
+        'Müdür': 'first',
         'CITY_NORMALIZED': lambda x: ', '.join(sorted(set(x)))  # Brick'nin kapsadığı şehirler
     }).reset_index()
     
-    Brick_analysis.columns = ['Brick', 'PF_Satis', 'Rakip_Satis', 'Manager', 'Kapsadigi_Sehirler']
+    Brick_analysis.columns = ['Brick', 'PF_Satis', 'Rakip_Satis', 'Müdür', 'Kapsadigi_Sehirler']
     Brick_analysis['Toplam_Pazar'] = Brick_analysis['PF_Satis'] + Brick_analysis['Rakip_Satis']
     Brick_analysis['Pazar_Payi_%'] = safe_divide(Brick_analysis['PF_Satis'], Brick_analysis['Toplam_Pazar']) * 100
     Brick_analysis['Bolge_Ici_Pay_%'] = safe_divide(Brick_analysis['PF_Satis'], region_total_pf) * 100
     
     Brick_analysis = Brick_analysis.sort_values('PF_Satis', ascending=False)
     
-    # 3. MANAGER BAZLI ANALİZ
-    manager_analysis = df_region.groupby('MANAGER').agg({
+    # 3. Müdür BAZLI ANALİZ
+    Müdür_analysis = df_region.groupby('Müdür').agg({
         cols['pf']: 'sum',
         cols['rakip']: 'sum',
         'TERRITORIES': 'nunique',  # Kaç Brick yönetiyor
         'CITY_NORMALIZED': 'nunique'  # Kaç şehirde çalışıyor
     }).reset_index()
     
-    manager_analysis.columns = ['Manager', 'PF_Satis', 'Rakip_Satis', 'Brick_Sayisi', 'Sehir_Sayisi']
-    manager_analysis['Toplam_Pazar'] = manager_analysis['PF_Satis'] + manager_analysis['Rakip_Satis']
-    manager_analysis['Pazar_Payi_%'] = safe_divide(manager_analysis['PF_Satis'], manager_analysis['Toplam_Pazar']) * 100
-    manager_analysis['Ortalama_Brick_Performansi'] = safe_divide(manager_analysis['PF_Satis'], manager_analysis['Brick_Sayisi'])
+    Müdür_analysis.columns = ['Müdür', 'PF_Satis', 'Rakip_Satis', 'Brick_Sayisi', 'Sehir_Sayisi']
+    Müdür_analysis['Toplam_Pazar'] = Müdür_analysis['PF_Satis'] + Müdür_analysis['Rakip_Satis']
+    Müdür_analysis['Pazar_Payi_%'] = safe_divide(Müdür_analysis['PF_Satis'], Müdür_analysis['Toplam_Pazar']) * 100
+    Müdür_analysis['Ortalama_Brick_Performansi'] = safe_divide(Müdür_analysis['PF_Satis'], Müdür_analysis['Brick_Sayisi'])
     
-    manager_analysis = manager_analysis.sort_values('PF_Satis', ascending=False)
+    Müdür_analysis = Müdür_analysis.sort_values('PF_Satis', ascending=False)
     
     # 4. ZAMAN İÇİ GELİŞİM (Aylık)
     monthly_analysis = df_region.groupby('YIL_AY').agg({
@@ -806,7 +806,7 @@ def calculate_intra_region_performance(df, product, selected_region, date_filter
     # Büyüme oranları
     monthly_analysis['PF_Buyume_%'] = monthly_analysis['PF_Satis'].pct_change() * 100
     
-    return city_analysis, Brick_analysis, manager_analysis, monthly_analysis
+    return city_analysis, Brick_analysis, Müdür_analysis, monthly_analysis
 
 # =============================================================================
 # GELİŞTİRİLMİŞ ZAMAN SERİSİ ANALİZ FONKSİYONLARI
@@ -1060,7 +1060,7 @@ def load_excel_data(file):
     df['CITY'] = df['CITY'].str.strip()
     df['CITY_NORMALIZED'] = df['CITY'].apply(normalize_city_name_fixed)
     df['REGION'] = df['REGION'].str.upper().str.strip()
-    df['MANAGER'] = df['MANAGER'].str.upper().str.strip()
+    df['Müdür'] = df['Müdür'].str.upper().str.strip()
     
     return df
 
@@ -1577,12 +1577,12 @@ def calculate_Brick_performance(df, product, date_filter=None):
     if date_filter:
         df = df[(df['DATE'] >= date_filter[0]) & (df['DATE'] <= date_filter[1])]
     
-    terr_perf = df.groupby(['TERRITORIES', 'REGION', 'CITY', 'MANAGER']).agg({
+    terr_perf = df.groupby(['TERRITORIES', 'REGION', 'CITY', 'Müdür']).agg({
         cols['pf']: 'sum',
         cols['rakip']: 'sum'
     }).reset_index()
     
-    terr_perf.columns = ['Brick', 'Region', 'City', 'Manager', 'PF_Satis', 'Rakip_Satis']
+    terr_perf.columns = ['Brick', 'Region', 'City', 'Müdür', 'PF_Satis', 'Rakip_Satis']
     terr_perf['Toplam_Pazar'] = terr_perf['PF_Satis'] + terr_perf['Rakip_Satis']
     terr_perf['Pazar_Payi_%'] = safe_divide(terr_perf['PF_Satis'], terr_perf['Toplam_Pazar']) * 100
     
@@ -1898,20 +1898,20 @@ def create_intra_region_city_chart(city_analysis):
     
     return fig
 
-def create_intra_region_manager_chart(manager_analysis):
-    """Bölge içi manager performans grafiği"""
-    if manager_analysis is None or manager_analysis.empty:
+def create_intra_region_Müdür_chart(Müdür_analysis):
+    """Bölge içi Müdür performans grafiği"""
+    if Müdür_analysis is None or Müdür_analysis.empty:
         return None
     
     fig = go.Figure()
     
     # PF Satış
     fig.add_trace(go.Bar(
-        x=manager_analysis['Manager'],
-        y=manager_analysis['PF_Satis'],
+        x=Müdür_analysis['Müdür'],
+        y=Müdür_analysis['PF_Satis'],
         name='PF Satış',
         marker_color=PERFORMANCE_COLORS['success'],
-        text=[format_number(x) for x in manager_analysis['PF_Satis']],
+        text=[format_number(x) for x in Müdür_analysis['PF_Satis']],
         textposition='outside',
         marker=dict(
             line=dict(width=1.5, color='rgba(255, 255, 255, 0.8)')
@@ -1920,23 +1920,23 @@ def create_intra_region_manager_chart(manager_analysis):
     
     # Brick başına performans (ikinci eksen)
     fig.add_trace(go.Scatter(
-        x=manager_analysis['Manager'],
-        y=manager_analysis['Ortalama_Brick_Performansi'],
+        x=Müdür_analysis['Müdür'],
+        y=Müdür_analysis['Ortalama_Brick_Performansi'],
         name='Brick Başına Ort.',
         mode='lines+markers+text',
         line=dict(color=PERFORMANCE_COLORS['warning'], width=3),
         marker=dict(size=8, color='white', line=dict(width=2, color=PERFORMANCE_COLORS['warning'])),
-        text=[format_number(x) for x in manager_analysis['Ortalama_Brick_Performansi']],
+        text=[format_number(x) for x in Müdür_analysis['Ortalama_Brick_Performansi']],
         textposition='top center',
         yaxis="y2"
     ))
     
     fig.update_layout(
         title=dict(
-            text='<b>Manager Performans Karşılaştırması</b>',
+            text='<b>Müdür Performans Karşılaştırması</b>',
             font=dict(size=20, color='white', family='Inter')
         ),
-        xaxis_title='<b>Manager</b>',
+        xaxis_title='<b>Müdür</b>',
         yaxis_title='<b>Toplam PF Satış</b>',
         yaxis2=dict(
             title='<b>Brick Başına Ort.</b>',
@@ -2940,8 +2940,8 @@ def main():
         regions = ["TÜMÜ"] + sorted(df['REGION'].unique())
         selected_region = st.selectbox("Bölge", regions)
         
-        managers = ["TÜMÜ"] + sorted(df['MANAGER'].unique())
-        selected_manager = st.selectbox("Manager", managers)
+        Müdürs = ["TÜMÜ"] + sorted(df['Müdür'].unique())
+        selected_Müdür = st.selectbox("Müdür", Müdürs)
         
         st.markdown('</div>', unsafe_allow_html=True)
         
@@ -2951,8 +2951,8 @@ def main():
             df_filtered = df_filtered[df_filtered['TERRITORIES'] == selected_Brick]
         if selected_region != "TÜMÜ":
             df_filtered = df_filtered[df_filtered['REGION'] == selected_region]
-        if selected_manager != "TÜMÜ":
-            df_filtered = df_filtered[df_filtered['MANAGER'] == selected_manager]
+        if selected_Müdür != "TÜMÜ":
+            df_filtered = df_filtered[df_filtered['Müdür'] == selected_Müdür]
         
         st.markdown("---")
         
@@ -3023,7 +3023,7 @@ def main():
                      f"{format_percentage(100-market_share)} rakip")
         with col4:
             st.metric("🏢 Active Brick", str(active_territories), 
-                     f"{df_period['MANAGER'].nunique()} manager")
+                     f"{df_period['Müdür'].nunique()} Müdür")
         
         st.markdown("---")
         
@@ -3132,10 +3132,10 @@ def main():
         st.markdown("---")
         st.subheader("📋 Top 10 Brick Detayları")
         
-        display_cols = ['Brick', 'Region', 'City', 'Manager', 'PF_Satis', 'Toplam_Pazar', 'Toplam_Pazar_%', 'Pazar_Payi_%', 'Agirlik_%']
+        display_cols = ['Brick', 'Region', 'City', 'Müdür', 'PF_Satis', 'Toplam_Pazar', 'Toplam_Pazar_%', 'Pazar_Payi_%', 'Agirlik_%']
         
         top10_display = top10[display_cols].copy()
-        top10_display.columns = ['Brick', 'Region', 'City', 'Manager', 'PF Satış', 'Toplam Pazar', 'Toplam Pazar %', 'Pazar Payı %', 'Ağırlık %']
+        top10_display.columns = ['Brick', 'Region', 'City', 'Müdür', 'PF Satış', 'Toplam Pazar', 'Toplam Pazar %', 'Pazar Payı %', 'Ağırlık %']
         top10_display.index = range(1, len(top10_display) + 1)
         
         styled_df = style_dataframe(
@@ -3499,14 +3499,14 @@ def main():
             st.subheader(f"📋 Detaylı Brick Listesi (Top {show_n})")
             
             display_cols = [
-                'Brick', 'Region', 'City', 'Manager',
+                'Brick', 'Region', 'City', 'Müdür',
                 'PF_Satis', 'Rakip_Satis', 'Toplam_Pazar', 'Toplam_Pazar_%',
                 'Pazar_Payi_%', 'Goreceli_Pazar_Payi', 'Agirlik_%'
             ]
             
             terr_display = terr_sorted[display_cols].copy()
             terr_display.columns = [
-                'Brick', 'Region', 'City', 'Manager',
+                'Brick', 'Region', 'City', 'Müdür',
                 'PF Satış', 'Rakip Satış', 'Toplam Pazar', 'Toplam Pazar %',
                 'Pazar Payı %', 'Göreceli Pay', 'Ağırlık %'
             ]
@@ -4056,7 +4056,7 @@ def main():
             
             if selected_intra_region != "Seçiniz":
                 # Bölge içi detaylı analiz
-                city_analysis, Brick_analysis, manager_analysis, monthly_analysis = calculate_intra_region_performance(
+                city_analysis, Brick_analysis, Müdür_analysis, monthly_analysis = calculate_intra_region_performance(
                     df_filtered, selected_product, selected_intra_region, date_filter
                 )
                 
@@ -4088,11 +4088,11 @@ def main():
                     if intra_city_chart:
                         st.plotly_chart(intra_city_chart, use_container_width=True)
                     
-                    # Manager performans grafiği
-                    st.subheader(f"👨‍💼 {selected_intra_region} - Manager Performansı")
-                    intra_manager_chart = create_intra_region_manager_chart(manager_analysis)
-                    if intra_manager_chart:
-                        st.plotly_chart(intra_manager_chart, use_container_width=True)
+                    # Müdür performans grafiği
+                    st.subheader(f"👨‍💼 {selected_intra_region} - Müdür Performansı")
+                    intra_Müdür_chart = create_intra_region_Müdür_chart(Müdür_analysis)
+                    if intra_Müdür_chart:
+                        st.plotly_chart(intra_Müdür_chart, use_container_width=True)
                     
                     # Bölge içi zaman serisi
                     st.subheader(f"📈 {selected_intra_region} - Zaman İçinde Gelişim")
@@ -4162,27 +4162,27 @@ def main():
                         st.dataframe(styled_city, use_container_width=True, height=400)
                     
                     with col_table2:
-                        st.subheader("👨‍💼 Manager Detayları")
+                        st.subheader("👨‍💼 Müdür Detayları")
                         
-                        manager_display = manager_analysis.copy()
-                        manager_display = manager_display[['Manager', 'PF_Satis', 'Pazar_Payi_%', 'Brick_Sayisi', 'Ortalama_Brick_Performansi']]
-                        manager_display.columns = ['Manager', 'PF Satış', 'Pazar Payı %', 'Brick Sayısı', 'Brick Başına Ort.']
-                        manager_display.index = range(1, len(manager_display) + 1)
+                        Müdür_display = Müdür_analysis.copy()
+                        Müdür_display = Müdür_display[['Müdür', 'PF_Satis', 'Pazar_Payi_%', 'Brick_Sayisi', 'Ortalama_Brick_Performansi']]
+                        Müdür_display.columns = ['Müdür', 'PF Satış', 'Pazar Payı %', 'Brick Sayısı', 'Brick Başına Ort.']
+                        Müdür_display.index = range(1, len(Müdür_display) + 1)
                         
-                        styled_manager = style_dataframe(
-                            manager_display,
+                        styled_Müdür = style_dataframe(
+                            Müdür_display,
                             color_column='Pazar Payı %',
                             gradient_columns=['PF Satış', 'Brick Başına Ort.']
                         )
                         
-                        st.dataframe(styled_manager, use_container_width=True, height=400)
+                        st.dataframe(styled_Müdür, use_container_width=True, height=400)
                     
                     # Brick detayları
                     st.subheader("🏢 Brick Detayları")
                     
                     Brick_display = Brick_analysis.copy()
-                    Brick_display = Brick_display[['Brick', 'Manager', 'Kapsadigi_Sehirler', 'PF_Satis', 'Pazar_Payi_%', 'Bolge_Ici_Pay_%']]
-                    Brick_display.columns = ['Brick', 'Manager', 'Kapsadığı Şehirler', 'PF Satış', 'Pazar Payı %', 'Bölge İçi Pay %']
+                    Brick_display = Brick_display[['Brick', 'Müdür', 'Kapsadigi_Sehirler', 'PF_Satis', 'Pazar_Payi_%', 'Bolge_Ici_Pay_%']]
+                    Brick_display.columns = ['Brick', 'Müdür', 'Kapsadığı Şehirler', 'PF Satış', 'Pazar Payı %', 'Bölge İçi Pay %']
                     Brick_display.index = range(1, len(Brick_display) + 1)
                     
                     styled_Brick_intra = style_dataframe(
@@ -4338,6 +4338,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
