@@ -2476,7 +2476,7 @@ def create_advanced_time_series_chart(monthly_df, forecast_df=None):
     
     fig.update_layout(
         title=dict(
-            text='<b>Gelişmiş Zaman Serisi Analizi</b>',
+            text='<b>Zaman Serisi Analizi</b>',
             font=dict(size=22, color='white', family='Inter')
         ),
         xaxis_title='<b>Tarih</b>',
@@ -3304,7 +3304,7 @@ def main():
         "📊 Genel Bakış",
         "🗺️ Modern Harita",
         "🏢 Brick Analizi",
-        "📈 Gelişmiş Zaman Serisi",
+        "📈 Zaman Serisi",
         "🎯 Rakip Analizi",
         "⭐ BCG & Strateji",
         "🏆 Bölge Karşılaştırması",
@@ -3872,7 +3872,7 @@ def main():
     
     # TAB 4: GELİŞTİRİLMİŞ ZAMAN SERİSİ ANALİZİ
     with tab4:
-        st.header("📈 Gelişmiş Zaman Serisi Analizi & ML Tahminleme")
+        st.header("📈 Zaman Serisi Analizi & ML Tahminleme")
         
         col_ts1, col_ts2 = st.columns(2)
         
@@ -3889,7 +3889,7 @@ def main():
                 ["Temel Zaman Serisi", "Trend Analizi", "Karşılaştırmalı Analiz", "Mevsimsellik Analizi", "Volatilite Analizi"]
             )
         
-        # Gelişmiş zaman serisi hesapla
+        # Zaman Serisi hesapla
         monthly_df = calculate_advanced_time_series(df_filtered, selected_product, Brick_for_ts, date_filter)
         
         if len(monthly_df) == 0:
@@ -4000,8 +4000,8 @@ def main():
                         
                         st.markdown("---")
                         
-                        # Gelişmiş zaman serisi grafiği
-                        st.subheader("📈 Gelişmiş Zaman Serisi ve Tahminler")
+                        # Zaman Serisi grafiği
+                        st.subheader("📈 Zaman Serisi ve Tahminler")
                         ts_chart = create_advanced_time_series_chart(monthly_df, forecast_df)
                         if ts_chart:
                             st.plotly_chart(ts_chart, use_container_width=True)
@@ -4717,7 +4717,7 @@ def main():
             </p>
             <ul style="color: #cbd5e1; margin-left: 1.5rem;">
                 <li>Brick Performans (Toplam Pazar % ile)</li>
-                <li>Gelişmiş Zaman Serisi Analizi</li>
+                <li>Zaman Serisi Analizi</li>
                 <li>Trend Analizi Sonuçları</li>
                 <li>ML Tahmin Sonuçları</li>
                 <li>BCG Matrix</li>
@@ -4830,6 +4830,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
