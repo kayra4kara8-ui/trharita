@@ -520,10 +520,10 @@ CITY_NORMALIZE_CLEAN = {
     'SİNOP': 'Sinop',
     'SIVAS': 'Sivas',
     'SİVAS': 'Sivas',
-    'SANLIURFA': 'Sanliurfa',
+    'SANLIURFA": "Sanliurfa',
     'ŞANLIURFA': 'Sanliurfa',
-    'SIRNAK': 'Sirnak',
-    'ŞIRNAK': 'Sirnak',
+    'SIRNAK": "Sirnak',
+    'ŞIRNAK": "Sirnak',
     'TEKIRDAG': 'Tekirdag',
     'TEKİRDAĞ': 'Tekirdag',
     'TOKAT': 'Tokat',
@@ -1020,136 +1020,84 @@ def create_strategic_matrix_chart(alignment_df):
     return fig
 
 
-def create_strategic_hierarchy_chart(alignment_df):
+def create_sunburst_alignment_chart(alignment_df):
     """
-    Stratejik hiyerarşiyi temiz bir şekilde gösteren sunburst grafiği
+    Stratejik hizalanma için sunburst diagram
+    
+    Parameters:
+    -----------
+    alignment_df : DataFrame
+        Stratejik hizalanma analiz sonuçları
+    
+    Returns:
+    --------
+    plotly.graph_objects.Figure
     """
     if alignment_df.empty:
         return None
     
-    # Veriyi hazırla
-    df = alignment_df.copy()
-    
-    # Öncelik seviyelerini daha okunabilir yap
-    priority_map = {
-        1: "🚨 Yüksek Öncelik",
-        2: "⚠️ Orta-Yüksek",
-        3: "📊 Orta Öncelik",
-        4: "✅ Düşük Öncelik"
-    }
-    df['Priority_Label'] = df['Oncelik_Seviyesi'].map(priority_map)
-    
     # Hiyerarşik veri yapısı oluştur
-    labels = []
-    parents = []
-    values = []
-    customdata = []
+    hierarchical_data = []
     
-    # Kök düğüm
-    labels.append("🏢 Tüm Brick'ler")
-    parents.append("")
-    values.append(len(df))
-    customdata.append(["Tüm Brick'ler", len(df), df['Stratejik_Hizalanma_Skoru'].mean()])
+    for _, row in alignment_df.iterrows():
+        # Üst seviye: Stratejik Durum
+        hierarchical_data.append({
+            'labels': row['Stratejik_Durum'],
+            'parents': '',
+            'values': 1,
+            'ids': f"status_{row['Stratejik_Durum']}",
+            'color': '#1E3A8A'
+        })
+        
+        # Orta seviye: BCG Kategorisi
+        hierarchical_data.append({
+            'labels': row['BCG_Kategori'],
+            'parents': row['Stratejik_Durum'],
+            'values': 1,
+            'ids': f"bcg_{row['BCG_Kategori']}_{row['Stratejik_Durum']}",
+            'color': '#0EA5E9' if row['BCG_Kategori'] == "⭐ Star" else 
+                    '#06B6D4' if row['BCG_Kategori'] == "🐄 Cash Cow" else
+                    '#3B82F6' if row['BCG_Kategori'] == "❓ Question Mark" else
+                    '#64748B'
+        })
+        
+        # Alt seviye: Brick
+        hierarchical_data.append({
+            'labels': row['Brick'],
+            'parents': row['BCG_Kategori'],
+            'values': row['Stratejik_Hizalanma_Skoru'],  # Skor büyüklüğü
+            'ids': f"Brick_{row['Brick']}",
+            'color': '#3B82F6'
+        })
     
-    # Öncelik seviyeleri (1. seviye)
-    for priority_label in df['Priority_Label'].unique():
-        priority_data = df[df['Priority_Label'] == priority_label]
-        labels.append(priority_label)
-        parents.append("🏢 Tüm Brick'ler")
-        values.append(len(priority_data))
-        customdata.append([priority_label, len(priority_data), priority_data['Stratejik_Hizalanma_Skoru'].mean()])
+    # DataFrame'e çevir
+    hierarchy_df = pd.DataFrame(hierarchical_data)
     
-    # Stratejik durumlar (2. seviye)
-    for priority_label in df['Priority_Label'].unique():
-        priority_data = df[df['Priority_Label'] == priority_label]
-        for status in priority_data['Stratejik_Durum'].unique():
-            status_data = priority_data[priority_data['Stratejik_Durum'] == status]
-            labels.append(status)
-            parents.append(priority_label)
-            values.append(len(status_data))
-            customdata.append([status, len(status_data), status_data['Stratejik_Hizalanma_Skoru'].mean()])
-    
-    # BCG kategorileri (3. seviye - sadece yeterli veri varsa)
-    for priority_label in df['Priority_Label'].unique():
-        priority_data = df[df['Priority_Label'] == priority_label]
-        for status in priority_data['Stratejik_Durum'].unique():
-            status_data = priority_data[priority_data['Stratejik_Durum'] == status]
-            if len(status_data) >= 3:  # Sadece yeterli veri varsa göster
-                for bcg in status_data['BCG_Kategori'].unique():
-                    bcg_data = status_data[status_data['BCG_Kategori'] == bcg]
-                    if len(bcg_data) > 0:
-                        labels.append(bcg)
-                        parents.append(status)
-                        values.append(len(bcg_data))
-                        customdata.append([bcg, len(bcg_data), bcg_data['Stratejik_Hizalanma_Skoru'].mean()])
-    
-    # Renkler
-    colors = []
-    for label in labels:
-        if label == "🏢 Tüm Brick'ler":
-            colors.append('#1E3A8A')  # Lacivert
-        elif "🚨" in label:
-            colors.append('#EF4444')  # Kırmızı
-        elif "⚠️" in label:
-            colors.append('#F59E0B')  # Sarı
-        elif "📊" in label:
-            colors.append('#3B82F6')  # Mavi
-        elif "✅" in label:
-            colors.append('#10B981')  # Yeşil
-        elif "Stratejik Senkronizasyon" in label:
-            colors.append('#1E3A8A')
-        elif "Operasyonel Atalet" in label:
-            colors.append('#0EA5E9')
-        elif "Hizalanma Riski" in label:
-            colors.append('#475569')
-        elif "Kaynak Optimizasyon" in label:
-            colors.append('#06B6D4')
-        elif "Portföy Dengesizliği" in label:
-            colors.append('#64748B')
-        elif "⭐ Star" in label:
-            colors.append('#2563EB')
-        elif "🐄 Cash Cow" in label:
-            colors.append('#06B6D4')
-        elif "❓ Question Mark" in label:
-            colors.append('#0EA5E9')
-        elif "🐶 Dog" in label:
-            colors.append('#64748B')
-        else:
-            colors.append('#94A3B8')
-    
-    # Sunburst grafiği oluştur
     fig = go.Figure(go.Sunburst(
-        labels=labels,
-        parents=parents,
-        values=values,
-        branchvalues="total",
+        labels=hierarchy_df['labels'],
+        parents=hierarchy_df['parents'],
+        values=hierarchy_df['values'],
+        ids=hierarchy_df['ids'],
+        branchvalues='total',
         maxdepth=3,
-        insidetextorientation='horizontal',
         marker=dict(
-            colors=colors,
-            line=dict(width=1, color='rgba(255, 255, 255, 0.8)')
+            colors=hierarchy_df['color'],
+            line=dict(width=2, color='rgba(255, 255, 255, 0.8)')
         ),
-        hovertemplate='<b>%{label}</b><br>' +
-                     'Sayı: %{value} Brick<br>' +
-                     'Ort. Skor: %{customdata[2]:.1f}<br>' +
-                     '<extra></extra>',
-        customdata=customdata
+        hovertemplate='<b>%{label}</b><br>Skor: %{value:.1f}<br>Ebeveyn: %{parent}<extra></extra>',
+        textinfo='label+value'
     ))
     
     fig.update_layout(
         title=dict(
-            text='<b>Stratejik Hiyerarşi (Sunburst)</b><br>' +
-                f'<span style="font-size: 14px; color: #94a3b8">Toplam {len(df)} Brick</span>',
-            font=dict(size=22, color='white', family='Inter'),
-            x=0.5,
-            y=0.95
+            text='<b>Stratejik Hizalanma Hiyerarşisi (Sunburst)</b>',
+            font=dict(size=22, color='white', family='Inter')
         ),
         height=700,
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)',
         font=dict(color='#e2e8f0', family='Inter'),
-        margin=dict(t=120, b=20, l=20, r=20),
-        showlegend=False
+        margin=dict(t=50, b=20, l=20, r=20)
     )
     
     return fig
@@ -4828,68 +4776,12 @@ def main():
                     st.plotly_chart(matrix_chart, use_container_width=True)
             
             # Sunburst grafiği
-            # TAB 8'deki sunburst bölümünü şöyle değiştirin:
-# Sunburst grafiği - BASİTLEŞTİRİLMİŞ VERSİYON
-st.subheader("🔄 Stratejik Hiyerarşi (Sunburst)")
-
-# Öncelikle veri filtrelemesi yapalım
-if len(alignment_analysis) > 50:
-    # Çok fazla veri varsa, en kritik olanları göster
-    critical_data = alignment_analysis[
-        (alignment_analysis['Oncelik_Seviyesi'].isin([1, 2])) |
-        (alignment_analysis['Stratejik_Hizalanma_Skoru'] < 60)
-    ].head(30)
-    sunburst_chart = create_strategic_hierarchy_chart(critical_data)
-    
-    if sunburst_chart:
-        col_info, col_chart = st.columns([1, 2])
-        
-        with col_info:
-            st.markdown("""
-            <div style="background: rgba(30, 41, 59, 0.7); padding: 1.5rem; border-radius: 12px; margin-bottom: 1rem;">
-                <h4 style="color: #e2e8f0; margin-top: 0;">🎯 Hiyerarşi Yapısı</h4>
-                <p style="color: #cbd5e1; font-size: 0.9rem;">
-                Bu sunburst diyagramı, stratejik durumları hiyerarşik olarak gösterir:
-                </p>
-                <ul style="color: #cbd5e1; font-size: 0.9rem;">
-                    <li><b>1. Seviye:</b> Öncelik seviyeleri</li>
-                    <li><b>2. Seviye:</b> Stratejik durumlar</li>
-                    <li><b>3. Seviye:</b> BCG kategorileri</li>
-                </ul>
-                <p style="color: #cbd5e1; font-size: 0.9rem; margin-top: 1rem;">
-                <b>👆 Hover yaparak</b> detayları görün. <b>🔍 Tıklayarak</b> zoom yapabilirsiniz.
-                </p>
-            </div>
-            """, unsafe_allow_html=True)
+            st.subheader("🔄 Stratejik Hiyerarşi (Sunburst)")
+            sunburst_chart = create_sunburst_alignment_chart(alignment_analysis.head(20))  # İlk 20 Brick
+            if sunburst_chart:
+                st.plotly_chart(sunburst_chart, use_container_width=True)
             
-            # Özet istatistikler
-            st.markdown("""
-            <div style="background: rgba(30, 41, 59, 0.7); padding: 1.5rem; border-radius: 12px;">
-                <h4 style="color: #e2e8f0; margin-top: 0;">📊 Görüntülenen Veri</h4>
-                <p style="color: #cbd5e1; font-size: 0.9rem;">
-                Çok fazla veri olduğu için sadece <b>en kritik 30 Brick</b> gösteriliyor:
-                </p>
-                <ul style="color: #cbd5e1; font-size: 0.9rem;">
-                    <li>Öncelik 1 & 2 olanlar</li>
-                    <li>Hizalanma skoru < 60 olanlar</li>
-                </ul>
-                <p style="color: #cbd5e1; font-size: 0.9rem; margin-top: 1rem;">
-                Tam liste için detaylı tabloyu kullanın.
-                </p>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        with col_chart:
-            st.plotly_chart(sunburst_chart, use_container_width=True)
-    else:
-        st.info("⏳ Kritik veri bulunamadı veya sunburst oluşturulamadı")
-else:
-    # Az veri varsa tamamını göster
-    sunburst_chart = create_strategic_hierarchy_chart(alignment_analysis)
-    if sunburst_chart:
-        st.plotly_chart(sunburst_chart, use_container_width=True)
-    else:
-        st.info("⏳ Sunburst oluşturmak için yeterli veri yok")
+            st.markdown("---")
             
             # Kritik analiz bölümleri
             st.subheader("🚨 Kritik Durum Analizleri")
@@ -5122,7 +5014,3 @@ else:
 
 if __name__ == "__main__":
     main()
-
-
-
-
