@@ -3334,7 +3334,7 @@ def main():
                 <span style="opacity: 0.3">|</span>
                 <span>RAKİP ANALİZİ</span>
                 <span style="opacity: 0.3">|</span>
-                <span class="cap-item">🔍 STRATEJİK DOKU UYUMU ANALİZİ</span>
+                <span class="cap-item">STRATEJİK DOKU UYUMU ANALİZİ</span>
             </div>
         </div>
     """, unsafe_allow_html=True)
@@ -5014,4 +5014,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
