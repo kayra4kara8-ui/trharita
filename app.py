@@ -3328,7 +3328,7 @@ def main():
         total_rakip = df_period[cols['rakip']].sum()
         total_market = total_pf + total_rakip
         market_share = (total_pf / total_market * 100) if total_market > 0 else 0
-        active_territories = df_period['TERRITORIES'].nunique()
+        Aktif_territories = df_period['TERRITORIES'].nunique()
         avg_monthly_pf = total_pf / df_period['YIL_AY'].nunique() if df_period['YIL_AY'].nunique() > 0 else 0
         
         col1, col2, col3, col4 = st.columns(4)
@@ -3341,7 +3341,7 @@ def main():
             st.metric("📊 Pazar Payı", format_percentage(market_share), 
                      f"{format_percentage(100-market_share)} rakip")
         with col4:
-            st.metric("🏢 Active Brick", str(active_territories), 
+            st.metric("🏢 Aktif Brick", str(Aktif_territories), 
                      f"{df_period['MANAGER'].nunique()} manager")
         
         st.markdown("---")
@@ -3498,7 +3498,7 @@ def main():
         total_pf = city_data['PF_Satis'].sum()
         total_market = city_data['Toplam_Pazar'].sum()
         avg_share = city_data['Pazar_Payi_%'].mean()
-        active_cities = len(city_data[city_data['PF_Satis'] > 0])
+        Aktif_cities = len(city_data[city_data['PF_Satis'] > 0])
         top_city = city_data.loc[city_data['PF_Satis'].idxmax(), 'City'] if len(city_data) > 0 else "Yok"
         
         with col1:
@@ -3508,7 +3508,7 @@ def main():
         with col3:
             st.metric("📊 Ort. Pazar Payı", format_percentage(avg_share))
         with col4:
-            st.metric("🏙️ Aktif Şehir", str(active_cities))
+            st.metric("🏙️ Aktif Şehir", str(Aktif_cities))
         with col5:
             st.metric("🏆 Lider Şehir", top_city)
         
@@ -4830,6 +4830,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
