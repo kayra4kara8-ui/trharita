@@ -2793,53 +2793,71 @@ def style_dataframe(df, color_column=None, gradient_columns=None):
 # =============================================================================
 
 def main():
-    # CSS ile stil tanımlamaları (Daha temiz bir görünüm için)
+    # Kurumsal Renk Paleti ve Modern Stil
     st.markdown("""
         <style>
-        .main-header {
-            font-family: 'Inter', sans-serif;
+        /* Ana Konteyner */
+        .header-wrapper {
+            background: #001219; /* Görseldeki koyu arka plan tonu */
+            padding: 3rem 1rem;
+            border-radius: 15px;
             text-align: center;
-            font-weight: 800;
-            letter-spacing: -1px;
-            color: #F8FAFC;
+            border: 1px solid rgba(14, 165, 233, 0.1);
+        }
+
+        /* Ana Başlık: Daha temiz ve ince-kalın dengeli */
+        .main-title {
+            font-family: 'Inter', sans-serif;
+            color: #FFFFFF;
+            font-size: 2.8rem;
+            font-weight: 200; /* İnce font modern durur */
+            letter-spacing: 2px;
             margin-bottom: 0.5rem;
             text-transform: uppercase;
         }
-        .sub-header-container {
-            text-align: center;
-            margin-bottom: 3rem;
-            padding: 1rem;
-            border-bottom: 1px solid rgba(226, 232, 240, 0.1);
-            background: rgba(14, 165, 233, 0.05);
-            border-radius: 8px;
+
+        .main-title b {
+            font-weight: 800; /* Vurgu için kalın */
+            color: #FFFFFF;
         }
-        .feature-tag {
-            display: inline-block;
-            color: #38BDF8;
+
+        /* Alt Başlık: İsimleri sadeleştirdik */
+        .subtitle {
+            color: #0EA5E9; /* Görseldeki mavi tonu */
+            font-size: 1.1rem;
             font-weight: 500;
-            font-size: 0.95rem;
-            margin: 0 10px;
+            letter-spacing: 1px;
+            opacity: 0.9;
         }
-        .separator {
-            color: #475569;
-            font-weight: 300;
+
+        /* Dekoratif Alt Çizgi */
+        .divider {
+            height: 2px;
+            width: 60px;
+            background: #0EA5E9;
+            margin: 1.5rem auto;
+            border-radius: 10px;
+        }
+
+        /* Özellikler: Minimalist ikonik yaklaşım */
+        .feature-line {
+            color: #94a3b8;
+            font-size: 0.85rem;
+            word-spacing: 5px;
+            text-transform: uppercase;
         }
         </style>
     """, unsafe_allow_html=True)
 
-    # Başlık Alanı
-    st.markdown('<h1 class="main-header">🎯 GELİŞMİŞ TİCARİ PORTFÖY ANALİZ SİSTEMİ</h1>', unsafe_allow_html=True)
-
-    # Alt Bilgi Alanı (Modern Etiketli Görünüm)
-    st.markdown("""
-        <div class="sub-header-container">
-            <span class="feature-tag">ML Tahminleme</span> <span class="separator">|</span>
-            <span class="feature-tag">Gelişmiş Zaman Serisi Analizi</span> <span class="separator">|</span>
-            <span class="feature-tag">Modern Harita Katmanları</span> <span class="separator">|</span>
-            <span class="feature-tag">Rakip Analizi</span>
-            <br>
-            <span class="feature-tag" style="margin-top: 8px;">Bölge Karşılaştırmalı Analiz</span> <span class="separator">•</span>
-            <span class="feature-tag">Bölge İçi Detaylı Performans Analizi</span>
+    # Uygulama Alanı
+    st.markdown(f"""
+        <div class="header-wrapper">
+            <div class="subtitle">STRATEJİK VERİ YÖNETİMİ</div>
+            <h1 class="main-title">BÖLGE <b>PERFORMANS ANALİZİ</b></h1>
+            <div class="divider"></div>
+            <div class="feature-line">
+                ML TAHMİNLEME • ZAMAN SERİSİ • MODERN HARİTA • RAKİP ANALİZİ
+            </div>
         </div>
     """, unsafe_allow_html=True)
     
@@ -4319,6 +4337,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
