@@ -989,6 +989,14 @@ def create_strategic_heatmap_chart(alignment_df):
     all_values = [val for sublist in heatmap_data for val in sublist]
     max_val = max(all_values) if all_values else 0
     
+    # Sade ve basit colorbar ayarları
+    colorbar_settings = {}
+    
+    # Sadece max değer 0'dan büyükse tick ekle
+    if max_val > 0:
+        colorbar_settings['tickvals'] = [0, max_val]
+        colorbar_settings['ticktext'] = ['Az', 'Çok']
+    
     fig = go.Figure(data=go.Heatmap(
         z=heatmap_data,
         x=strategic_statuses,
@@ -998,14 +1006,23 @@ def create_strategic_heatmap_chart(alignment_df):
         texttemplate='%{text}',
         textfont={"size": 16, "color": "white"},
         hovertemplate='<b>BCG:</b> %{y}<br><b>Durum:</b> %{x}<br><b>Brick Sayısı:</b> %{z}<extra></extra>',
-        showscale=True,
-        colorbar=dict(
-            title="Brick Sayısı",
-            titleside="right",
-            tickvals=[0, max_val] if max_val > 0 else None,
-            ticktext=["Az", "Çok"] if max_val > 0 else None
-        )
+        showscale=True
     ))
+    
+    # Colorbar'ı ayrıca update_layout ile ayarla
+    if colorbar_settings:
+        fig.update_layout(
+            coloraxis_colorbar=dict(
+                title="Brick Sayısı",
+                **colorbar_settings
+            )
+        )
+    else:
+        fig.update_layout(
+            coloraxis_colorbar=dict(
+                title="Brick Sayısı"
+            )
+        )
     
     fig.update_layout(
         title=dict(
@@ -1029,7 +1046,7 @@ def create_strategic_heatmap_chart(alignment_df):
     )
     
     return fig
-
+    
 def create_strategic_alignment_score_chart(alignment_df):
     """
     Stratejik Hizalanma Skorları Dağılımı
@@ -5010,3 +5027,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
