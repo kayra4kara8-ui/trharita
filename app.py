@@ -8,6 +8,8 @@ GELİŞTİRİLMİŞ ÖZELLİKLER:
 - 📈 Gelişmiş rakip analizi ve trend karşılaştırması
 - 🎯 Dinamik zaman aralığı filtreleme
 - 📉 Trend analizi ve performans metrikleri
+- 🆕 BÖLGE KARŞILAŞTIRMALI ANALİZ
+- 🆕 BÖLGE İÇİ DETAYLI PERFORMANS ANALİZİ
 """
 
 import streamlit as st
@@ -487,7 +489,7 @@ CITY_NORMALIZE_CLEAN = {
     'MERSIN': 'Mersin',
     'MERSİN': 'Mersin',
     'MUGLA': 'Mugla',
-    'MUĞLA': 'Mugla',
+    'MUĞLA': 'Mugla",
     'MUS': 'Mus',
     'MUŞ': 'Mus',
     'NEVSEHIR': 'Nevsehir',
@@ -655,6 +657,143 @@ def calculate_seasonality(y_values, period=12):
         return "Analiz Edilemedi", None
     
     return "Bilinmiyor", None
+
+# =============================================================================
+# YENİ ANALİZ FONKSİYONLARI
+# =============================================================================
+
+def calculate_region_comparative_analysis(df, product, date_filter=None):
+    """
+    Bölgeler arası karşılaştırmalı analiz
+    
+    Her bölge için:
+    - PF Satış Toplamı
+    - Toplam Pazar Büyüklüğü
+    - Pazar Payı
+    - Bölge İçi Pay (Bölgedeki PF Satışın Türkiye'deki PF Satışa Oranı)
+    - Yoğunluk (Birim Şehir Başına PF Satış)
+    """
+    cols = get_product_columns(product)
+    
+    if date_filter:
+        df = df[(df['DATE'] >= date_filter[0]) & (df['DATE'] <= date_filter[1])]
+    
+    # Türkiye toplamları
+    total_pf_turkey = df[cols['pf']].sum()
+    total_market_turkey = (df[cols['pf']] + df[cols['rakip']]).sum()
+    
+    # Bölge bazlı analiz
+    region_analysis = df.groupby('REGION').agg({
+        cols['pf']: 'sum',
+        cols['rakip']: 'sum'
+    }).reset_index()
+    
+    region_analysis.columns = ['Region', 'PF_Satis', 'Rakip_Satis']
+    region_analysis['Toplam_Pazar'] = region_analysis['PF_Satis'] + region_analysis['Rakip_Satis']
+    region_analysis['Pazar_Payi_%'] = safe_divide(region_analysis['PF_Satis'], region_analysis['Toplam_Pazar']) * 100
+    
+    # Bölge içi pay (Türkiye'deki toplam PF satışa göre)
+    region_analysis['Bolge_Ici_Pay_%'] = safe_divide(region_analysis['PF_Satis'], total_pf_turkey) * 100
+    
+    # Şehir sayısı ve yoğunluk
+    city_count = df.groupby('REGION')['CITY_NORMALIZED'].nunique().reset_index()
+    city_count.columns = ['Region', 'Sehir_Sayisi']
+    region_analysis = region_analysis.merge(city_count, on='Region', how='left')
+    region_analysis['Sehir_Sayisi'] = region_analysis['Sehir_Sayisi'].fillna(0)
+    region_analysis['Yogunluk'] = safe_divide(region_analysis['PF_Satis'], region_analysis['Sehir_Sayisi'])
+    
+    # Performans skoru (çok boyutlu)
+    region_analysis['Performans_Skoru'] = (
+        (region_analysis['Bolge_Ici_Pay_%'] / 100) * 0.4 +          # Bölge içi ağırlık
+        (region_analysis['Pazar_Payi_%'] / 100) * 0.3 +            # Pazar payı
+        (region_analysis['Yogunluk'] / region_analysis['Yogunluk'].max() if region_analysis['Yogunluk'].max() > 0 else 0) * 0.3  # Yoğunluk
+    ) * 100
+    
+    # Sıralama
+    region_analysis = region_analysis.sort_values('Performans_Skoru', ascending=False)
+    
+    return region_analysis
+
+def calculate_intra_region_performance(df, product, selected_region, date_filter=None):
+    """
+    Seçilen bir bölge içindeki detaylı performans analizi
+    
+    Bölge içindeki:
+    - Şehirlerin PF Satış Dağılımı
+    - Territory Performansları
+    - Manager Performansları
+    - Zaman İçinde Gelişim
+    """
+    cols = get_product_columns(product)
+    
+    if date_filter:
+        df = df[(df['DATE'] >= date_filter[0]) & (df['DATE'] <= date_filter[1])]
+    
+    # Bölgeyi filtrele
+    df_region = df[df['REGION'] == selected_region].copy()
+    
+    if len(df_region) == 0:
+        return None, None, None, None
+    
+    # 1. ŞEHİR BAZLI ANALİZ
+    city_analysis = df_region.groupby('CITY_NORMALIZED').agg({
+        cols['pf']: 'sum',
+        cols['rakip']: 'sum'
+    }).reset_index()
+    
+    city_analysis.columns = ['City', 'PF_Satis', 'Rakip_Satis']
+    city_analysis['Toplam_Pazar'] = city_analysis['PF_Satis'] + city_analysis['Rakip_Satis']
+    city_analysis['Pazar_Payi_%'] = safe_divide(city_analysis['PF_Satis'], city_analysis['Toplam_Pazar']) * 100
+    
+    region_total_pf = city_analysis['PF_Satis'].sum()
+    city_analysis['Bolge_Ici_Pay_%'] = safe_divide(city_analysis['PF_Satis'], region_total_pf) * 100
+    
+    city_analysis = city_analysis.sort_values('PF_Satis', ascending=False)
+    
+    # 2. TERRITORY BAZLI ANALİZ
+    territory_analysis = df_region.groupby('TERRITORIES').agg({
+        cols['pf']: 'sum',
+        cols['rakip']: 'sum',
+        'MANAGER': 'first',
+        'CITY_NORMALIZED': lambda x: ', '.join(sorted(set(x)))  # Territory'nin kapsadığı şehirler
+    }).reset_index()
+    
+    territory_analysis.columns = ['Territory', 'PF_Satis', 'Rakip_Satis', 'Manager', 'Kapsadigi_Sehirler']
+    territory_analysis['Toplam_Pazar'] = territory_analysis['PF_Satis'] + territory_analysis['Rakip_Satis']
+    territory_analysis['Pazar_Payi_%'] = safe_divide(territory_analysis['PF_Satis'], territory_analysis['Toplam_Pazar']) * 100
+    territory_analysis['Bolge_Ici_Pay_%'] = safe_divide(territory_analysis['PF_Satis'], region_total_pf) * 100
+    
+    territory_analysis = territory_analysis.sort_values('PF_Satis', ascending=False)
+    
+    # 3. MANAGER BAZLI ANALİZ
+    manager_analysis = df_region.groupby('MANAGER').agg({
+        cols['pf']: 'sum',
+        cols['rakip']: 'sum',
+        'TERRITORIES': 'nunique',  # Kaç territory yönetiyor
+        'CITY_NORMALIZED': 'nunique'  # Kaç şehirde çalışıyor
+    }).reset_index()
+    
+    manager_analysis.columns = ['Manager', 'PF_Satis', 'Rakip_Satis', 'Territory_Sayisi', 'Sehir_Sayisi']
+    manager_analysis['Toplam_Pazar'] = manager_analysis['PF_Satis'] + manager_analysis['Rakip_Satis']
+    manager_analysis['Pazar_Payi_%'] = safe_divide(manager_analysis['PF_Satis'], manager_analysis['Toplam_Pazar']) * 100
+    manager_analysis['Ortalama_Territory_Performansi'] = safe_divide(manager_analysis['PF_Satis'], manager_analysis['Territory_Sayisi'])
+    
+    manager_analysis = manager_analysis.sort_values('PF_Satis', ascending=False)
+    
+    # 4. ZAMAN İÇİ GELİŞİM (Aylık)
+    monthly_analysis = df_region.groupby('YIL_AY').agg({
+        cols['pf']: 'sum',
+        cols['rakip']: 'sum'
+    }).reset_index().sort_values('YIL_AY')
+    
+    monthly_analysis.columns = ['YIL_AY', 'PF_Satis', 'Rakip_Satis']
+    monthly_analysis['Toplam_Pazar'] = monthly_analysis['PF_Satis'] + monthly_analysis['Rakip_Satis']
+    monthly_analysis['Pazar_Payi_%'] = safe_divide(monthly_analysis['PF_Satis'], monthly_analysis['Toplam_Pazar']) * 100
+    
+    # Büyüme oranları
+    monthly_analysis['PF_Buyume_%'] = monthly_analysis['PF_Satis'].pct_change() * 100
+    
+    return city_analysis, territory_analysis, manager_analysis, monthly_analysis
 
 # =============================================================================
 # GELİŞTİRİLMİŞ ZAMAN SERİSİ ANALİZ FONKSİYONLARI
@@ -1513,6 +1652,289 @@ def calculate_bcg_matrix(df, product, date_filter=None):
     return terr_perf
 
 # =============================================================================
+# YENİ GÖRSELLEŞTİRME FONKSİYONLARI
+# =============================================================================
+
+def create_region_comparison_chart(region_analysis):
+    """Bölge karşılaştırmalı analiz grafiği"""
+    fig = go.Figure()
+    
+    # Çoklu bar grafiği
+    fig.add_trace(go.Bar(
+        x=region_analysis['Region'],
+        y=region_analysis['PF_Satis'],
+        name='PF Satış',
+        marker_color=PERFORMANCE_COLORS['success'],
+        text=[format_number(x) for x in region_analysis['PF_Satis']],
+        textposition='outside',
+        marker=dict(
+            line=dict(width=2, color='rgba(255, 255, 255, 0.8)')
+        )
+    ))
+    
+    fig.add_trace(go.Bar(
+        x=region_analysis['Region'],
+        y=region_analysis['Toplam_Pazar'],
+        name='Toplam Pazar',
+        marker_color=PERFORMANCE_COLORS['info'],
+        text=[format_number(x) for x in region_analysis['Toplam_Pazar']],
+        textposition='outside',
+        marker=dict(
+            line=dict(width=2, color='rgba(255, 255, 255, 0.8)')
+        )
+    ))
+    
+    # İkinci eksen için Pazar Payı
+    fig.add_trace(go.Scatter(
+        x=region_analysis['Region'],
+        y=region_analysis['Pazar_Payi_%'],
+        name='Pazar Payı %',
+        mode='lines+markers',
+        line=dict(color=PERFORMANCE_COLORS['warning'], width=3),
+        marker=dict(size=10, color='white', line=dict(width=2, color=PERFORMANCE_COLORS['warning'])),
+        text=[f"{x:.1f}%" for x in region_analysis['Pazar_Payi_%']],
+        textposition='top center',
+        yaxis="y2"
+    ))
+    
+    fig.update_layout(
+        title=dict(
+            text='<b>Bölge Karşılaştırmalı Analiz</b>',
+            font=dict(size=22, color='white', family='Inter')
+        ),
+        xaxis_title='<b>Bölge</b>',
+        yaxis_title='<b>Satış</b>',
+        yaxis2=dict(
+            title='<b>Pazar Payı %</b>',
+            overlaying='y',
+            side='right',
+            showgrid=False,
+            ticksuffix='%',
+            range=[0, 100]
+        ),
+        barmode='group',
+        height=600,
+        xaxis=dict(tickangle=-45),
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='#e2e8f0', family='Inter'),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1,
+            bgcolor='rgba(30, 41, 59, 0.8)'
+        ),
+        yaxis=dict(
+            tickformat=',.0f'
+        )
+    )
+    
+    return fig
+
+def create_region_radar_chart(region_analysis):
+    """Bölge performansı radar grafiği"""
+    # Normalize edilmiş değerler
+    max_pf = region_analysis['PF_Satis'].max()
+    max_total = region_analysis['Toplam_Pazar'].max()
+    max_share = region_analysis['Pazar_Payi_%'].max()
+    max_density = region_analysis['Yogunluk'].max()
+    max_performance = region_analysis['Performans_Skoru'].max()
+    
+    # Sadece top 5 bölge göster
+    top_regions = region_analysis.head(5)
+    
+    categories = ['PF Satış', 'Toplam Pazar', 'Pazar Payı', 'Yoğunluk', 'Performans']
+    
+    fig = go.Figure()
+    
+    for idx, row in top_regions.iterrows():
+        fig.add_trace(go.Scatterpolar(
+            r=[
+                row['PF_Satis'] / max_pf * 100,
+                row['Toplam_Pazar'] / max_total * 100,
+                row['Pazar_Payi_%'],
+                row['Yogunluk'] / max_density * 100 if max_density > 0 else 0,
+                row['Performans_Skoru'] / max_performance * 100 if max_performance > 0 else 0
+            ],
+            theta=categories,
+            fill='toself',
+            name=row['Region'],
+            line=dict(color=REGION_COLORS.get(row['Region'], "#64748B"), width=2),
+            fillcolor=REGION_COLORS.get(row['Region'], "#64748B") + '30'  # %30 opacity
+        ))
+    
+    fig.update_layout(
+        title=dict(
+            text='<b>Top 5 Bölge Performans Karşılaştırması</b>',
+            font=dict(size=22, color='white', family='Inter')
+        ),
+        polar=dict(
+            radialaxis=dict(
+                visible=True,
+                range=[0, 100],
+                ticksuffix='%'
+            )
+        ),
+        showlegend=True,
+        height=600,
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='#e2e8f0', family='Inter'),
+        legend=dict(
+            bgcolor='rgba(30, 41, 59, 0.8)',
+            bordercolor='rgba(59, 130, 246, 0.3)',
+            borderwidth=1
+        )
+    )
+    
+    return fig
+
+def create_intra_region_city_chart(city_analysis):
+    """Bölge içi şehir performans grafiği"""
+    fig = go.Figure()
+    
+    # Top 10 şehir
+    top_cities = city_analysis.head(10)
+    
+    # PF Satış
+    fig.add_trace(go.Bar(
+        x=top_cities['City'],
+        y=top_cities['PF_Satis'],
+        name='PF Satış',
+        marker_color=PERFORMANCE_COLORS['success'],
+        text=[format_number(x) for x in top_cities['PF_Satis']],
+        textposition='outside',
+        marker=dict(
+            line=dict(width=1.5, color='rgba(255, 255, 255, 0.8)')
+        )
+    ))
+    
+    # Toplam Pazar
+    fig.add_trace(go.Bar(
+        x=top_cities['City'],
+        y=top_cities['Toplam_Pazar'],
+        name='Toplam Pazar',
+        marker_color=PERFORMANCE_COLORS['info'],
+        text=[format_number(x) for x in top_cities['Toplam_Pazar']],
+        textposition='outside',
+        marker=dict(
+            line=dict(width=1.5, color='rgba(255, 255, 255, 0.8)')
+        )
+    ))
+    
+    # Pazar Payı (ikinci eksen)
+    fig.add_trace(go.Scatter(
+        x=top_cities['City'],
+        y=top_cities['Pazar_Payi_%'],
+        name='Pazar Payı %',
+        mode='lines+markers+text',
+        line=dict(color=PERFORMANCE_COLORS['warning'], width=3),
+        marker=dict(size=8, color='white', line=dict(width=2, color=PERFORMANCE_COLORS['warning'])),
+        text=[f"{x:.1f}%" for x in top_cities['Pazar_Payi_%']],
+        textposition='top center',
+        yaxis="y2"
+    ))
+    
+    fig.update_layout(
+        title=dict(
+            text='<b>Bölge İçi Şehir Performansı (Top 10)</b>',
+            font=dict(size=20, color='white', family='Inter')
+        ),
+        xaxis_title='<b>Şehir</b>',
+        yaxis_title='<b>Satış</b>',
+        yaxis2=dict(
+            title='<b>Pazar Payı %</b>',
+            overlaying='y',
+            side='right',
+            showgrid=False,
+            ticksuffix='%',
+            range=[0, 100]
+        ),
+        barmode='group',
+        height=500,
+        xaxis=dict(tickangle=-45),
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='#e2e8f0', family='Inter'),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        ),
+        yaxis=dict(
+            tickformat=',.0f'
+        )
+    )
+    
+    return fig
+
+def create_intra_region_manager_chart(manager_analysis):
+    """Bölge içi manager performans grafiği"""
+    fig = go.Figure()
+    
+    # PF Satış
+    fig.add_trace(go.Bar(
+        x=manager_analysis['Manager'],
+        y=manager_analysis['PF_Satis'],
+        name='PF Satış',
+        marker_color=PERFORMANCE_COLORS['success'],
+        text=[format_number(x) for x in manager_analysis['PF_Satis']],
+        textposition='outside',
+        marker=dict(
+            line=dict(width=1.5, color='rgba(255, 255, 255, 0.8)')
+        )
+    ))
+    
+    # Territory başına performans (ikinci eksen)
+    fig.add_trace(go.Scatter(
+        x=manager_analysis['Manager'],
+        y=manager_analysis['Ortalama_Territory_Performansi'],
+        name='Territory Başına Ort.',
+        mode='lines+markers+text',
+        line=dict(color=PERFORMANCE_COLORS['warning'], width=3),
+        marker=dict(size=8, color='white', line=dict(width=2, color=PERFORMANCE_COLORS['warning'])),
+        text=[format_number(x) for x in manager_analysis['Ortalama_Territory_Performansi']],
+        textposition='top center',
+        yaxis="y2"
+    ))
+    
+    fig.update_layout(
+        title=dict(
+            text='<b>Manager Performans Karşılaştırması</b>',
+            font=dict(size=20, color='white', family='Inter')
+        ),
+        xaxis_title='<b>Manager</b>',
+        yaxis_title='<b>Toplam PF Satış</b>',
+        yaxis2=dict(
+            title='<b>Territory Başına Ort.</b>',
+            overlaying='y',
+            side='right',
+            showgrid=False
+        ),
+        height=500,
+        xaxis=dict(tickangle=-45),
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='#e2e8f0', family='Inter'),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        ),
+        yaxis=dict(
+            tickformat=',.0f'
+        )
+    )
+    
+    return fig
+
+# =============================================================================
 # YATIRIM STRATEJİSİ - GELİŞTİRİLMİŞ ALGORİTMA
 # =============================================================================
 
@@ -2330,7 +2752,8 @@ def main():
     # Başlık ve açıklama
     st.markdown('<h1 class="main-header">🎯 GELİŞMİŞ TİCARİ PORTFÖY ANALİZ SİSTEMİ</h1>', unsafe_allow_html=True)
     st.markdown('<div style="text-align: center; font-size: 1.2rem; color: #94a3b8; margin-bottom: 3rem;">'
-                'GERÇEK ML Tahminleme • Gelişmiş Zaman Serisi Analizi • Modern Harita • Rakip Analizi'
+                'GERÇEK ML Tahminleme • Gelişmiş Zaman Serisi Analizi • Modern Harita • Rakip Analizi<br>'
+                '<span style="color: #0EA5E9; font-weight: 600;">YENİ: Bölge Karşılaştırmalı Analiz • Bölge İçi Detaylı Performans Analizi</span>'
                 '</div>', unsafe_allow_html=True)
     
     # SIDEBAR
@@ -2452,14 +2875,15 @@ def main():
                        f'<span style="color: #cbd5e1; font-size: 0.9rem;">{region}</span>'
                        f'</div>', unsafe_allow_html=True)
     
-    # ANA İÇERİK - TAB'LER
-    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
+    # ANA İÇERİK - TAB'LER (YENİ SEKMELER EKLENDİ)
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
         "📊 Genel Bakış",
         "🗺️ Modern Harita",
         "🏢 Territory Analizi",
         "📈 Gelişmiş Zaman Serisi",
         "🎯 Rakip Analizi",
         "⭐ BCG & Strateji",
+        "🏆 Bölge Karşılaştırması",  # YENİ SEKME
         "📥 Raporlar"
     ])
     
@@ -3449,8 +3873,228 @@ def main():
             height=400
         )
     
-    # TAB 7: RAPORLAR
+    # TAB 7: YENİ BÖLGE KARŞILAŞTIRMALI ANALİZ
     with tab7:
+        st.header("🏆 Bölge Karşılaştırmalı Analiz")
+        
+        # Bölge karşılaştırmalı analiz
+        region_comparison = calculate_region_comparative_analysis(df_filtered, selected_product, date_filter)
+        
+        if len(region_comparison) == 0:
+            st.warning("⚠️ Bölge verisi bulunamadı")
+        else:
+            # Özet Metrikler
+            st.subheader("📊 Bölge Performans Özeti")
+            
+            col_reg1, col_reg2, col_reg3, col_reg4, col_reg5 = st.columns(5)
+            
+            with col_reg1:
+                top_region = region_comparison.iloc[0]['Region']
+                top_pf = region_comparison.iloc[0]['PF_Satis']
+                st.metric("🏆 Lider Bölge", top_region, f"{format_number(top_pf)} PF")
+            
+            with col_reg2:
+                avg_pf_region = region_comparison['PF_Satis'].mean()
+                st.metric("📊 Ort. PF Satış", format_number(avg_pf_region))
+            
+            with col_reg3:
+                avg_share_region = region_comparison['Pazar_Payi_%'].mean()
+                st.metric("🎯 Ort. Pazar Payı", format_percentage(avg_share_region))
+            
+            with col_reg4:
+                avg_density = region_comparison['Yogunluk'].mean()
+                st.metric("📍 Ort. Yoğunluk", format_number(avg_density))
+            
+            with col_reg5:
+                region_count = len(region_comparison)
+                st.metric("🗺️ Bölge Sayısı", str(region_count))
+            
+            st.markdown("---")
+            
+            # Bölge karşılaştırma grafiği
+            st.subheader("📈 Bölge Karşılaştırmalı Analiz")
+            
+            region_chart = create_region_comparison_chart(region_comparison)
+            st.plotly_chart(region_chart, use_container_width=True)
+            
+            # Radar grafiği
+            st.subheader("🎯 Bölge Performans Radar Grafiği")
+            radar_chart = create_region_radar_chart(region_comparison)
+            st.plotly_chart(radar_chart, use_container_width=True)
+            
+            st.markdown("---")
+            
+            # Bölge seçimi için dropdown
+            st.subheader("🔍 Bölge İçi Detaylı Analiz")
+            
+            selected_intra_region = st.selectbox(
+                "Analiz Edilecek Bölge Seçin",
+                ["Seçiniz"] + sorted(region_comparison['Region'].unique())
+            )
+            
+            if selected_intra_region != "Seçiniz":
+                # Bölge içi detaylı analiz
+                city_analysis, territory_analysis, manager_analysis, monthly_analysis = calculate_intra_region_performance(
+                    df_filtered, selected_product, selected_intra_region, date_filter
+                )
+                
+                if city_analysis is not None:
+                    # Bölge içi özet metrikler
+                    col_intra1, col_intra2, col_intra3, col_intra4 = st.columns(4)
+                    
+                    with col_intra1:
+                        total_pf_region = city_analysis['PF_Satis'].sum()
+                        st.metric("💰 Bölge Toplam PF", format_number(total_pf_region))
+                    
+                    with col_intra2:
+                        avg_share_region = city_analysis['Pazar_Payi_%'].mean()
+                        st.metric("📊 Ort. Pazar Payı", format_percentage(avg_share_region))
+                    
+                    with col_intra3:
+                        city_count = len(city_analysis)
+                        st.metric("🏙️ Aktif Şehir", str(city_count))
+                    
+                    with col_intra4:
+                        top_city = city_analysis.iloc[0]['City']
+                        st.metric("🏆 Lider Şehir", top_city)
+                    
+                    st.markdown("---")
+                    
+                    # Şehir performans grafiği
+                    st.subheader(f"🏙️ {selected_intra_region} - Şehir Performansı")
+                    intra_city_chart = create_intra_region_city_chart(city_analysis)
+                    st.plotly_chart(intra_city_chart, use_container_width=True)
+                    
+                    # Manager performans grafiği
+                    st.subheader(f"👨‍💼 {selected_intra_region} - Manager Performansı")
+                    intra_manager_chart = create_intra_region_manager_chart(manager_analysis)
+                    st.plotly_chart(intra_manager_chart, use_container_width=True)
+                    
+                    # Bölge içi zaman serisi
+                    st.subheader(f"📈 {selected_intra_region} - Zaman İçinde Gelişim")
+                    
+                    if monthly_analysis is not None and len(monthly_analysis) > 0:
+                        fig_monthly = go.Figure()
+                        
+                        fig_monthly.add_trace(go.Scatter(
+                            x=monthly_analysis['YIL_AY'],
+                            y=monthly_analysis['PF_Satis'],
+                            mode='lines+markers',
+                            name='PF Satış',
+                            line=dict(color=PERFORMANCE_COLORS['success'], width=3),
+                            marker=dict(size=8, color='white', line=dict(width=2, color=PERFORMANCE_COLORS['success']))
+                        ))
+                        
+                        fig_monthly.add_trace(go.Scatter(
+                            x=monthly_analysis['YIL_AY'],
+                            y=monthly_analysis['Toplam_Pazar'],
+                            mode='lines',
+                            name='Toplam Pazar',
+                            line=dict(color=PERFORMANCE_COLORS['info'], width=2, dash='dash')
+                        ))
+                        
+                        fig_monthly.update_layout(
+                            title=dict(
+                                text=f'<b>{selected_intra_region} - Aylık Performans</b>',
+                                font=dict(size=20, color='white', family='Inter')
+                            ),
+                            xaxis_title='<b>Ay</b>',
+                            yaxis_title='<b>Satış</b>',
+                            height=500,
+                            plot_bgcolor='rgba(0,0,0,0)',
+                            paper_bgcolor='rgba(0,0,0,0)',
+                            font=dict(color='#e2e8f0', family='Inter'),
+                            legend=dict(
+                                orientation="h",
+                                yanchor="bottom",
+                                y=1.02,
+                                xanchor="right",
+                                x=1
+                            ),
+                            yaxis=dict(
+                                tickformat=',.0f'
+                            )
+                        )
+                        
+                        st.plotly_chart(fig_monthly, use_container_width=True)
+                    
+                    # Detaylı tablolar
+                    col_table1, col_table2 = st.columns(2)
+                    
+                    with col_table1:
+                        st.subheader("🏙️ Şehir Detayları")
+                        
+                        city_display = city_analysis.copy()
+                        city_display = city_display[['City', 'PF_Satis', 'Toplam_Pazar', 'Pazar_Payi_%', 'Bolge_Ici_Pay_%']]
+                        city_display.columns = ['Şehir', 'PF Satış', 'Toplam Pazar', 'Pazar Payı %', 'Bölge İçi Pay %']
+                        city_display.index = range(1, len(city_display) + 1)
+                        
+                        styled_city = style_dataframe(
+                            city_display,
+                            color_column='Pazar Payı %',
+                            gradient_columns=['PF Satış', 'Bölge İçi Pay %']
+                        )
+                        
+                        st.dataframe(styled_city, use_container_width=True, height=400)
+                    
+                    with col_table2:
+                        st.subheader("👨‍💼 Manager Detayları")
+                        
+                        manager_display = manager_analysis.copy()
+                        manager_display = manager_display[['Manager', 'PF_Satis', 'Pazar_Payi_%', 'Territory_Sayisi', 'Ortalama_Territory_Performansi']]
+                        manager_display.columns = ['Manager', 'PF Satış', 'Pazar Payı %', 'Territory Sayısı', 'Territory Başına Ort.']
+                        manager_display.index = range(1, len(manager_display) + 1)
+                        
+                        styled_manager = style_dataframe(
+                            manager_display,
+                            color_column='Pazar Payı %',
+                            gradient_columns=['PF Satış', 'Territory Başına Ort.']
+                        )
+                        
+                        st.dataframe(styled_manager, use_container_width=True, height=400)
+                    
+                    # Territory detayları
+                    st.subheader("🏢 Territory Detayları")
+                    
+                    territory_display = territory_analysis.copy()
+                    territory_display = territory_display[['Territory', 'Manager', 'Kapsadigi_Sehirler', 'PF_Satis', 'Pazar_Payi_%', 'Bolge_Ici_Pay_%']]
+                    territory_display.columns = ['Territory', 'Manager', 'Kapsadığı Şehirler', 'PF Satış', 'Pazar Payı %', 'Bölge İçi Pay %']
+                    territory_display.index = range(1, len(territory_display) + 1)
+                    
+                    styled_territory_intra = style_dataframe(
+                        territory_display,
+                        color_column='Pazar Payı %',
+                        gradient_columns=['PF Satış', 'Bölge İçi Pay %']
+                    )
+                    
+                    st.dataframe(styled_territory_intra, use_container_width=True, height=400)
+                else:
+                    st.warning(f"⚠️ {selected_intra_region} bölgesinde veri bulunamadı")
+            
+            st.markdown("---")
+            
+            # Detaylı bölge karşılaştırma tablosu
+            st.subheader("📋 Detaylı Bölge Karşılaştırması")
+            
+            region_display = region_comparison.copy()
+            region_display = region_display[['Region', 'PF_Satis', 'Toplam_Pazar', 'Pazar_Payi_%', 'Bolge_Ici_Pay_%', 'Sehir_Sayisi', 'Yogunluk', 'Performans_Skoru']]
+            region_display.columns = ['Bölge', 'PF Satış', 'Toplam Pazar', 'Pazar Payı %', 'Bölge İçi Pay %', 'Şehir Sayısı', 'Yoğunluk', 'Performans Skoru']
+            region_display.index = range(1, len(region_display) + 1)
+            
+            styled_region = style_dataframe(
+                region_display,
+                color_column='Performans Skoru',
+                gradient_columns=['PF Satış', 'Pazar Payı %', 'Bölge İçi Pay %', 'Yoğunluk']
+            )
+            
+            st.dataframe(
+                styled_region,
+                use_container_width=True,
+                height=400
+            )
+    
+    # TAB 8: RAPORLAR
+    with tab8:
         st.header("📥 Rapor İndirme")
         
         st.markdown("""
@@ -3468,6 +4112,8 @@ def main():
                 <li>BCG Matrix</li>
                 <li>Şehir Bazlı Analiz</li>
                 <li>Rakip Analizi</li>
+                <li><b>YENİ: Bölge Karşılaştırmalı Analiz</b></li>
+                <li><b>YENİ: Bölge İçi Detaylı Performans Analizi</b></li>
             </ul>
         </div>
         """, unsafe_allow_html=True)
@@ -3484,6 +4130,7 @@ def main():
                 bcg_df = calculate_bcg_matrix(df_filtered, selected_product, date_filter)
                 city_data = calculate_city_performance(df_filtered, selected_product, date_filter)
                 comp_data = calculate_competitor_analysis(df_filtered, selected_product, date_filter)
+                region_comparison = calculate_region_comparative_analysis(df_filtered, selected_product, date_filter)
                 
                 # ML tahmini
                 if len(monthly_df) >= 12:
@@ -3506,6 +4153,7 @@ def main():
                     
                     city_data.to_excel(writer, sheet_name='Şehir Analizi', index=False)
                     comp_data.to_excel(writer, sheet_name='Rakip Analizi', index=False)
+                    region_comparison.to_excel(writer, sheet_name='Bölge Karşılaştırması', index=False)
                     
                     if forecast_df is not None:
                         forecast_df.to_excel(writer, sheet_name='ML Tahminler', index=False)
@@ -3527,7 +4175,7 @@ def main():
                     # Özet sayfası
                     summary_data = {
                         'Metrik': ['Ürün', 'Dönem', 'Toplam PF Satış', 'Toplam Pazar', 'Pazar Payı', 
-                                  'Territory Sayısı', 'Trend Durumu', 'Mevsimsellik', 'Volatilite'],
+                                  'Territory Sayısı', 'Trend Durumu', 'Mevsimsellik', 'Volatilite', 'Lider Bölge', 'Lider Şehir'],
                         'Değer': [
                             selected_product,
                             date_option,
@@ -3537,7 +4185,9 @@ def main():
                             len(terr_perf),
                             trend_analysis.get('temel_trend', 'Bilinmiyor'),
                             trend_analysis.get('mevsimsellik', 'Bilinmiyor'),
-                            trend_analysis.get('volatilite', 'Bilinmiyor')
+                            trend_analysis.get('volatilite', 'Bilinmiyor'),
+                            region_comparison.iloc[0]['Region'] if len(region_comparison) > 0 else "Bilinmiyor",
+                            city_data.loc[city_data['PF_Satis'].idxmax(), 'City'] if len(city_data) > 0 else "Bilinmiyor"
                         ]
                     }
                     summary_df = pd.DataFrame(summary_data)
@@ -3556,4 +4206,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
