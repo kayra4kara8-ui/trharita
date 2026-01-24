@@ -953,7 +953,7 @@ def create_strategic_alignment_chart(alignment_df):
 
 def create_strategic_heatmap_chart(alignment_df):
     """
-    BCG vs Stratejik Durum için Heatmap (Isı Haritası)
+    BCG vs Stratejik Durum için Heatmap (Isı Haritası) - Çok Basit
     """
     if alignment_df.empty:
         return None
@@ -975,27 +975,8 @@ def create_strategic_heatmap_chart(alignment_df):
             row_data.append(count)
         heatmap_data.append(row_data)
     
-    # Renk skalası (mavi tonları)
-    colorscale = [
-        [0, '#0f172a'],      # En koyu
-        [0.2, '#1e293b'],
-        [0.4, '#334155'],
-        [0.6, '#475569'],
-        [0.8, '#64748b'],
-        [1, '#94a3b8']       # En açık
-    ]
-    
-    # Maksimum değeri güvenli hesapla
-    all_values = [val for sublist in heatmap_data for val in sublist]
-    max_val = max(all_values) if all_values else 0
-    
-    # Sade ve basit colorbar ayarları
-    colorbar_settings = {}
-    
-    # Sadece max değer 0'dan büyükse tick ekle
-    if max_val > 0:
-        colorbar_settings['tickvals'] = [0, max_val]
-        colorbar_settings['ticktext'] = ['Az', 'Çok']
+    # Basit renk skalası - hata olmaması için
+    colorscale = "Blues"
     
     fig = go.Figure(data=go.Heatmap(
         z=heatmap_data,
@@ -1005,24 +986,8 @@ def create_strategic_heatmap_chart(alignment_df):
         text=heatmap_data,
         texttemplate='%{text}',
         textfont={"size": 16, "color": "white"},
-        hovertemplate='<b>BCG:</b> %{y}<br><b>Durum:</b> %{x}<br><b>Brick Sayısı:</b> %{z}<extra></extra>',
-        showscale=True
+        hovertemplate='<b>BCG:</b> %{y}<br><b>Durum:</b> %{x}<br><b>Brick Sayısı:</b> %{z}<extra></extra>'
     ))
-    
-    # Colorbar'ı ayrıca update_layout ile ayarla
-    if colorbar_settings:
-        fig.update_layout(
-            coloraxis_colorbar=dict(
-                title="Brick Sayısı",
-                **colorbar_settings
-            )
-        )
-    else:
-        fig.update_layout(
-            coloraxis_colorbar=dict(
-                title="Brick Sayısı"
-            )
-        )
     
     fig.update_layout(
         title=dict(
@@ -5027,4 +4992,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
