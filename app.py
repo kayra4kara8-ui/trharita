@@ -894,7 +894,7 @@ def evaluate_strategic_alignment(bcg_category, strategy_distribution):
 
 def create_strategic_heatmap_chart(alignment_df):
     """
-    BCG vs Stratejik Durum için Heatmap - Çalışan minimal versiyon
+    BCG vs Stratejik Durum için Heatmap (Isı Haritası)
     """
     if alignment_df.empty:
         return None
@@ -917,22 +917,28 @@ def create_strategic_heatmap_chart(alignment_df):
                 row_data.append(count)
             heatmap_data.append(row_data)
         
-        # SADECE gerekli parametrelerle
+        # Basit renk skalası
+        colorscale = [
+            [0, '#0f172a'],      # En koyu
+            [1, '#94a3b8']       # En açık
+        ]
+        
+        # Colorbar OLMADAN heatmap oluştur
         fig = go.Figure(data=go.Heatmap(
             z=heatmap_data,
             x=strategic_statuses,
             y=bcg_categories,
-            colorscale="Blues",
+            colorscale=colorscale,
             text=heatmap_data,
             texttemplate='%{text}',
             textfont={"size": 16, "color": "white"},
-            hovertemplate='<b>BCG:</b> %{y}<br><b>Durum:</b> %{x}<br><b>Brick Sayısı:</b> %{z}<extra></extra>'
+            hovertemplate='<b>BCG:</b> %{y}<br><b>Durum:</b> %{x}<br><b>Brick Sayısı:</b> %{z}<extra></extra>',
+            showscale=False  # Colorbar'ı tamamen kaldır
         ))
         
-        # Sade layout
         fig.update_layout(
             title=dict(
-                text='<b>BCG vs Stratejik Durum Heatmap Analizi</b>',
+                text='<b>BCG vs Stratejik Durum Heatmap Analizi</b><br><span style="font-size:14px;color:#94a3b8">Renk koyulaştıkça Brick sayısı artar</span>',
                 font=dict(size=22, color='white', family='Inter')
             ),
             height=500,
@@ -948,16 +954,15 @@ def create_strategic_heatmap_chart(alignment_df):
                 title='<b>BCG Kategorisi</b>',
                 gridcolor='rgba(59, 130, 246, 0.1)'
             ),
-            margin=dict(t=80, b=100, l=100, r=50)
+            margin=dict(t=100, b=100, l=100, r=50)
         )
         
         return fig
         
     except Exception as e:
-        # Hata durumunda basit bir placeholder döndür
-        st.warning(f"Heatmap oluşturulamadı: {str(e)}")
+        st.error(f"Heatmap oluşturulamadı: {str(e)}")
         return None
-
+        
 
 def create_strategic_heatmap_chart(alignment_df):
     """
@@ -5004,6 +5009,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
