@@ -963,6 +963,76 @@ def create_strategic_heatmap_chart(alignment_df):
         st.error(f"Heatmap oluşturulamadı: {str(e)}")
         return None
         
+def create_strategic_alignment_chart(alignment_df):
+    """
+    Stratejik Durum Dağılımı Grafiği
+    """
+    if alignment_df.empty:
+        return None
+    
+    # Stratejik durum dağılımını hesapla
+    status_counts = alignment_df['Stratejik_Durum'].value_counts()
+    
+    # Renk eşleştirmesi
+    status_colors = {
+        "Stratejik Senkronizasyon": "#1E3A8A",
+        "Operasyonel Atalet": "#0EA5E9",
+        "Hizalanma Riski": "#475569",
+        "Kaynak Optimizasyon Fırsatı": "#06B6D4",
+        "Portföy Dengesizliği": "#64748B"
+    }
+    
+    # Grafik verisini hazırla
+    labels = list(status_counts.index)
+    values = list(status_counts.values)
+    
+    # Renkleri ata
+    colors = [status_colors.get(label, "#64748B") for label in labels]
+    
+    # Donut chart oluştur
+    fig = go.Figure(data=[go.Pie(
+        labels=labels,
+        values=values,
+        hole=0.5,
+        marker=dict(colors=colors),
+        textinfo='label+percent',
+        textposition='inside',
+        textfont=dict(size=12, color='white', family='Inter'),
+        hovertemplate='<b>%{label}</b><br>Sayı: %{value}<br>Oran: %{percent}<extra></extra>'
+    )])
+    
+    fig.update_layout(
+        title=dict(
+            text='<b>Stratejik Durum Dağılımı</b>',
+            font=dict(size=22, color='white', family='Inter')
+        ),
+        height=500,
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='#e2e8f0', family='Inter'),
+        legend=dict(
+            orientation="v",
+            yanchor="middle",
+            y=0.5,
+            xanchor="right",
+            x=1.3,
+            bgcolor='rgba(30, 41, 59, 0.8)',
+            bordercolor='rgba(59, 130, 246, 0.3)',
+            borderwidth=1,
+            font=dict(size=11)
+        ),
+        annotations=[
+            dict(
+                text=f'Toplam<br>{len(alignment_df)}',
+                x=0.5, y=0.5,
+                font=dict(size=16, color='white', family='Inter'),
+                showarrow=False
+            )
+        ]
+    )
+    
+    return fig
+
 
 def create_strategic_heatmap_chart(alignment_df):
     """
@@ -5009,6 +5079,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
