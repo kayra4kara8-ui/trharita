@@ -954,15 +954,6 @@ def create_strategic_alignment_chart(alignment_df):
 def create_strategic_heatmap_chart(alignment_df):
     """
     BCG vs Stratejik Durum için Heatmap (Isı Haritası)
-    
-    Parameters:
-    -----------
-    alignment_df : DataFrame
-        Stratejik hizalanma analiz sonuçları
-    
-    Returns:
-    --------
-    plotly.graph_objects.Figure
     """
     if alignment_df.empty:
         return None
@@ -994,6 +985,21 @@ def create_strategic_heatmap_chart(alignment_df):
         [1, '#94a3b8']       # En açık
     ]
     
+    # Maksimum değeri güvenli hesapla
+    all_values = [val for sublist in heatmap_data for val in sublist]
+    max_val = max(all_values) if all_values else 0
+    
+    # Colorbar ayarlarını dinamik yap
+    colorbar_settings = dict(
+        title="Brick Sayısı",
+        titleside="right"
+    )
+    
+    # Sadece max değer 0'dan büyükse özel tick ekle (Hata Önleyici Kısım)
+    if max_val > 0:
+        colorbar_settings["tickvals"] = [0, max_val]
+        colorbar_settings["ticktext"] = ["Az", "Çok"]
+    
     fig = go.Figure(data=go.Heatmap(
         z=heatmap_data,
         x=strategic_statuses,
@@ -1004,12 +1010,7 @@ def create_strategic_heatmap_chart(alignment_df):
         textfont={"size": 16, "color": "white"},
         hovertemplate='<b>BCG:</b> %{y}<br><b>Durum:</b> %{x}<br><b>Brick Sayısı:</b> %{z}<extra></extra>',
         showscale=True,
-        colorbar=dict(
-            title="Brick Sayısı",
-            titleside="right",
-            tickvals=[0, max([max(row) for row in heatmap_data])],
-            ticktext=["Az", "Çok"]
-        )
+        colorbar=colorbar_settings  # Düzeltilmiş ayarları kullanıyoruz
     ))
     
     fig.update_layout(
@@ -1034,7 +1035,6 @@ def create_strategic_heatmap_chart(alignment_df):
     )
     
     return fig
-
 
 def create_strategic_alignment_score_chart(alignment_df):
     """
@@ -5016,4 +5016,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
