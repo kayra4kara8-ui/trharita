@@ -510,7 +510,7 @@ CITY_NORMALIZE_CLEAN = {
     'SIVAS': 'Sivas',
     'SİVAS': 'Sivas',
     'SANLIURFA': 'Sanliurfa',
-    'ŞANLIURFA': 'Sanliurfa",
+    'ŞANLIURFA': 'Sanliurfa',
     'SIRNAK': 'Sirnak',
     'ŞIRNAK': 'Sirnak",
     'TEKIRDAG': 'Tekirdag',
@@ -4276,3 +4276,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
