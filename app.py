@@ -2793,70 +2793,71 @@ def style_dataframe(df, color_column=None, gradient_columns=None):
 # =============================================================================
 
 def main():
-    # Profesyonel UI Stil Tanımlamaları
+    # Ultra-Sade Enterprise UI
     st.markdown("""
         <style>
-        .header-container {
+        .header-box {
             text-align: center;
-            padding: 2.5rem 0;
-            background: #001219; /* Orijinal koyu arka plan */
-            border-bottom: 1px solid rgba(14, 165, 233, 0.2);
+            padding: 3rem 1rem;
+            background: #001219; /* Orijinal koyu lacivert */
             margin-bottom: 2rem;
         }
 
         .main-title {
             font-family: 'Inter', sans-serif;
             color: #FFFFFF;
-            font-size: 2.4rem;
+            font-size: 2.6rem;
             font-weight: 800;
-            letter-spacing: -0.5px;
-            margin-bottom: 1rem;
+            letter-spacing: -1px;
+            margin: 0;
             text-transform: uppercase;
         }
 
-        .highlight-text {
-            color: #0EA5E9; /* Orijinal mavi tonu */
+        .highlight {
+            color: #0EA5E9; /* Orijinal parlak mavi */
         }
 
-        .sub-nav {
+        .divider {
+            height: 1px;
+            width: 100px;
+            background: rgba(14, 165, 233, 0.3);
+            margin: 1.5rem auto;
+        }
+
+        .capabilities {
             display: flex;
             justify-content: center;
-            gap: 20px;
+            gap: 15px;
             flex-wrap: wrap;
-            color: #94a3b8;
-            font-size: 0.9rem;
-            font-weight: 500;
-            text-transform: uppercase;
+            color: #64748b;
+            font-size: 0.85rem;
+            font-weight: 600;
             letter-spacing: 1px;
         }
 
-        .nav-item {
+        .cap-item {
             color: #0EA5E9;
-            transition: all 0.3s ease;
-        }
-
-        .bullet {
-            color: #334155;
         }
         </style>
     """, unsafe_allow_html=True)
 
-    # İçerik Alanı
+    # UI Render
     st.markdown("""
-        <div class="header-container">
+        <div class="header-box">
             <h1 class="main-title">
-                🎯 GELİŞMİŞ TİCARİ <span class="highlight-text">PORTFÖY ANALİZ SİSTEMİ</span>
+                TİCARİ <span class="highlight">PORTFÖY ANALİZ SİSTEMİ</span>
             </h1>
-            <div class="sub-nav">
-                <span class="nav-item">ML Tahminleme</span>
-                <span class="bullet">•</span>
-                <span class="nav-item">Zaman Serisi</span>
-                <span class="bullet">•</span>
-                <span class="nav-item">Modern Harita</span>
-                <span class="bullet">•</span>
-                <span class="nav-item">Rakip Analizi</span>
-                <span class="bullet">•</span>
-                <span class="nav-item">Bölge Performans Analizi</span>
+            <div class="divider"></div>
+            <div class="capabilities">
+                <span>ML TAHMİNLEME</span>
+                <span style="opacity: 0.3">|</span>
+                <span>ZAMAN SERİSİ</span>
+                <span style="opacity: 0.3">|</span>
+                <span>MODERN HARİTA</span>
+                <span style="opacity: 0.3">|</span>
+                <span>RAKİP ANALİZİ</span>
+                <span style="opacity: 0.3">|</span>
+                <span class="cap-item">BÖLGE PERFORMANS ANALİZİ</span>
             </div>
         </div>
     """, unsafe_allow_html=True)
@@ -4337,6 +4338,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
