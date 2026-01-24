@@ -1,37 +1,41 @@
 # Streamlit ve temel
-streamlit>=1.28.0
-pandas>=2.0.0
-numpy>=1.24.0
+streamlit==1.28.2
+pandas==2.1.4
+numpy==1.26.0
 
-# Görselleştirme
-plotly>=5.17.0
+# Görselleştirme (Sunburst için plotly.express önemli)
+plotly==5.18.0
+plotly-express==0.4.1  # Sunburst grafiği için gerekli
 matplotlib==3.8.2
 seaborn==0.13.0
 
 # GeoJSON ve harita
-geopandas>=0.14.0
-shapely>=2.0.0
+geopandas==0.14.1
+shapely==2.0.2
 
 # ML ve analiz
-scikit-learn>=1.3.0
-scipy>=1.11.0
-statsmodels>=0.14.0
+scikit-learn==1.3.2
+scipy==1.11.4
+statsmodels==0.14.1
 
 # Excel ve rapor
-openpyxl>=3.1.0
+openpyxl==3.1.2
 reportlab==4.0.7
 
 # Ek bağımlılıklar (geopandas için)
-fiona>=1.9.0
-pyproj>=3.6.0
-rtree>=1.0.0
+fiona==1.9.5
+pyproj==3.6.1
+rtree==1.1.0
 
 # Türkçe karakter desteği
-chardet>=5.2.0
+chardet==5.2.0
 
 # Tarih işlemleri
-python-dateutil>=2.8.2
-pytz>=2023.3
+python-dateutil==2.8.2
+pytz==2023.3.post1
 
 # Ek
-xlrd>=2.0.1
+xlrd==2.0.1
+
+# Streamlit için ek component'lar (isteğe bağlı)
+streamlit-plotly-events==0.0.5  # Plotly etkileşimleri için
