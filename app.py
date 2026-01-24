@@ -489,7 +489,7 @@ CITY_NORMALIZE_CLEAN = {
     'MERSIN': 'Mersin',
     'MERSİN': 'Mersin',
     'MUGLA': 'Mugla',
-    'MUĞLA': 'Mugla",
+    'MUĞLA': 'Mugla',
     'MUS': 'Mus',
     'MUŞ': 'Mus',
     'NEVSEHIR': 'Nevsehir',
@@ -4206,3 +4206,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
