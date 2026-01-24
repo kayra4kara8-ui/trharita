@@ -2793,12 +2793,55 @@ def style_dataframe(df, color_column=None, gradient_columns=None):
 # =============================================================================
 
 def main():
-    # Başlık ve açıklama
+    # CSS ile stil tanımlamaları (Daha temiz bir görünüm için)
+    st.markdown("""
+        <style>
+        .main-header {
+            font-family: 'Inter', sans-serif;
+            text-align: center;
+            font-weight: 800;
+            letter-spacing: -1px;
+            color: #F8FAFC;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+        .sub-header-container {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 1rem;
+            border-bottom: 1px solid rgba(226, 232, 240, 0.1);
+            background: rgba(14, 165, 233, 0.05);
+            border-radius: 8px;
+        }
+        .feature-tag {
+            display: inline-block;
+            color: #38BDF8;
+            font-weight: 500;
+            font-size: 0.95rem;
+            margin: 0 10px;
+        }
+        .separator {
+            color: #475569;
+            font-weight: 300;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # Başlık Alanı
     st.markdown('<h1 class="main-header">🎯 GELİŞMİŞ TİCARİ PORTFÖY ANALİZ SİSTEMİ</h1>', unsafe_allow_html=True)
-    st.markdown('<div style="text-align: center; font-size: 1.2rem; color: #94a3b8; margin-bottom: 3rem;">'
-                '<span style="color: #0EA5E9; font-weight: 600;"> ML Tahminleme • Gelişmiş Zaman Serisi Analizi • Modern Harita • Rakip Analizi</br>'
-                '<span style="color: #0EA5E9; font-weight: 600;"> • Bölge Karşılaştırmalı Analiz • Bölge İçi Detaylı Performans Analizi</span>'
-                '</div>', unsafe_allow_html=True)
+
+    # Alt Bilgi Alanı (Modern Etiketli Görünüm)
+    st.markdown("""
+        <div class="sub-header-container">
+            <span class="feature-tag">ML Tahminleme</span> <span class="separator">|</span>
+            <span class="feature-tag">Gelişmiş Zaman Serisi Analizi</span> <span class="separator">|</span>
+            <span class="feature-tag">Modern Harita Katmanları</span> <span class="separator">|</span>
+            <span class="feature-tag">Rakip Analizi</span>
+            <br>
+            <span class="feature-tag" style="margin-top: 8px;">Bölge Karşılaştırmalı Analiz</span> <span class="separator">•</span>
+            <span class="feature-tag">Bölge İçi Detaylı Performans Analizi</span>
+        </div>
+    """, unsafe_allow_html=True)
     
     # SIDEBAR
     with st.sidebar:
@@ -4276,6 +4319,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
