@@ -1839,7 +1839,7 @@ def train_advanced_ml_models(df, forecast_periods=3):
             y_pred = np.maximum(y_pred, 0)
             
             mae = mean_absolute_error(y_test, y_pred)
-            rmse = np.sqrt(mean_squared_error(y_test, y_pred)
+            rmse = np.sqrt(mean_squared_error(y_test, y_pred))
             mape = np.mean(np.abs((y_test - y_pred) / np.maximum(y_test, 1))) * 100
             r2 = r2_score(y_test, y_pred)
             
@@ -4942,5 +4942,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
