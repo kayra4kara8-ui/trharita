@@ -534,8 +534,8 @@ CITY_NORMALIZE_CLEAN = {
     'VAN': 'Van',
     'YALOVA': 'Yalova',
     'YOZGAT': 'Yozgat',
-    'ZONGULDAK': 'Zonguldak',
-    'ZONGULDAK': 'Zonguldak',
+    'ZONGULDAK': 'Zonguldak",
+    'ZONGULDAK': 'Zonguldak",
     'ARDAHAN': 'Ardahan',
     'AKSARAY': 'Aksaray',
     'KIRIKKALE': 'Kirikkale'
@@ -683,11 +683,11 @@ def hex_to_rgba(hex_color, alpha=0.3):
 
 def analyze_tissue_coherence(df, product, date_filter=None):
     """
-    STRATEJİK DOKU UYUMU ANALİZİ - GÜNCELLENMİŞ VE DÜZELTİLMİŞ
-    Şehir (makro) > Brick (mikro) hiyerarşisine göre çalışır.
+    STRATEJİK DOKU UYUMU ANALİZİ - GÜNCELLENMİŞ VERSİYON
+    Şehir (makro) ile Brick (mikro) performans uyumunu analiz eder.
     
-    Adım 1: Şehir Düzeyi Yatırım Stratejileri (Makro)
-    Adım 2: Brick Düzeyi BCG Matrisi (Mikro)
+    Adım 1: Şehir Stratejisi - CITY_NORMALIZED (makro)
+    Adım 2: Brick BCG - TERRITORIES (mikro)
     Adım 3: Birleştirme ve İçgörü
     
     Returns:
@@ -700,92 +700,65 @@ def analyze_tissue_coherence(df, product, date_filter=None):
     else:
         df_filtered = df.copy()
     
-    # ADIM 1: ŞEHİR BAZLI YATIRIM STRATEJİSİ (MAKRO)
-    def calculate_city_investment_strategy():
-        """Şehir için yatırım stratejisi hesapla"""
-        # Şehir toplamlarını hesapla
-        city_totals = df_filtered.groupby(['CITY_NORMALIZED', 'REGION']).agg({
-            cols['pf']: 'sum',
-            cols['rakip']: 'sum'
-        }).reset_index()
+    # Yardımcı fonksiyonlar
+    def calculate_city_strategy(df_city):
+        """Şehir bazlı yatırım stratejisi hesapla"""
+        df_city = df_city.copy()
         
-        city_totals.columns = ['Sehir', 'Region', 'PF_Satis', 'Rakip_Satis']
-        city_totals['Toplam_Pazar'] = city_totals['PF_Satis'] + city_totals['Rakip_Satis']
-        city_totals['Pazar_Payi_%'] = safe_divide(city_totals['PF_Satis'], city_totals['Toplam_Pazar']) * 100
-        
-        # Türkiye toplamı
-        total_pf_turkey = df_filtered[cols['pf']].sum()
-        total_market_turkey = (df_filtered[cols['pf']] + df_filtered[cols['rakip']]).sum()
-        
-        # Şehir büyüklüğü (Türkiye pazarına göre)
-        city_totals['Ulke_Pazar_Payi_%'] = safe_divide(city_totals['Toplam_Pazar'], total_market_turkey) * 100
-        
+        # Pazar büyüklüğü segmentasyonu
         try:
-            city_totals['Pazar_Buyuklugu'] = pd.qcut(
-                city_totals['Ulke_Pazar_Payi_%'],
+            df_city['Pazar_Buyuklugu'] = pd.qcut(
+                df_city['Toplam_Pazar'],
                 q=3,
                 labels=['Küçük', 'Orta', 'Büyük'],
                 duplicates='drop'
             )
         except:
-            city_totals['Pazar_Buyuklugu'] = 'Orta'
+            df_city['Pazar_Buyuklugu'] = 'Orta'
         
-        # Şehir pazar payı segmenti (kendi pazarındaki pay)
+        # Pazar payı segmentasyonu
         try:
-            city_totals['Pazar_Payi_Segment'] = pd.qcut(
-                city_totals['Pazar_Payi_%'],
+            df_city['Pazar_Payi_Segment'] = pd.qcut(
+                df_city['Pazar_Payi_%'],
                 q=3,
                 labels=['Düşük', 'Orta', 'Yüksek'],
                 duplicates='drop'
             )
         except:
-            city_totals['Pazar_Payi_Segment'] = 'Orta'
+            df_city['Pazar_Payi_Segment'] = 'Orta'
         
-        # Şehir büyüme potansiyeli (toplam pazar - PF satış)
-        city_totals['Buyume_Potansiyeli'] = city_totals['Toplam_Pazar'] - city_totals['PF_Satis']
-        
-        # Şehir büyüme oranı (zaman içinde)
-        city_growth = {}
-        for city in city_totals['Sehir'].unique():
-            city_data = df_filtered[df_filtered['CITY_NORMALIZED'] == city].sort_values('DATE')
-            
-            if len(city_data) >= 6:  # En az 6 ay veri
-                # İlk yarı ve ikinci yarı
-                split_point = len(city_data) // 2
-                first_half = city_data.iloc[:split_point][cols['pf']].sum()
-                second_half = city_data.iloc[split_point:][cols['pf']].sum()
-                
-                if first_half > 0:
-                    growth = ((second_half - first_half) / first_half) * 100
-                else:
-                    growth = 100 if second_half > 0 else 0
-            else:
-                growth = 0
-            
-            city_growth[city] = growth
-        
-        city_totals['Sehir_Buyume_%'] = city_totals['Sehir'].map(city_growth)
+        # Büyüme potansiyeli (toplam pazar - PF satış)
+        df_city['Buyume_Potansiyeli'] = df_city['Toplam_Pazar'] - df_city['PF_Satis']
+        try:
+            df_city['Buyume_Potansiyeli_Segment'] = pd.qcut(
+                df_city['Buyume_Potansiyeli'],
+                q=3,
+                labels=['Düşük', 'Orta', 'Yüksek'],
+                duplicates='drop'
+            )
+        except:
+            df_city['Buyume_Potansiyeli_Segment'] = 'Orta'
         
         # Performans segmentasyonu
         try:
-            city_totals['Performans_Segment'] = pd.qcut(
-                city_totals['Sehir_Buyume_%'],
+            df_city['Performans_Segment'] = pd.qcut(
+                df_city['PF_Satis'],
                 q=3,
                 labels=['Düşük', 'Orta', 'Yüksek'],
                 duplicates='drop'
             )
         except:
-            city_totals['Performans_Segment'] = 'Orta'
+            df_city['Performans_Segment'] = 'Orta'
         
         # Şehir stratejisi atama
         def assign_city_strategy(row):
             pazar = str(row['Pazar_Buyuklugu'])
             pay = str(row['Pazar_Payi_Segment'])
+            potansiyel = str(row['Buyume_Potansiyeli_Segment'])
             performans = str(row['Performans_Segment'])
-            potansiyel = row['Buyume_Potansiyeli']
             
             # 🚀 Agresif: Büyük/Orta Pazar + Düşük Pay + Yüksek Büyüme Potansiyeli
-            if pazar in ['Büyük', 'Orta'] and pay == 'Düşük' and potansiyel > row['PF_Satis'] * 0.3:
+            if pazar in ['Büyük', 'Orta'] and pay == 'Düşük' and potansiyel in ['Yüksek', 'Orta']:
                 return "🚀 Agresif"
             
             # ⚡ Hızlandırılmış: Büyük/Orta Pazar + Orta Pay + Orta/Yüksek Performans
@@ -797,281 +770,281 @@ def analyze_tissue_coherence(df, product, date_filter=None):
                 return "🛡️ Koruma"
             
             # 💎 Potansiyel: Küçük Pazar + Yüksek Büyüme Potansiyeli + İyi Performans
-            elif pazar == 'Küçük' and potansiyel > row['PF_Satis'] * 0.5 and performans in ['Orta', 'Yüksek']:
+            elif pazar == 'Küçük' and potansiyel == 'Yüksek' and performans in ['Orta', 'Yüksek']:
                 return "💎 Potansiyel"
             
             # 👁️ İzleme: Diğerleri
             else:
                 return "👁️ İzleme"
         
-        city_totals['Sehir_Stratejisi'] = city_totals.apply(assign_city_strategy, axis=1)
-        return city_totals
+        df_city['Sehir_Stratejisi'] = df_city.apply(assign_city_strategy, axis=1)
+        return df_city
     
-    # ADIM 2: BRICK BAZLI BCG MATRİSİ (MİKRO)
-    def calculate_brick_bcg_matrix():
-        """Tüm Brick'ler için BCG matrisi hesapla"""
-        # Brick performansı
-        brick_perf = df_filtered.groupby(['TERRITORIES', 'CITY_NORMALIZED', 'REGION', 'MANAGER']).agg({
-            cols['pf']: 'sum',
-            cols['rakip']: 'sum'
-        }).reset_index()
+    def calculate_brick_bcg(df_brick):
+        """Brick bazlı BCG matrisi hesapla"""
+        df_brick = df_brick.copy()
         
-        brick_perf.columns = ['Brick', 'Sehir', 'Region', 'Manager', 'PF_Satis', 'Rakip_Satis']
-        brick_perf['Toplam_Pazar'] = brick_perf['PF_Satis'] + brick_perf['Rakip_Satis']
-        brick_perf['Pazar_Payi_%'] = safe_divide(brick_perf['PF_Satis'], brick_perf['Toplam_Pazar']) * 100
+        if len(df_brick) < 2:
+            df_brick['BCG_Kategori'] = '❓ Question Mark'
+            return df_brick
         
-        # Önce şehir toplamlarını hesapla
-        city_totals = df_filtered.groupby('CITY_NORMALIZED').agg({
-            cols['pf']: 'sum',
-            cols['rakip']: 'sum'
-        }).reset_index()
+        # Göreceli pazar payı (PF / Rakip)
+        df_brick['Goreceli_Pazar_Payi'] = safe_divide(df_brick['PF_Satis'], df_brick['Rakip_Satis'])
         
-        city_totals.columns = ['Sehir', 'Sehir_PF', 'Sehir_Rakip']
-        city_totals['Sehir_Toplam'] = city_totals['Sehir_PF'] + city_totals['Sehir_Rakip']
+        # Pazar büyümesi hesaplama (zaman içinde)
+        brick_names = df_brick['Brick'].unique()
+        growth_rates = {}
         
-        # Brick'i şehir toplamları ile birleştir
-        brick_perf = brick_perf.merge(city_totals, on='Sehir', how='left')
-        
-        # Brick'in şehir içindeki göreceli pazar payı
-        brick_perf['Sehir_Ici_Goreceli_Pay'] = safe_divide(brick_perf['PF_Satis'], brick_perf['Sehir_PF'])
-        
-        # Brick'in şehir içindeki pazar payı yüzdesi
-        brick_perf['Sehir_Ici_Pay_%'] = safe_divide(brick_perf['PF_Satis'], brick_perf['Sehir_Toplam']) * 100
-        
-        # Brick büyümesi (zaman içinde)
-        brick_growth = {}
-        for brick in brick_perf['Brick'].unique():
+        for brick in brick_names:
             brick_data = df_filtered[df_filtered['TERRITORIES'] == brick].sort_values('DATE')
-            
-            if len(brick_data) >= 4:  # En az 4 ay veri
-                # İlk yarı ve ikinci yarı
-                split_point = max(1, len(brick_data) // 2)
-                first_half = brick_data.iloc[:split_point][cols['pf']].sum()
-                second_half = brick_data.iloc[split_point:][cols['pf']].sum()
-                
+            if len(brick_data) >= 2:
+                # İlk ve son dönemleri karşılaştır
+                first_half = brick_data.head(len(brick_data)//2)[cols['pf']].sum()
+                second_half = brick_data.tail(len(brick_data)//2)[cols['pf']].sum()
                 if first_half > 0:
-                    growth = ((second_half - first_half) / first_half) * 100
+                    growth_rate = ((second_half - first_half) / first_half) * 100
                 else:
-                    growth = 100 if second_half > 0 else 0
+                    growth_rate = 0
             else:
-                growth = 0
-            
-            brick_growth[brick] = growth
+                growth_rate = 0
+            growth_rates[brick] = growth_rate
         
-        brick_perf['Brick_Buyume_%'] = brick_perf['Brick'].map(brick_growth)
+        df_brick['Pazar_Buyume_%'] = df_brick['Brick'].map(growth_rates)
+        
+        # Medyan değerler
+        median_share = df_brick['Goreceli_Pazar_Payi'].median()
+        median_growth = df_brick['Pazar_Buyume_%'].median()
         
         # BCG kategorisi atama
-        # Medyan değerler
-        median_share = brick_perf['Sehir_Ici_Goreceli_Pay'].median()
-        median_growth = brick_perf['Brick_Buyume_%'].median()
-        
         def assign_bcg(row):
-            if row['Sehir_Ici_Goreceli_Pay'] >= median_share and row['Brick_Buyume_%'] >= median_growth:
+            if row['Goreceli_Pazar_Payi'] >= median_share and row['Pazar_Buyume_%'] >= median_growth:
                 return "⭐ Star"
-            elif row['Sehir_Ici_Goreceli_Pay'] >= median_share and row['Brick_Buyume_%'] < median_growth:
+            elif row['Goreceli_Pazar_Payi'] >= median_share and row['Pazar_Buyume_%'] < median_growth:
                 return "🐄 Cash Cow"
-            elif row['Sehir_Ici_Goreceli_Pay'] < median_share and row['Brick_Buyume_%'] >= median_growth:
+            elif row['Goreceli_Pazar_Payi'] < median_share and row['Pazar_Buyume_%'] >= median_growth:
                 return "❓ Question Mark"
             else:
                 return "🐶 Dog"
         
-        brick_perf['BCG_Kategori'] = brick_perf.apply(assign_bcg, axis=1)
-        return brick_perf
+        df_brick['BCG_Kategori'] = df_brick.apply(assign_bcg, axis=1)
+        return df_brick
+    
+    # ADIM 1: ŞEHİR BAZLI ANALİZ (Makro)
+    city_analysis = df_filtered.groupby(['CITY_NORMALIZED', 'REGION']).agg({
+        cols['pf']: 'sum',
+        cols['rakip']: 'sum'
+    }).reset_index()
+    
+    city_analysis.columns = ['Sehir', 'Region', 'PF_Satis', 'Rakip_Satis']
+    city_analysis['Toplam_Pazar'] = city_analysis['PF_Satis'] + city_analysis['Rakip_Satis']
+    city_analysis['Pazar_Payi_%'] = safe_divide(city_analysis['PF_Satis'], city_analysis['Toplam_Pazar']) * 100
+    
+    # Şehir stratejisi hesapla
+    city_analysis = calculate_city_strategy(city_analysis)
+    
+    # ADIM 2: BRICK BAZLI ANALİZ (Mikro)
+    brick_analysis = df_filtered.groupby(['TERRITORIES', 'REGION', 'MANAGER', 'CITY_NORMALIZED']).agg({
+        cols['pf']: 'sum',
+        cols['rakip']: 'sum'
+    }).reset_index()
+    
+    brick_analysis.columns = ['Brick', 'Region', 'Manager', 'Sehir', 'PF_Satis', 'Rakip_Satis']
+    brick_analysis['Toplam_Pazar'] = brick_analysis['PF_Satis'] + brick_analysis['Rakip_Satis']
+    brick_analysis['Pazar_Payi_%'] = safe_divide(brick_analysis['PF_Satis'], brick_analysis['Toplam_Pazar']) * 100
+    
+    # Brick BCG hesapla
+    brick_analysis = calculate_brick_bcg(brick_analysis)
     
     # ADIM 3: BİRLEŞTİRME VE İÇGÖRÜ
-    try:
-        # 1. Şehir stratejilerini hesapla
-        city_strategies = calculate_city_investment_strategy()
+    # Şehir stratejisi ile Brick BCG'yi birleştir
+    combined = brick_analysis.merge(
+        city_analysis[['Sehir', 'Sehir_Stratejisi', 'Pazar_Buyuklugu', 'Pazar_Payi_Segment']],
+        left_on='Sehir',
+        right_on='Sehir',
+        how='left'
+    )
+    
+    # Eksik stratejiler için varsayılan değer
+    combined['Sehir_Stratejisi'] = combined['Sehir_Stratejisi'].fillna('👁️ İzleme')
+    
+    # Stratejik içgörü oluştur
+    def generate_strategic_insight(row):
+        sehir_strateji = row['Sehir_Stratejisi']
+        brick_bcg = row['BCG_Kategori']
         
-        # 2. Brick BCG'yi hesapla
-        brick_bcg = calculate_brick_bcg_matrix()
+        # Özel kombinasyonlar
+        if sehir_strateji == "⚡ Hızlandırılmış" and brick_bcg == "🐄 Cash Cow":
+            return "Büyüme Finansörü: Bu Brick'ten gelen nakdi, şehrin geri kalanındaki büyümeyi fonlamak için kullan."
         
-        # 3. Birleştir
-        combined = brick_bcg.merge(
-            city_strategies[['Sehir', 'Sehir_Stratejisi', 'Pazar_Buyuklugu', 'Pazar_Payi_%', 'Sehir_Buyume_%']],
-            on='Sehir',
-            how='left'
+        elif sehir_strateji == "🚀 Agresif" and brick_bcg == "❓ Question Mark":
+            return "Kritik Dönemeç: Şehir agresif büyürken bu Brick geride kalamaz. Yatırımı artırıp Star'a çevir."
+        
+        elif sehir_strateji == "🛡️ Koruma" and brick_bcg == "⭐ Star":
+            return "Kale Komutanı: Liderliği koruyan ana savunma hattı. Rekabete alan bırakma."
+        
+        elif sehir_strateji == "💎 Potansiyel" and brick_bcg == "🐶 Dog":
+            return "Yük Atımı: Potansiyelli şehirde zayıf halka. Verimliliği artır veya kaynağı başka Brick'e kaydır."
+        
+        elif sehir_strateji == "🚀 Agresif" and brick_bcg == "⭐ Star":
+            return "Öncü Kuvvet: Agresif şehirdeki yıldız. Büyümeye öncülük ediyor. Kaynak önceliği ver."
+        
+        elif sehir_strateji == "⚡ Hızlandırılmış" and brick_bcg == "⭐ Star":
+            return "Hızlandırıcı Motor: Hızlanan şehirdeki yıldız. Momentumu koru, ölçeği büyüt."
+        
+        elif sehir_strateji == "🛡️ Koruma" and brick_bcg == "🐄 Cash Cow":
+            return "Savunma Hattı: Korunması gereken şehirdeki nakit ineği. Karı maksimize et, liderliği koru."
+        
+        elif sehir_strateji == "👁️ İzleme" and brick_bcg == "❓ Question Mark":
+            return "Gözlem Altında: İzleme şehrindeki soru işareti. Düşük riskle test et, dikkatli izle."
+        
+        elif sehir_strateji == "👁️ İzleme" and brick_bcg == "🐶 Dog":
+            return "İzole Edilmiş: İzleme şehrindeki köpek. Kaynak kullanımını optimize et, çıkış stratejisi hazırla."
+        
+        else:
+            return "Standart Yönetim: Dengeli yaklaşım sürdür, performansı düzenli izle."
+    
+    combined['Stratejik_Yorum'] = combined.apply(generate_strategic_insight, axis=1)
+    
+    # Doku Uyum Skoru hesapla (0-100)
+    def calculate_tissue_coherence_score(row):
+        sehir_strateji = row['Sehir_Stratejisi']
+        brick_bcg = row['BCG_Kategori']
+        brick_pay = row['Pazar_Payi_%']
+        
+        # Temel skor (BCG ve strateji uyumu)
+        base_score = 50  # Nötr başlangıç
+        
+        # Şehir stratejisine göre puanlar
+        strateji_scores = {
+            "🚀 Agresif": {"⭐ Star": 100, "❓ Question Mark": 70, "🐄 Cash Cow": 50, "🐶 Dog": 20},
+            "⚡ Hızlandırılmış": {"⭐ Star": 90, "🐄 Cash Cow": 80, "❓ Question Mark": 60, "🐶 Dog": 30},
+            "🛡️ Koruma": {"🐄 Cash Cow": 90, "⭐ Star": 85, "🐶 Dog": 40, "❓ Question Mark": 35},
+            "💎 Potansiyel": {"⭐ Star": 95, "❓ Question Mark": 75, "🐄 Cash Cow": 55, "🐶 Dog": 25},
+            "👁️ İzleme": {"🐄 Cash Cow": 70, "⭐ Star": 65, "❓ Question Mark": 45, "🐶 Dog": 35}
+        }
+        
+        # BCG skorları
+        bcg_weights = {"⭐ Star": 1.2, "🐄 Cash Cow": 1.0, "❓ Question Mark": 0.8, "🐶 Dog": 0.6}
+        
+        # Pazar payı bonusu (%30'dan yüksekse bonus)
+        pay_bonus = min(brick_pay / 3, 20) if brick_pay > 30 else 0
+        
+        if sehir_strateji in strateji_scores and brick_bcg in strateji_scores[sehir_strateji]:
+            base_score = strateji_scores[sehir_strateji][brick_bcg]
+        
+        # BCG ağırlığı uygula
+        bcg_weight = bcg_weights.get(brick_bcg, 1.0)
+        weighted_score = base_score * bcg_weight
+        
+        # Final skor (0-100 arasında sınırla)
+        final_score = min(100, max(0, weighted_score + pay_bonus))
+        
+        return round(final_score, 1)
+    
+    combined['Doku_Uyum_Skoru'] = combined.apply(calculate_tissue_coherence_score, axis=1)
+    
+    # Aksiyon önerisi oluştur
+    def generate_action_recommendation(row):
+        score = row['Doku_Uyum_Skoru']
+        insight = row['Stratejik_Yorum']
+        
+        if score >= 80:
+            return "Yatırım Artır: Yüksek uyum, başarıyı ölçeklendir"
+        elif score >= 60:
+            return "Stabil Tut: İyi uyum, mevcut stratejiyi sürdür"
+        elif score >= 40:
+            return "İyileştir: Orta uyum, optimizasyon yap"
+        else:
+            return "Revize Et: Düşük uyum, stratejiyi gözden geçir"
+    
+    combined['Aksiyon_Onerisi'] = combined.apply(generate_action_recommendation, axis=1)
+    
+    # Gereken sütunları ekle/rename et
+    combined['Sehir_Sayisi'] = 1  # Her Brick bir şehirle ilişkili
+    
+    # Sonuç DataFrame'ini hazırla
+    result_columns = [
+        'Brick', 'Region', 'Manager', 'Sehir', 'Sehir_Sayisi',
+        'PF_Satis', 'Rakip_Satis', 'Toplam_Pazar', 'Pazar_Payi_%',
+        'Sehir_Stratejisi', 'BCG_Kategori', 'Stratejik_Yorum',
+        'Doku_Uyum_Skoru', 'Aksiyon_Onerisi'
+    ]
+    
+    result_df = combined[result_columns].copy()
+    
+    # Eski sütun adıyla uyumluluk için Doku_Uyum_Durumu sütunu ekle
+    result_df['Doku_Uyum_Durumu'] = result_df['Stratejik_Yorum'].apply(
+        lambda x: "🎯 Uyumlu Büyüme" if "Öncü Kuvvet" in x or "Hızlandırıcı Motor" in x 
+        else "⚠️ Yönetim Zafiyeti" if "Kritik Dönemeç" in x 
+        else "🎭 Yanıltıcı Başarı" if "Gözlem Altında" in x 
+        else "🔄 Stratejik Revizyon Gerekiyor" if "İzole Edilmiş" in x or "Yük Atımı" in x
+        else "📊 Nötr Durum"
+    )
+    
+    # Önem sıralaması (skora göre)
+    result_df['Oncelik_Seviyesi'] = pd.qcut(
+        result_df['Doku_Uyum_Skoru'],
+        q=4,
+        labels=[1, 2, 3, 4],  # 1 = En yüksek öncelik (en düşük skor)
+        duplicates='drop'
+    )
+    
+    # Sıralama
+    result_df = result_df.sort_values(['Oncelik_Seviyesi', 'Doku_Uyum_Skoru'], ascending=[True, False])
+    
+    return result_df
+
+def create_tissue_coherence_chart(analysis_df):
+    """Stratejik Doku Uyumu analizini görselleştir"""
+    if analysis_df.empty:
+        return None
+    
+    # Uyum durumlarına göre grupla
+    coherence_counts = analysis_df['Doku_Uyum_Durumu'].value_counts()
+    
+    fig = go.Figure()
+    
+    colors = {
+        "🎯 Uyumlu Büyüme": "#10B981",      # Yeşil
+        "⚠️ Yönetim Zafiyeti": "#EF4444",    # Kırmızı
+        "🎭 Yanıltıcı Başarı": "#F59E0B",    # Sarı
+        "🔄 Stratejik Revizyon Gerekiyor": "#8B5CF6",  # Mor
+        "📊 Nötr Durum": "#64748B"           # Gri
+    }
+    
+    fig.add_trace(go.Bar(
+        x=coherence_counts.index,
+        y=coherence_counts.values,
+        marker_color=[colors.get(x, "#64748B") for x in coherence_counts.index],
+        text=coherence_counts.values,
+        textposition='auto',
+        marker=dict(
+            line=dict(width=2, color='rgba(255, 255, 255, 0.8)')
+        ),
+        hovertemplate='<b>%{x}</b><br>Brick Sayısı: %{y}<extra></extra>'
+    ))
+    
+    fig.update_layout(
+        title=dict(
+            text='<b>Stratejik Doku Uyumu Dağılımı</b>',
+            font=dict(size=22, color='white', family='Inter')
+        ),
+        xaxis_title='<b>Doku Uyum Durumu</b>',
+        yaxis_title='<b>Brick Sayısı</b>',
+        height=500,
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='#e2e8f0', family='Inter'),
+        xaxis=dict(
+            tickangle=-45,
+            gridcolor='rgba(59, 130, 246, 0.1)'
+        ),
+        yaxis=dict(
+            gridcolor='rgba(59, 130, 246, 0.1)'
         )
-        
-        # Eksik değerleri doldur
-        combined['Sehir_Stratejisi'] = combined['Sehir_Stratejisi'].fillna('👁️ İzleme')
-        combined['Pazar_Buyuklugu'] = combined['Pazar_Buyuklugu'].fillna('Orta')
-        
-        # Stratejik içgörü oluştur
-        def generate_strategic_insight(row):
-            sehir_strateji = row['Sehir_Stratejisi']
-            brick_bcg = row['BCG_Kategori']
-            
-            # Özel kombinasyonlar (istenen kombinasyonlar)
-            if sehir_strateji == "⚡ Hızlandırılmış" and brick_bcg == "🐄 Cash Cow":
-                return "Büyüme Finansörü: Bu Brick'ten gelen nakdi, şehrin geri kalanındaki büyümeyi fonlamak için kullan."
-            
-            elif sehir_strateji == "🚀 Agresif" and brick_bcg == "❓ Question Mark":
-                return "Kritik Dönemeç: Şehir agresif büyürken bu Brick geride kalamaz. Yatırımı artırıp Star'a çevir."
-            
-            elif sehir_strateji == "🛡️ Koruma" and brick_bcg == "⭐ Star":
-                return "Kale Komutanı: Liderliği koruyan ana savunma hattı. Rekabete alan bırakma."
-            
-            elif sehir_strateji == "💎 Potansiyel" and brick_bcg == "🐶 Dog":
-                return "Yük Atımı: Potansiyelli şehirde zayıf halka. Verimliliği artır veya kaynağı başka Brick'e kaydır."
-            
-            # Diğer mantıklı kombinasyonlar
-            elif sehir_strateji == "🚀 Agresif" and brick_bcg == "⭐ Star":
-                return "Öncü Kuvvet: Agresif şehirdeki yıldız. Büyümeye öncülük ediyor. Kaynak önceliği ver."
-            
-            elif sehir_strateji == "⚡ Hızlandırılmış" and brick_bcg == "⭐ Star":
-                return "Hızlandırıcı Motor: Hızlanan şehirdeki yıldız. Momentumu koru, ölçeği büyüt."
-            
-            elif sehir_strateji == "🛡️ Koruma" and brick_bcg == "🐄 Cash Cow":
-                return "Savunma Hattı: Korunması gereken şehirdeki nakit ineği. Karı maksimize et, liderliği koru."
-            
-            elif sehir_strateji == "👁️ İzleme" and brick_bcg == "❓ Question Mark":
-                return "Gözlem Altında: İzleme şehrindeki soru işareti. Düşük riskle test et, dikkatli izle."
-            
-            elif sehir_strateji == "👁️ İzleme" and brick_bcg == "🐶 Dog":
-                return "İzole Edilmiş: İzleme şehrindeki köpek. Kaynak kullanımını optimize et, çıkış stratejisi hazırla."
-            
-            elif sehir_strateji == "💎 Potansiyel" and brick_bcg == "⭐ Star":
-                return "Gizli Mücevher: Potansiyelli şehirdeki yıldız. Ölçeklendir, model olarak kullan."
-            
-            else:
-                return "Standart Yönetim: Dengeli yaklaşım sürdür, performansı düzenli izle."
-        
-        combined['Stratejik_Yorum'] = combined.apply(generate_strategic_insight, axis=1)
-        
-        # Doku Uyum Skoru hesapla (0-100)
-        def calculate_tissue_coherence_score(row):
-            sehir_strateji = row['Sehir_Stratejisi']
-            brick_bcg = row['BCG_Kategori']
-            brick_sehir_pay = row['Sehir_Ici_Pay_%']
-            sehir_buyume = row['Sehir_Buyume_%']
-            brick_buyume = row['Brick_Buyume_%']
-            
-            # Temel skor (BCG ve strateji uyumu)
-            base_score = 50  # Nötr başlangıç
-            
-            # Şehir stratejisine göre puanlar
-            strateji_scores = {
-                "🚀 Agresif": {
-                    "⭐ Star": 100,    # Agresif şehir + Star Brick = Mükemmel
-                    "❓ Question Mark": 70,  # Agresif şehir + Question Mark = Potansiyel
-                    "🐄 Cash Cow": 50,  # Agresif şehir + Cash Cow = Orta
-                    "🐶 Dog": 20       # Agresif şehir + Dog = Kötü
-                },
-                "⚡ Hızlandırılmış": {
-                    "⭐ Star": 90,      # Hızlanan şehir + Star = Çok iyi
-                    "🐄 Cash Cow": 80,  # Hızlanan şehir + Cash Cow = İyi
-                    "❓ Question Mark": 60,  # Hızlanan şehir + Question Mark = Orta
-                    "🐶 Dog": 30       # Hızlanan şehir + Dog = Zayıf
-                },
-                "🛡️ Koruma": {
-                    "🐄 Cash Cow": 90,  # Koruma şehri + Cash Cow = Mükemmel
-                    "⭐ Star": 85,      # Koruma şehri + Star = Çok iyi
-                    "🐶 Dog": 40,      # Koruma şehri + Dog = Zayıf
-                    "❓ Question Mark": 35  # Koruma şehri + Question Mark = Kötü
-                },
-                "💎 Potansiyel": {
-                    "⭐ Star": 95,      # Potansiyelli şehir + Star = Mükemmel
-                    "❓ Question Mark": 75,  # Potansiyelli şehir + Question Mark = İyi
-                    "🐄 Cash Cow": 55,  # Potansiyelli şehir + Cash Cow = Orta
-                    "🐶 Dog": 25       # Potansiyelli şehir + Dog = Kötü
-                },
-                "👁️ İzleme": {
-                    "🐄 Cash Cow": 70,  # İzleme şehri + Cash Cow = İyi
-                    "⭐ Star": 65,      # İzleme şehri + Star = Orta-iyi
-                    "❓ Question Mark": 45,  # İzleme şehri + Question Mark = Düşük
-                    "🐶 Dog": 35       # İzleme şehri + Dog = Çok düşük
-                }
-            }
-            
-            # BCG ağırlıkları
-            bcg_weights = {
-                "⭐ Star": 1.2,
-                "🐄 Cash Cow": 1.0,
-                "❓ Question Mark": 0.8,
-                "🐶 Dog": 0.6
-            }
-            
-            # Şehir içi pay bonusu (%10'dan yüksekse bonus)
-            pay_bonus = min(brick_sehir_pay / 2, 15) if brick_sehir_pay > 10 else 0
-            
-            # Büyüme uyumu bonusu (Brick büyümesi şehir büyümesinden yüksekse)
-            growth_bonus = 0
-            if brick_buyume > sehir_buyume and sehir_buyume > 0:
-                growth_bonus = min((brick_buyume - sehir_buyume) / 5, 10)
-            
-            if sehir_strateji in strateji_scores and brick_bcg in strateji_scores[sehir_strateji]:
-                base_score = strateji_scores[sehir_strateji][brick_bcg]
-            
-            # BCG ağırlığı uygula
-            bcg_weight = bcg_weights.get(brick_bcg, 1.0)
-            weighted_score = base_score * bcg_weight
-            
-            # Final skor (0-100 arasında sınırla)
-            final_score = min(100, max(0, weighted_score + pay_bonus + growth_bonus))
-            
-            return round(final_score, 1)
-        
-        combined['Doku_Uyum_Skoru'] = combined.apply(calculate_tissue_coherence_score, axis=1)
-        
-        # Aksiyon önerisi oluştur
-        def generate_action_recommendation(row):
-            score = row['Doku_Uyum_Skoru']
-            insight = row['Stratejik_Yorum']
-            
-            if score >= 80:
-                return "Yatırım Artır: Yüksek uyum, başarıyı ölçeklendir"
-            elif score >= 60:
-                return "Stabil Tut: İyi uyum, mevcut stratejiyi sürdür"
-            elif score >= 40:
-                return "İyileştir: Orta uyum, optimizasyon yap"
-            else:
-                return "Revize Et: Düşük uyum, stratejiyi gözden geçir"
-        
-        combined['Aksiyon_Onerisi'] = combined.apply(generate_action_recommendation, axis=1)
-        
-        # Şehir sayısı (her Brick 1 şehirle ilişkili)
-        combined['Sehir_Sayisi'] = 1
-        
-        # Doku Uyum Durumu (eski kodla uyumluluk için)
-        combined['Doku_Uyum_Durumu'] = combined.apply(
-            lambda x: "🎯 Uyumlu Büyüme" if x['Doku_Uyum_Skoru'] >= 80
-            else "⚠️ Yönetim Zafiyeti" if x['Doku_Uyum_Skoru'] >= 60
-            else "🎭 Yanıltıcı Başarı" if x['Doku_Uyum_Skoru'] >= 40
-            else "🔄 Stratejik Revizyon Gerekiyor" if x['Doku_Uyum_Skoru'] >= 20
-            else "📊 Nötr Durum", axis=1
-        )
-        
-        # Önem sıralaması (skora göre)
-        try:
-            combined['Oncelik_Seviyesi'] = pd.qcut(
-                combined['Doku_Uyum_Skoru'],
-                q=4,
-                labels=[1, 2, 3, 4],  # 1 = En yüksek öncelik (en düşük skor)
-                duplicates='drop'
-            )
-        except:
-            combined['Oncelik_Seviyesi'] = 3  # Varsayılan orta öncelik
-        
-        # Sonuç DataFrame'ini hazırla
-        result_columns = [
-            'Brick', 'Region', 'Manager', 'Sehir', 'Sehir_Sayisi',
-            'PF_Satis', 'Rakip_Satis', 'Toplam_Pazar', 'Pazar_Payi_%',
-            'Sehir_Ici_Pay_%', 'Sehir_Stratejisi', 'BCG_Kategori',
-            'Stratejik_Yorum', 'Doku_Uyum_Skoru', 'Doku_Uyum_Durumu',
-            'Aksiyon_Onerisi', 'Oncelik_Seviyesi'
-        ]
-        
-        result_df = combined[result_columns].copy()
-        
-        # Sıralama
-        result_df = result_df.sort_values(['Oncelik_Seviyesi', 'Doku_Uyum_Skoru'], ascending=[True, False])
-        
-        return result_df
-        
-    except Exception as e:
-        st.error(f"Doku uyum analizi hatası: {str(e)}")
-        return pd.DataFrame()
+    )
+    
+    return fig
 
 # =============================================================================
 # YENİ ANALİZ FONKSİYONLARI
@@ -1866,7 +1839,7 @@ def train_advanced_ml_models(df, forecast_periods=3):
             y_pred = np.maximum(y_pred, 0)
             
             mae = mean_absolute_error(y_test, y_pred)
-            rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+            rmse = np.sqrt(mean_squared_error(y_test, y_pred)
             mape = np.mean(np.abs((y_test - y_pred) / np.maximum(y_test, 1))) * 100
             r2 = r2_score(y_test, y_pred)
             
@@ -4637,35 +4610,30 @@ def main():
         st.header("🔄 Şehir vs Brick Performans Uyumsuzluk Analizi")
         
         # --- DÜZELTİLMİŞ KOD (SOLA YASLI) ---
-                # --- DÜZELTİLMİŞ KOD ---
         st.markdown("""
 <div style="background: rgba(15, 23, 41, 0.6); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.2); margin-bottom: 2rem;">
-<h3 style="color: #ffffff; margin-top: 0; font-size: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem; margin-bottom: 1rem;">🧬 Analiz Mantığı: Makro-Mikro Uyumu</h3>
-<p style="color: #cbd5e1; font-size: 0.95rem; line-height: 1.6; margin-bottom: 1.5rem;">Bu analiz, bir organizmanın sağlıklı büyümesi gibi, Şehirlerin (makro-ortam) ve Brick'lerin (mikro-birimler) birbiriyle uyumlu çalışıp çalışmadığını inceler. Sağlıklı büyüme için makro (şehir) ve mikro (Brick) performansının uyumlu olması gereklidir.</p>
+<h3 style="color: #ffffff; margin-top: 0; font-size: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem; margin-bottom: 1rem;">🧬 Analiz Mantığı: Mikro-Makro Uyumu</h3>
+<p style="color: #cbd5e1; font-size: 0.95rem; line-height: 1.6; margin-bottom: 1.5rem;">Bu analiz, bir organizmanın sağlıklı büyümesi gibi, Brick'lerin (organlar) ve şehirlerin (hücreler) birbiriyle uyumlu çalışıp çalışmadığını inceler. Sağlıklı büyüme için mikro (şehir) ve makro (Brick) performansının uyumlu olması gereklidir.</p>
 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
 <div style="background: rgba(16, 185, 129, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #10B981;">
 <h4 style="color: #10B981; margin: 0 0 0.5rem 0; font-size: 1.1rem;">🎯 Uyumlu Büyüme</h4>
-<p style="color: #e2e8f0; margin: 0; font-size: 0.9rem;">Hem Şehir (makro) hem Brick (mikro) yüksek performansta</p>
+<p style="color: #e2e8f0; margin: 0; font-size: 0.9rem;">Hem şehirler hem Brick yüksek performansta</p>
 </div>
 <div style="background: rgba(239, 68, 68, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #EF4444;">
 <h4 style="color: #EF4444; margin: 0 0 0.5rem 0; font-size: 1.1rem;">⚠️ Yönetim Zafiyeti</h4>
-<p style="color: #e2e8f0; margin: 0; font-size: 0.9rem;">Şehir (makro) iyi ama Brick (mikro) kötü - Koordinasyon eksik</p>
+<p style="color: #e2e8f0; margin: 0; font-size: 0.9rem;">Şehirler iyi ama Brick kötü - Koordinasyon eksik</p>
 </div>
 <div style="background: rgba(245, 158, 11, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #F59E0B;">
 <h4 style="color: #F59E0B; margin: 0 0 0.5rem 0; font-size: 1.1rem;">🎭 Yanıltıcı Başarı</h4>
-<p style="color: #e2e8f0; margin: 0; font-size: 0.9rem;">Brick (mikro) iyi ama Şehir (makro) kötü - Büyük şehir etkisi</p>
+<p style="color: #e2e8f0; margin: 0; font-size: 0.9rem;">Brick iyi ama şehirler kötü - Büyük şehir etkisi</p>
 </div>
 <div style="background: rgba(59, 130, 246, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #3B82F6;">
 <h4 style="color: #3B82F6; margin: 0 0 0.5rem 0; font-size: 1.1rem;">🔄 Stratejik Revizyon</h4>
 <p style="color: #e2e8f0; margin: 0; font-size: 0.9rem;">Her ikisi de kötü - Temel strateji sorunu</p>
 </div>
 </div>
-<div style="margin-top: 1rem; padding: 1rem; background: rgba(30, 41, 59, 0.5); border-radius: 8px; border: 1px solid rgba(59, 130, 246, 0.2);">
-<p style="color: #94a3b8; margin: 0; font-size: 0.85rem; font-weight: 600;">📌 HİYERARŞİ: <span style="color: #0EA5E9;">ŞEHİR (MAKRO)</span> → <span style="color: #F59E0B;">BRICK (MİKRO)</span> - Bir Şehir birden fazla Brick içerir</p>
-</div>
 </div>
 """, unsafe_allow_html=True)
-        # --- DÜZELTİLMİŞ KOD BİTİŞİ ---
         
         # Analizi çalıştır
         with st.spinner("Stratejik Doku Uyumu analizi yapılıyor..."):
@@ -4974,8 +4942,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
