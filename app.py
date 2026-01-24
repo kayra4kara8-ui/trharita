@@ -1,4 +1,4 @@
-🎯 GELİŞMİŞ TİCARİ PORTFÖY ANALİZ SİSTEMİ
+"""🎯 GELİŞMİŞ TİCARİ PORTFÖY ANALİZ SİSTEMİ
 Territory Bazlı Performans, ML Tahminleme, Türkiye Haritası ve Rekabet Analizi
 
 GELİŞTİRİLMİŞ ÖZELLİKLER:
