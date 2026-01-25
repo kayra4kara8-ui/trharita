@@ -4815,48 +4815,49 @@ def main():
             critical_bricks = alignment_results[alignment_results['Oncelik_Seviyesi'] <= 2]
             
             if not critical_bricks.empty:
-                for idx, (_, row) in enumerate(critical_bricks.iterrows()):
-                    # Slide-style container
-                    st.markdown(f"""
-                    <div class="executive-card {'critical-card' if row['Oncelik_Seviyesi'] == 1 else 'warning-card'}">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                            <h3 style="color: white; margin: 0; font-size: 1.3rem;">
-                                {idx+1}. {row['Brick']} - {row['Stratejik_Durum']}
-                            </h3>
-                            <span style="background: {'rgba(239, 68, 68, 0.3)' if row['Oncelik_Seviyesi'] == 1 else 'rgba(245, 158, 11, 0.3)'}; 
-                                   color: {'#EF4444' if row['Oncelik_Seviyesi'] == 1 else '#F59E0B'}; 
-                                   padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.9rem; font-weight: 600;">
-                                Öncelik Seviyesi: {row['Oncelik_Seviyesi']}
-                            </span>
-                        </div>
-                        
-                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1rem;">
-                            <div style="background: rgba(37, 99, 235, 0.2); padding: 0.8rem; border-radius: 8px;">
-                                <div style="color: #94a3b8; font-size: 0.85rem;">💰 Ciro</div>
-                                <div style="color: white; font-size: 1.2rem; font-weight: 600;">{format_number(row['PF_Satis'])}</div>
-                            </div>
-                            <div style="background: rgba(16, 185, 129, 0.2); padding: 0.8rem; border-radius: 8px;">
-                                <div style="color: #94a3b8; font-size: 0.85rem;">📊 Pazar Payı</div>
-                                <div style="color: white; font-size: 1.2rem; font-weight: 600;">{row['Pazar_Payi_%']:.1f}%</div>
-                            </div>
-                            <div style="background: rgba(139, 92, 246, 0.2); padding: 0.8rem; border-radius: 8px;">
-                                <div style="color: #94a3b8; font-size: 0.85rem;">⭐ BCG</div>
-                                <div style="color: white; font-size: 1.2rem; font-weight: 600;">{row['BCG_Kategori']}</div>
-                            </div>
-                            <div style="background: rgba(14, 165, 233, 0.2); padding: 0.8rem; border-radius: 8px;">
-                                <div style="color: #94a3b8; font-size: 0.85rem;">🎯 Stratejik Skor</div>
-                                <div style="color: white; font-size: 1.2rem; font-weight: 600;">{row['Stratejik_Skor']:.1f}/100</div>
-                            </div>
-                        </div>
-                        
-                        <div style="background: rgba(30, 41, 59, 0.5); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
-                            <div style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.5rem;">🔍 Kök Neden (Şehir Kırılımı)</div>
-                            <div style="color: #e2e8f0; font-size: 0.95rem; line-height: 1.5;">
-                                {row['Sehir_Detay'].replace('\n', '<br>')}
-                            </div>
-                        </div>
-                    </div>
-                    """, unsafe_allow_html=True)
+    for idx, (_, row) in enumerate(critical_bricks.iterrows()):
+        # Slide-style container
+        # HTML içeriği tamamen sola yaslanmalıdır
+        st.markdown(f"""
+<div class="executive-card {'critical-card' if row['Oncelik_Seviyesi'] == 1 else 'warning-card'}">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h3 style="color: white; margin: 0; font-size: 1.3rem;">
+            {idx+1}. {row['Brick']} - {row['Stratejik_Durum']}
+        </h3>
+        <span style="background: {'rgba(239, 68, 68, 0.3)' if row['Oncelik_Seviyesi'] == 1 else 'rgba(245, 158, 11, 0.3)'}; 
+               color: {'#EF4444' if row['Oncelik_Seviyesi'] == 1 else '#F59E0B'}; 
+               padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.9rem; font-weight: 600;">
+            Öncelik Seviyesi: {row['Oncelik_Seviyesi']}
+        </span>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1rem;">
+        <div style="background: rgba(37, 99, 235, 0.2); padding: 0.8rem; border-radius: 8px;">
+            <div style="color: #94a3b8; font-size: 0.85rem;">💰 Ciro</div>
+            <div style="color: white; font-size: 1.2rem; font-weight: 600;">{format_number(row['PF_Satis'])}</div>
+        </div>
+        <div style="background: rgba(16, 185, 129, 0.2); padding: 0.8rem; border-radius: 8px;">
+            <div style="color: #94a3b8; font-size: 0.85rem;">📊 Pazar Payı</div>
+            <div style="color: white; font-size: 1.2rem; font-weight: 600;">{row['Pazar_Payi_%']:.1f}%</div>
+        </div>
+        <div style="background: rgba(139, 92, 246, 0.2); padding: 0.8rem; border-radius: 8px;">
+            <div style="color: #94a3b8; font-size: 0.85rem;">⭐ BCG</div>
+            <div style="color: white; font-size: 1.2rem; font-weight: 600;">{row['BCG_Kategori']}</div>
+        </div>
+        <div style="background: rgba(14, 165, 233, 0.2); padding: 0.8rem; border-radius: 8px;">
+            <div style="color: #94a3b8; font-size: 0.85rem;">🎯 Stratejik Skor</div>
+            <div style="color: white; font-size: 1.2rem; font-weight: 600;">{row['Stratejik_Skor']:.1f}/100</div>
+        </div>
+    </div>
+    
+    <div style="background: rgba(30, 41, 59, 0.5); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+        <div style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.5rem;">🔍 Kök Neden (Şehir Kırılımı)</div>
+        <div style="color: #e2e8f0; font-size: 0.95rem; line-height: 1.5;">
+            {row['Sehir_Detay'].replace(chr(10), '<br>')}
+        </div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
                     
                     # McKinsey Slide Logic
                     with st.expander(f"📋 {row['Brick']} - Detaylı Analiz", expanded=False):
@@ -5089,4 +5090,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
