@@ -1,4 +1,3 @@
-"""
 🎯 GELİŞMİŞ TİCARİ PORTFÖY ANALİZ SİSTEMİ
 Brick Bazlı Performans, ML Tahminleme, Türkiye Haritası ve Rekabet Analizi
 
@@ -573,9 +572,10 @@ CITY_NORMALIZE_CLEAN = {
     'KARS': 'Kars',
     'KASTAMONU': 'Kastamonu',
     'KASTAMONU': 'Kastamonu',
+    'KASTAMONU': 'Kastamonu',
     'KAYSERI': 'Kayseri',
-    'KIRIKKALE': 'Kinkkale',
-    'KIRKLARELI': 'Kirklareli',
+    'KIRIKKALE': 'Kinkkale",
+    'KIRKLARELI': 'Kirklareli",
     'KIRKLARELİ': 'Kirklareli',
     'KIRSEHIR': 'Kirsehir',
     'KIRŞEHİR': 'Kirsehir',
@@ -628,7 +628,7 @@ CITY_NORMALIZE_CLEAN = {
     'VAN': 'Van',
     'YALOVA': 'Yalova',
     'YOZGAT': 'Yozgat',
-    'ZONGULDAK': 'Zonguldak',
+    'ZONGULDAK': 'Zonguldak",
     'ZONGULDAK': 'Zonguldak',
     'ARDAHAN': 'Ardahan',
     'AKSARAY': 'Aksaray',
@@ -5171,4 +5171,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
