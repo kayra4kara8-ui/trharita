@@ -3328,7 +3328,7 @@ def main():
                 <span style="opacity: 0.3">|</span>
                 <span>RAKİP ANALİZİ</span>
                 <span style="opacity: 0.3">|</span>
-                <span class="cap-item">🔍 STRATEJİK DOKU UYUMU ANALİZİ</span>
+                <span class="cap-item">STRATEJİK DOKU UYUMU ANALİZİ</span>
             </div>
         </div>
     """, unsafe_allow_html=True)
@@ -3458,7 +3458,7 @@ def main():
         "🗺️ Modern Harita",
         "🏢 Brick Analizi",
         "📈 Zaman Serisi",
-        "🎯 Rakip Analizi",
+        "📌 Rakip Analizi",
         "⭐ BCG & Strateji",
         "🏆 Bölge Karşılaştırması",
         "🎯 Stratejik Doku Uyumu Analizi",  # İSİM DEĞİŞTİ - PROFESYONEL
@@ -5008,6 +5008,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
