@@ -11,7 +11,7 @@ GELİŞTİRİLMİŞ ÖZELLİKLER:
 - 📉 Trend analizi ve performans metrikleri
 - 🆕 BÖLGE KARŞILAŞTIRMALI ANALİZ
 - 🆕 BÖLGE İÇİ DETAYLI PERFORMANS ANALİZİ
-- 🆕 🔍 STRATEJİK DOKU UYUMU ANALİZİ (EXECUTIVE LEVEL - PROFESYONEL İŞ DİLİ)
+- 🆕 📌 EXECUTIVE-LEVEL ANALİZ – ŞEHİR YATIRIM STRATEJİSİ & BRICK BCG ENTEGRASYONU
 """
 
 import streamlit as st
@@ -272,6 +272,58 @@ st.markdown("""
         background: rgba(245, 158, 11, 0.1);
     }
     
+    /* YENİ: STRATEJİK UYUM KARTLARI */
+    .strategic-fit-card {
+        background: rgba(30, 41, 59, 0.8);
+        padding: 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        border: 1px solid;
+    }
+    
+    .fit-high {
+        border-color: #10B981;
+        background: rgba(16, 185, 129, 0.1);
+    }
+    
+    .fit-medium {
+        border-color: #F59E0B;
+        background: rgba(245, 158, 11, 0.1);
+    }
+    
+    .fit-low {
+        border-color: #EF4444;
+        background: rgba(239, 68, 68, 0.1);
+    }
+    
+    /* SKOR GÖSTERGELERİ */
+    .score-indicator {
+        width: 100%;
+        height: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+        overflow: hidden;
+        margin: 0.5rem 0;
+    }
+    
+    .score-fill {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.5s ease;
+    }
+    
+    .score-high {
+        background: linear-gradient(90deg, #10B981, #34D399);
+    }
+    
+    .score-medium {
+        background: linear-gradient(90deg, #F59E0B, #FBBF24);
+    }
+    
+    .score-low {
+        background: linear-gradient(90deg, #EF4444, #F87171);
+    }
+    
 </style>
 """, unsafe_allow_html=True)
 
@@ -334,13 +386,30 @@ STRATEGY_COLORS = {
     "👁️ İzleme": "#64748B"         # Slate Gray
 }
 
-# STRATEJİK HİZALANMA RENKLERİ (YENİ - EXECUTIVE LEVEL)
-STRATEGIC_ALIGNMENT_COLORS = {
-    "Büyütme Fırsatı": "#10B981",        # Yeşil - Büyüme fırsatı
-    "Operasyonel Atalet": "#F59E0B",     # Turuncu - Atalet
-    "Hizalanma Riski": "#EF4444",        # Kırmızı - Risk
-    "Stratejik Senkronizasyon": "#2563EB", # Mavi - Senkronizasyon
-    "Portföy Dengesizliği": "#64748B"    # Gri - Dengesizlik
+# STRATEJİK UYUM RENKLERİ (YENİ - EXECUTIVE LEVEL)
+STRATEGIC_FIT_COLORS = {
+    "Güçlü Uyum": "#10B981",        # Yeşil - Güçlü uyum
+    "Kısmi Uyum": "#F59E0B",        # Turuncu - Orta uyum
+    "Stratejik Kopuş": "#EF4444",   # Kırmızı - Zayıf uyum
+    "Uyumlu": "#2563EB",            # Mavi - Uyumlu
+    "Riskli": "#EF4444",            # Kırmızı - Riskli
+    "Fırsat": "#10B981"             # Yeşil - Fırsat
+}
+
+# STRATEJİK UYUM SKOR RENKLERİ
+FIT_SCORE_COLORS = {
+    "high": "#10B981",      # 80-100: Güçlü Uyum
+    "medium": "#F59E0B",    # 50-79: Kısmi Uyum
+    "low": "#EF4444"        # 0-49: Stratejik Kopuş
+}
+
+# KARAR ÖNERİSİ RENKLERİ
+DECISION_COLORS = {
+    "Yatırımı Artır": "#10B981",
+    "Seçici Yatırım Yap": "#3B82F6",
+    "Yeniden Dengele": "#F59E0B",
+    "Mevcut Yapıyı Koru": "#64748B",
+    "Yatırımı Azalt / Çekil": "#EF4444"
 }
 
 # GRADIENT SCALES for Visualizations (Mavi tonlarına güncellendi)
@@ -553,7 +622,7 @@ CITY_NORMALIZE_CLEAN = {
     'TOKAT': 'Tokat',
     'TRABZON': 'Trabzon',
     'TUNCELI': 'Tunceli',
-    'TUNCELİ': 'Tunceli',
+    'TUNCELİ': 'Tunceli",
     'USAK': 'Usak',
     'UŞAK': 'Usak',
     'VAN': 'Van',
@@ -703,24 +772,22 @@ def hex_to_rgba(hex_color, alpha=0.3):
     return f'rgba(100, 116, 139, {alpha})'  # Varsayılan slate gray
 
 # =============================================================================
-# STRATEJİK DOKU UYUMU ANALİZİ - EXECUTIVE LEVEL (YENİ)
+# YENİ: ŞEHİR-BRICK STRATEJİK UYUM ANALİZİ FONKSİYONLARI
 # =============================================================================
 
-def analyze_strategic_alignment(df, product, date_filter=None):
+def analyze_city_brick_strategic_alignment(df, product, date_filter=None):
     """
-    EXECUTIVE LEVEL STRATEJİK DOKU UYUMU ANALİZİ
+    ŞEHİR–BRICK STRATEJİK UYUM ANALİZİ
     
-    Brick seviyesinde görünen risk ve fırsatların hangi şehirlerden kaynaklandığını 
-    kök neden analizi ile ortaya koyar. Finansal etkiyi (ciro yoğunluğu) merkeze alır.
+    MAKRO: Şehir bazlı yatırım stratejileri
+    MİKRO: Brick bazlı BCG konumlandırması
     
-    Yeni Kategoriler:
-    1. Hizalanma Riski: Stratejik hedeflerle uyumsuzluk
-    2. Operasyonel Atalet: Potansiyelin kilitlemesi
-    3. Büyütme Fırsatı: Yatırım gerektiren alanlar
-    
-    Executive Metrics:
-    - Risk Altındaki Ciro: Hizalanma Riski kategorisindeki Brick'lerin toplam PF_Satis
-    - Kilitlenmiş Büyüme Fırsatı: Operasyonel Atalet kategorisindeki Brick'lerin toplam PF_Satis
+    Analiz mantığı:
+    1. Her şehir için yatırım stratejisi belirle
+    2. Her Brick için BCG kategorisi belirle
+    3. Şehir stratejisi ile Brick BCG konumlarını karşılaştır
+    4. Stratejik uyum skoru hesapla
+    5. İçgörü ve aksiyon önerisi üret
     """
     cols = get_product_columns(product)
     
@@ -729,418 +796,377 @@ def analyze_strategic_alignment(df, product, date_filter=None):
     else:
         df_filtered = df.copy()
     
-    # Brick bazlı performans
-    bcg_df = calculate_bcg_matrix(df_filtered, product, date_filter)
-    
-    # Şehir bazlı performans (kökneden analizi için)
+    # 1. ŞEHİR BAZLI YATIRIM STRATEJİSİ
     city_perf = calculate_city_performance(df_filtered, product, date_filter)
     investment_df = calculate_investment_strategy(city_perf)
     
+    # 2. BRICK BAZLI BCG MATRIX
+    bcg_df = calculate_bcg_matrix(df_filtered, product, date_filter)
+    
+    # 3. ŞEHİR–BRICK EŞLEŞTİRMESİ
+    # Her Brick'in hangi şehirde olduğunu bul
+    city_brick_mapping = df_filtered.groupby(['CITY_NORMALIZED', 'TERRITORIES']).agg({
+        cols['pf']: 'sum'
+    }).reset_index()
+    
+    city_brick_mapping.columns = ['City', 'Brick', 'PF_Satis']
+    
+    # Şehir stratejileri ile birleştir
+    city_brick_mapping = city_brick_mapping.merge(
+        investment_df[['City', 'Yatırım_Stratejisi']],
+        on='City',
+        how='left'
+    )
+    
+    # Brick BCG kategorileri ile birleştir
+    city_brick_mapping = city_brick_mapping.merge(
+        bcg_df[['Brick', 'BCG_Kategori']],
+        on='Brick',
+        how='left'
+    )
+    
+    # BCG kategorisi olmayan Brick'ler için varsayılan değer
+    city_brick_mapping['BCG_Kategori'] = city_brick_mapping['BCG_Kategori'].fillna('🐶 Dog')
+    
+    # 4. ŞEHİR BAZLI ANALİZ
     results = []
     
-    for _, brick_row in bcg_df.iterrows():
-        brick = brick_row['Brick']
-        bcg_category = brick_row['BCG_Kategori']
-        brick_pf_satis = brick_row['PF_Satis']
-        brick_pazar_payi = brick_row['Pazar_Payi_%']
+    for city in city_brick_mapping['City'].unique():
+        city_data = city_brick_mapping[city_brick_mapping['City'] == city]
         
-        # 1️⃣ BRICK → ŞEHİR KIRILIMI (Root Cause Analysis)
-        # Bu Brick'in kapsadığı şehirleri bul
-        brick_cities = df_filtered[df_filtered['TERRITORIES'] == brick]['CITY_NORMALIZED'].unique()
+        if city_data.empty:
+            continue
         
-        city_details = []
-        city_breakdown = []
-        if len(brick_cities) > 0:
-            # Şehirlerin performansını al
-            brick_city_data = city_perf[city_perf['City'].isin(brick_cities)].copy()
-            
-            # Şehir yatırım stratejilerini ekle
-            brick_city_data = brick_city_data.merge(
-                investment_df[['City', 'Yatırım_Stratejisi']], 
-                on='City', 
-                how='left'
-            )
-            
-            # Şehirleri PF_Satis'e göre sırala
-            brick_city_data = brick_city_data.sort_values('PF_Satis', ascending=False)
-            
-            # Şehir bazlı stratejik pozisyon belirle
-            def get_city_strategic_position(row):
-                pf_satis = row['PF_Satis']
-                pazar_payi = row['Pazar_Payi_%']
-                strategy = row.get('Yatırım_Stratejisi', '👁️ İzleme')
-                
-                if pazar_payi >= 50:
-                    return "🚀 Büyütme" if strategy in ['🚀 Agresif', '⚡ Hızlandırılmış'] else "🛡️ Koruma"
-                elif pazar_payi >= 30:
-                    return "🎯 Müdahale" if pf_satis > 0 else "👁️ İzleme"
-                else:
-                    return "⚠️ Kritik" if pf_satis > 0 else "📉 Düşük Öncelik"
-            
-            brick_city_data['Stratejik_Pozisyon'] = brick_city_data.apply(get_city_strategic_position, axis=1)
-            
-            # Şehir kırılımı oluştur (en fazla ilk 5 şehir)
-            top_cities = brick_city_data.head(5)
-            for _, city_row in top_cities.iterrows():
-                city_share = (city_row['PF_Satis'] / brick_pf_satis * 100) if brick_pf_satis > 0 else 0
-                city_details.append(f"• {city_row['City']}: [{city_row['Stratejik_Pozisyon']}] (Pay: %{city_share:.1f})")
-                city_breakdown.append({
-                    'City': city_row['City'],
-                    'Position': city_row['Stratejik_Pozisyon'],
-                    'Share': city_share,
-                    'PF_Satis': city_row['PF_Satis'],
-                    'Pazar_Payi_%': city_row['Pazar_Payi_%']
-                })
-            
-            # 5'ten fazla şehir varsa (+X şehir daha) ekle
-            if len(brick_city_data) > 5:
-                remaining = len(brick_city_data) - 5
-                city_details.append(f"(+{remaining} şehir daha)")
+        # Şehir stratejisi
+        city_strategy = city_data['Yatırım_Stratejisi'].iloc[0]
         
-        # 2️⃣ STRATEJİK DURUM BELİRLEME
-        # BCG + Şehir dağılımına göre stratejik durum
-        strategic_status, strategic_score, explanation = evaluate_brick_strategic_status(
-            bcg_category, brick_city_data if len(brick_cities) > 0 else None, brick_pazar_payi
-        )
+        # Brick dağılımı
+        brick_distribution = city_data.groupby('BCG_Kategori').agg({
+            'PF_Satis': ['sum', 'count']
+        }).reset_index()
         
-        # 3️⃣ OTOMATİK AKSİYON PLANI ÜRETİMİ
-        action_plan = generate_automatic_action_plan(
-            strategic_status, bcg_category, brick_city_data if len(brick_cities) > 0 else None, city_details
-        )
+        brick_distribution.columns = ['BCG_Kategori', 'Toplam_Ciro', 'Brick_Sayisi']
         
-        # 4️⃣ OKR ÜRETİMİ
-        okr_objective, okr_key_results = generate_automatic_okr(
-            strategic_status, bcg_category, brick, brick_city_data if len(brick_cities) > 0 else None
-        )
+        # Toplam ciro
+        total_ciro = brick_distribution['Toplam_Ciro'].sum()
+        
+        # BCG kategorilerine göre yüzde dağılımı
+        brick_distribution['Ciro_Pay_%'] = (brick_distribution['Toplam_Ciro'] / total_ciro * 100) if total_ciro > 0 else 0
+        
+        # 5. STRATEJİK UYUM SKORU HESAPLA
+        strategic_fit_score, fit_category = calculate_strategic_fit_score(city_strategy, brick_distribution)
+        
+        # 6. TEK CÜMLELİK YÖNETİCİ İÇGÖRÜSÜ
+        executive_insight = generate_executive_insight(city, city_strategy, brick_distribution, strategic_fit_score)
+        
+        # 7. YATIRIM KOMİTESİ KARAR ÖZETİ
+        decision_summary = generate_decision_summary(city_strategy, brick_distribution, strategic_fit_score)
+        
+        # 8. DETAYLI BRICK LİSTESİ (ilk 5)
+        top_bricks = city_data.nlargest(5, 'PF_Satis')
+        brick_details = []
+        for _, brick_row in top_bricks.iterrows():
+            brick_share = (brick_row['PF_Satis'] / total_ciro * 100) if total_ciro > 0 else 0
+            brick_details.append(f"• {brick_row['Brick']} [{brick_row['BCG_Kategori']}]: {format_number(brick_row['PF_Satis'])} (%{brick_share:.1f})")
         
         results.append({
-            'Brick': brick,
-            'BCG_Kategori': bcg_category,
-            'PF_Satis': brick_pf_satis,
-            'Pazar_Payi_%': brick_pazar_payi,
-            'Sehir_Sayisi': len(brick_cities),
-            'Sehir_Detay': "\n".join(city_details) if city_details else "Şehir verisi bulunamadı",
-            'Sehir_Kırılımı': city_breakdown,
-            'Stratejik_Durum': strategic_status,
-            'Stratejik_Skor': strategic_score,
-            'Aciklama': explanation,
-            'Aksiyon_Plani': action_plan,
-            'OKR_Objective': okr_objective,
-            'OKR_Key_Results': okr_key_results,
-            'Oncelik_Seviyesi': calculate_priority_level(strategic_status, strategic_score, brick_pf_satis)
+            'Şehir': city,
+            'Şehir_Yatırım_Stratejisi': city_strategy,
+            'Toplam_Ciro': total_ciro,
+            'Brick_Sayisi': len(city_data),
+            'BCG_Dağılımı': brick_distribution.to_dict('records'),
+            'Stratejik_Uyum_Skoru': strategic_fit_score,
+            'Uyum_Kategorisi': fit_category,
+            'Yönetici_İçgörüsü': executive_insight,
+            'Karar_Önerisi': decision_summary['decision'],
+            'Karar_Gerekçesi': decision_summary['rationale'],
+            'Detaylı_Brick_Listesi': "\n".join(brick_details) if brick_details else "Brick verisi bulunamadı",
+            'BCG_Star_%': brick_distribution[brick_distribution['BCG_Kategori'] == '⭐ Star']['Ciro_Pay_%'].sum(),
+            'BCG_CashCow_%': brick_distribution[brick_distribution['BCG_Kategori'] == '🐄 Cash Cow']['Ciro_Pay_%'].sum(),
+            'BCG_Question_%': brick_distribution[brick_distribution['BCG_Kategori'] == '❓ Question Mark']['Ciro_Pay_%'].sum(),
+            'BCG_Dog_%': brick_distribution[brick_distribution['BCG_Kategori'] == '🐶 Dog']['Ciro_Pay_%'].sum()
         })
     
     results_df = pd.DataFrame(results)
     
-    # 5️⃣ FİNANSAL ETKİ METRİKLERİ
-    risk_altindaki_ciro = results_df[results_df['Stratejik_Durum'] == 'Hizalanma Riski']['PF_Satis'].sum()
-    kilitlenmis_buyume = results_df[results_df['Stratejik_Durum'] == 'Operasyonel Atalet']['PF_Satis'].sum()
+    # Sıralama: Önce uyum skoru (düşükten yükseğe), sonra ciro (yüksekten düşüğe)
+    results_df = results_df.sort_values(['Stratejik_Uyum_Skoru', 'Toplam_Ciro'], ascending=[True, False])
     
-    results_df['Risk_Altindaki_Ciro_%'] = (results_df['PF_Satis'] / risk_altindaki_ciro * 100) if risk_altindaki_ciro > 0 else 0
-    results_df['Kilitlenmis_Buyume_%'] = (results_df['PF_Satis'] / kilitlenmis_buyume * 100) if kilitlenmis_buyume > 0 else 0
-    
-    return results_df.sort_values(['Oncelik_Seviyesi', 'PF_Satis'], ascending=[True, False]), risk_altindaki_ciro, kilitlenmis_buyume
+    return results_df
 
+def calculate_strategic_fit_score(city_strategy, brick_distribution):
+    """
+    Şehir stratejisi ile Brick BCG dağılımı arasındaki uyum skorunu hesapla
+    
+    Skor mantığı:
+    0-49: Stratejik Kopuş
+    50-79: Kısmi Uyum
+    80-100: Güçlü Uyum
+    """
+    # BCG dağılımını dictionary'ye çevir
+    bcg_dict = {}
+    for _, row in brick_distribution.iterrows():
+        bcg_dict[row['BCG_Kategori']] = row['Ciro_Pay_%']
+    
+    # Varsayılan değerler
+    star_percent = bcg_dict.get('⭐ Star', 0)
+    cashcow_percent = bcg_dict.get('🐄 Cash Cow', 0)
+    question_percent = bcg_dict.get('❓ Question Mark', 0)
+    dog_percent = bcg_dict.get('🐶 Dog', 0)
+    
+    # Şehir stratejisine göre ideal BCG dağılımı
+    ideal_distributions = {
+        '🚀 Agresif': {'star': 40, 'question': 30, 'cashcow': 20, 'dog': 10},
+        '⚡ Hızlandırılmış': {'star': 30, 'question': 25, 'cashcow': 30, 'dog': 15},
+        '🛡️ Koruma': {'star': 15, 'question': 20, 'cashcow': 50, 'dog': 15},
+        '💎 Potansiyel': {'star': 20, 'question': 40, 'cashcow': 20, 'dog': 20},
+        '👁️ İzleme': {'star': 10, 'question': 20, 'cashcow': 30, 'dog': 40}
+    }
+    
+    if city_strategy not in ideal_distributions:
+        city_strategy = '👁️ İzleme'  # Varsayılan
+    
+    ideal = ideal_distributions[city_strategy]
+    
+    # Skor hesapla (ideal dağılıma yakınlık)
+    score = 100 - (
+        abs(star_percent - ideal['star']) * 0.3 +
+        abs(cashcow_percent - ideal['cashcow']) * 0.2 +
+        abs(question_percent - ideal['question']) * 0.3 +
+        abs(dog_percent - ideal['dog']) * 0.2
+    )
+    
+    # Skoru 0-100 arasına sınırla
+    score = max(0, min(100, score))
+    
+    # Kategori belirle
+    if score >= 80:
+        fit_category = "Güçlü Uyum"
+    elif score >= 50:
+        fit_category = "Kısmi Uyum"
+    else:
+        fit_category = "Stratejik Kopuş"
+    
+    return round(score, 1), fit_category
 
-def evaluate_brick_strategic_status(bcg_category, city_data, brick_pazar_payi):
+def generate_executive_insight(city, city_strategy, brick_distribution, strategic_fit_score):
     """
-    Brick'in stratejik durumunu değerlendir
+    Tek cümlelik yönetici içgörüsü üret
+    
+    Format:
+    [ŞEHİR]: [Şehir yatırım stratejisi], ancak [baskın brick BCG durumu] nedeniyle [net risk/fırsat yorumu].
     """
-    if city_data is None or len(city_data) == 0:
-        return "Veri Yok", 0, "Şehir verisi bulunamadı"
+    # En baskın BCG kategorisini bul
+    dominant_bcg = brick_distribution.loc[brick_distribution['Ciro_Pay_%'].idxmax(), 'BCG_Kategori']
+    dominant_percent = brick_distribution.loc[brick_distribution['Ciro_Pay_%'].idxmax(), 'Ciro_Pay_%']
     
-    # Şehir performans metrikleri
-    high_perf_cities = city_data[city_data['Pazar_Payi_%'] >= 50]
-    low_perf_cities = city_data[city_data['Pazar_Payi_%'] < 30]
-    agresif_cities = city_data[city_data['Yatırım_Stratejisi'] == '🚀 Agresif']
-    
-    high_perf_ratio = len(high_perf_cities) / len(city_data) * 100 if len(city_data) > 0 else 0
-    low_perf_ratio = len(low_perf_cities) / len(city_data) * 100 if len(city_data) > 0 else 0
-    agresif_ratio = len(agresif_cities) / len(city_data) * 100 if len(city_data) > 0 else 0
-    
-    # Stratejik skor hesapla
-    strategic_score = (
-        (brick_pazar_payi / 100) * 0.4 +
-        (high_perf_ratio / 100) * 0.3 +
-        (1 - (low_perf_ratio / 100)) * 0.2 +
-        (agresif_ratio / 100) * 0.1
-    ) * 100
-    
-    # Stratejik durum belirle
-    if bcg_category in ["⭐ Star", "🐄 Cash Cow"]:
-        if low_perf_ratio > 40:
-            return "Hizalanma Riski", strategic_score, f"Başarılı Brick'te %{low_perf_ratio:.1f} düşük performanslı şehir var. Başarı sürdürülebilir değil."
-        elif high_perf_ratio < 30:
-            return "Operasyonel Atalet", strategic_score, f"Yüksek potansiyelli Brick'te sadece %{high_perf_ratio:.1f} yüksek performanslı şehir var."
+    # İçgörü mantığı
+    if strategic_fit_score >= 80:
+        # Güçlü uyum
+        if city_strategy in ['🚀 Agresif', '⚡ Hızlandırılmış']:
+            insight = f"{city}: {city_strategy} stratejisi, {dominant_bcg} brick'lerin %{dominant_percent:.1f} ciro payı ile güçlü şekilde destekleniyor."
         else:
-            return "Büyütme Fırsatı", strategic_score, f"Güçlü performans dağılımı (%{high_perf_ratio:.1f} yüksek performanslı şehir). Ölçeklendirilebilir."
+            insight = f"{city}: {city_strategy} stratejisi, mevcut brick portföyü ile uyumlu ve risk düzeyi kontrollü."
     
-    elif bcg_category == "❓ Question Mark":
-        if agresif_ratio > 50:
-            return "Büyütme Fırsatı", strategic_score, f"%{agresif_ratio:.1f} agresif stratejili şehir. Yatırımla Star'a dönüşebilir."
-        elif low_perf_ratio > 60:
-            return "Hizalanma Riski", strategic_score, f"%{low_perf_ratio:.1f} düşük performanslı şehir. Stratejik yeniden konumlandırma gerekli."
+    elif strategic_fit_score >= 50:
+        # Kısmi uyum
+        if dominant_bcg in ['🐄 Cash Cow', '🐶 Dog'] and city_strategy in ['🚀 Agresif', '⚡ Hızlandırılmış']:
+            insight = f"{city}: {city_strategy} stratejisi, ancak cironun %{dominant_percent:.1f}'inin {dominant_bcg} brick'lerde olması büyüme hızını kısıtlıyor."
+        elif dominant_bcg == '⭐ Star' and city_strategy in ['🛡️ Koruma', '👁️ İzleme']:
+            insight = f"{city}: {city_strategy} stratejisi, ancak cironun %{dominant_percent:.1f}'inin {dominant_bcg} brick'lerde olması stratejik tutarsızlık riski taşıyor."
         else:
-            return "Operasyonel Atalet", strategic_score, f"Potansiyel var ama agresif şehir oranı düşük (%{agresif_ratio:.1f}). Kaynak optimizasyonu gerekli."
-    
-    else:  # Dog
-        if high_perf_ratio > 20:
-            return "Büyütme Fırsatı", strategic_score, f"Dog kategorisinde %{high_perf_ratio:.1f} yüksek performanslı şehir var. Potansiyel yeniden konumlandırma fırsatı."
-        else:
-            return "Hizalanma Riski", strategic_score, f"Tüm şehirler düşük performanslı. Portföy optimizasyonu gerekiyor."
-
-
-def generate_automatic_action_plan(strategic_status, bcg_category, city_data, city_details):
-    """
-    Otomatik aksiyon planı üret
-    """
-    if strategic_status == "Hizalanma Riski":
-        if bcg_category in ["⭐ Star", "🐄 Cash Cow"]:
-            return (
-                "**DÜZELTİCİ AKSİYON:** Başarıyı korumak için zayıf şehirlerde operasyonel iyileştirme yap.\n"
-                "• Düşük performanslı şehirlerde müşteri segmentasyonu revizyonu\n"
-                "• Marjinal optimizasyon için kaynak tahsisi\n"
-                "• Aylık performans takip mekanizması kur"
-            )
-        else:
-            return (
-                "**SAVUNMACI AKSİYON:** Kaynak israfını önlemek için stratejik yeniden konumlandırma.\n"
-                "• Düşük potansiyelli şehirlerde kaynak azaltımı\n"
-                "• Performans kriterlerine göre portföy optimizasyonu\n"
-                "• 3 aylık stratejik değerlendirme periyodu"
-            )
-    
-    elif strategic_status == "Operasyonel Atalet":
-        return (
-            "**AKTİVASYON AKSİYON:** Kilitli potansiyeli açığa çıkarmak için operasyonel revizyon.\n"
-            "• Agresif stratejili şehirlere kaynak kaydırımı\n"
-            "• Büyüme odaklı KPI'lar belirleme\n"
-            "• Haftalık performans izleme ve müdahale mekanizması"
-        )
-    
-    elif strategic_status == "Büyütme Fırsatı":
-        return (
-            "**YATIRIM AKSİYON:** Başarıyı ölçeklendirmek için agresif büyüme stratejisi.\n"
-            "• Yüksek performanslı şehirlerde yatırım artırımı\n"
-            "• Başarı modelini diğer şehirlere yayma planı\n"
-            "• Çeyreklik büyüme hedefleri belirleme"
-        )
-    
-    return "**İZLEME AKSİYON:** Mevcut durumu koru, aylık performans takibi yap."
-
-
-def generate_automatic_okr(strategic_status, bcg_category, brick, city_data):
-    """
-    Otomatik OKR üret
-    """
-    if city_data is None or len(city_data) == 0:
-        return "Veri yetersiz", ["Yeterli veri olmadığı için OKR oluşturulamadı"]
-    
-    if strategic_status == "Hizalanma Riski":
-        objective = f"{brick}'te stratejik hizalanmayı yeniden sağlamak"
-        key_results = [
-            "Düşük performanslı şehirlerde pazar payını %5 artırmak",
-            "Risk altındaki ciroyu %15 azaltmak",
-            "Şehir bazlı doğru strateji oranını %70'e çıkarmak"
-        ]
-    
-    elif strategic_status == "Operasyonel Atalet":
-        objective = f"{brick}'te kilitli büyüme potansiyelini açığa çıkarmak"
-        key_results = [
-            "Agresif stratejili şehir sayısını 2x artırmak",
-            "Atalet yaşayan şehirlerde büyüme katkısını %25 artırmak",
-            "Operasyonel verimliliği %20 iyileştirmek"
-        ]
-    
-    elif strategic_status == "Büyütme Fırsatı":
-        objective = f"{brick}'te başarıyı ölçeklendirerek büyümeyi hızlandırmak"
-        key_results = [
-            "Yüksek performanslı şehirlerde pazar payını %10 artırmak",
-            "Toplam ciro büyümesini %30'a çıkarmak",
-            "Yeni şehirlere genişleme ile kapsamı %15 artırmak"
-        ]
+            insight = f"{city}: {city_strategy} stratejisi ile brick portföyü kısmen uyumlu, ancak optimizasyon gerekiyor."
     
     else:
-        objective = f"{brick}'te mevcut performansı korumak ve optimize etmek"
-        key_results = [
-            "Pazar payı dalgalanmasını %5 altında tutmak",
-            "Operasyonel maliyetleri %10 optimize etmek",
-            "Müşteri memnuniyetini korumak"
-        ]
+        # Stratejik kopuş
+        if dominant_bcg == '🐶 Dog' and city_strategy in ['🚀 Agresif', '⚡ Hızlandırılmış']:
+            insight = f"{city}: {city_strategy} stratejisi, ancak cironun %{dominant_percent:.1f}'inin {dominant_bcg} brick'lerde olması ciddi stratejik kopuşa işaret ediyor."
+        elif dominant_bcg == '⭐ Star' and city_strategy == '👁️ İzleme':
+            insight = f"{city}: {city_strategy} stratejisi, ancak cironun %{dominant_percent:.1f}'inin {dominant_bcg} brick'lerde olması yatırım eksikliğini gösteriyor."
+        else:
+            insight = f"{city}: Şehir stratejisi ile brick portföyü arasında ciddi uyumsuzluk var. Acil müdahale gerekiyor."
     
-    return objective, key_results
+    return insight
 
-
-def calculate_priority_level(strategic_status, strategic_score, pf_satis):
+def generate_decision_summary(city_strategy, brick_distribution, strategic_fit_score):
     """
-    Öncelik seviyesi hesapla
+    Yatırım komitesi için karar özeti oluştur
+    
+    Karar seçenekleri:
+    - Yatırımı Artır
+    - Seçici Yatırım Yap
+    - Yeniden Dengele
+    - Mevcut Yapıyı Koru
+    - Yatırımı Azalt / Çekil
     """
-    if strategic_status == "Hizalanma Riski" and pf_satis > 1000000:
-        return 1  # Yüksek öncelik - Büyük ciro risk altında
-    elif strategic_status == "Operasyonel Atalet" and strategic_score < 50:
-        return 1  # Yüksek öncelik - Potansiyel kilitli
-    elif strategic_status == "Hizalanma Riski":
-        return 2  # Orta-yüksek öncelik
-    elif strategic_status == "Operasyonel Atalet":
-        return 3  # Orta öncelik
-    elif strategic_status == "Büyütme Fırsatı":
-        return 4  # Orta-düşük öncelik
+    # En baskın BCG kategorisini bul
+    dominant_bcg = brick_distribution.loc[brick_distribution['Ciro_Pay_%'].idxmax(), 'BCG_Kategori']
+    dominant_percent = brick_distribution.loc[brick_distribution['Ciro_Pay_%'].idxmax(), 'Ciro_Pay_%']
+    
+    # Karar mantığı
+    if strategic_fit_score >= 80:
+        # Güçlü uyum
+        if city_strategy in ['🚀 Agresif', '⚡ Hızlandırılmış']:
+            decision = "Yatırımı Artır"
+            rationale = "Şehir stratejisi ile brick portföyü güçlü uyum içinde. Başarı modelini ölçeklendirmek için yatırım artırılmalı."
+        else:
+            decision = "Mevcut Yapıyı Koru"
+            rationale = "Strateji-portföy uyumu optimal seviyede. Mevcut yapı korunarak karlılık sürdürülmeli."
+    
+    elif strategic_fit_score >= 50:
+        # Kısmi uyum
+        if city_strategy in ['🚀 Agresif', '⚡ Hızlandırılmış']:
+            if dominant_bcg in ['🐄 Cash Cow', '🐶 Dog']:
+                decision = "Yeniden Dengele"
+                rationale = f"Cironun %{dominant_percent:.1f}'i {dominant_bcg} brick'lerde. Büyüme stratejisi için brick portföyü yeniden dengelenmeli."
+            else:
+                decision = "Seçici Yatırım Yap"
+                rationale = "Strateji-portföy uyumu kısmen var. Star ve Question Mark brick'lere odaklanarak seçici yatırım yapılmalı."
+        else:
+            decision = "Seçici Yatırım Yap"
+            rationale = "Portföyde optimizasyon fırsatları var. Yüksek potansiyelli brick'lere odaklanarak seçici yatırım yapılmalı."
+    
     else:
-        return 5  # Düşük öncelik
+        # Stratejik kopuş
+        if dominant_bcg == '🐶 Dog' and city_strategy in ['🚀 Agresif', '⚡ Hızlandırılmış']:
+            decision = "Yatırımı Azalt / Çekil"
+            rationale = f"Cironun %{dominant_percent:.1f}'i Dog brick'lerde. Büyüme stratejisi ile uyumsuz. Yatırım azaltılmalı veya strateji revize edilmeli."
+        elif dominant_bcg == '⭐ Star' and city_strategy == '👁️ İzleme':
+            decision = "Yatırımı Artır"
+            rationale = "Star brick'lere rağmen izleme stratejisi uygulanıyor. Potansiyeli değerlendirmek için yatırım artırılmalı."
+        else:
+            decision = "Yeniden Dengele"
+            rationale = "Ciddi stratejik kopuş var. Brick portföyü şehir stratejisiyle uyumlu hale getirilmeli."
+    
+    return {
+        'decision': decision,
+        'rationale': rationale
+    }
 
-
-def create_strategic_alignment_summary_chart(alignment_df, risk_ciro, kilitlenmis_buyume):
+def create_strategic_fit_dashboard(alignment_df):
     """
-    Stratejik durum dağılımını gösteren executive chart
+    Stratejik uyum dashboard'ı oluştur
     """
     if alignment_df.empty:
         return None
     
-    # Gruplandırma
-    status_counts = alignment_df['Stratejik_Durum'].value_counts()
+    # 1. Genel Durum Özeti
+    total_cities = len(alignment_df)
+    high_fit = len(alignment_df[alignment_df['Stratejik_Uyum_Skoru'] >= 80])
+    medium_fit = len(alignment_df[(alignment_df['Stratejik_Uyum_Skoru'] >= 50) & (alignment_df['Stratejik_Uyum_Skoru'] < 80)])
+    low_fit = len(alignment_df[alignment_df['Stratejik_Uyum_Skoru'] < 50])
     
-    # Finansal etki ile birleştir
-    financial_impact = alignment_df.groupby('Stratejik_Durum')['PF_Satis'].sum()
+    # 2. Finansal Etki
+    total_ciro = alignment_df['Toplam_Ciro'].sum()
+    risk_ciro = alignment_df[alignment_df['Stratejik_Uyum_Skoru'] < 50]['Toplam_Ciro'].sum()
+    risk_percent = (risk_ciro / total_ciro * 100) if total_ciro > 0 else 0
     
     fig = go.Figure()
     
-    # Bar chart - Brick sayısı
-    fig.add_trace(go.Bar(
-        x=status_counts.index,
-        y=status_counts.values,
-        name='Brick Sayısı',
-        marker_color=[STRATEGIC_ALIGNMENT_COLORS.get(s, "#64748B") for s in status_counts.index],
-        text=status_counts.values,
-        textposition='outside',
-        yaxis='y1'
-    ))
+    # 3. Stratejik Uyum Dağılımı
+    fit_counts = alignment_df['Uyum_Kategorisi'].value_counts()
     
-    # Line chart - Finansal etki
-    fig.add_trace(go.Scatter(
-        x=financial_impact.index,
-        y=financial_impact.values,
-        name='Toplam Ciro',
-        mode='lines+markers+text',
-        line=dict(color='white', width=3),
-        marker=dict(size=12, color='white', line=dict(width=2, color='#0EA5E9')),
-        text=[format_number(x) for x in financial_impact.values],
-        textposition='top center',
-        yaxis='y2'
+    fig.add_trace(go.Bar(
+        x=fit_counts.index,
+        y=fit_counts.values,
+        name='Şehir Sayısı',
+        marker_color=[STRATEGIC_FIT_COLORS.get(cat, "#64748B") for cat in fit_counts.index],
+        text=fit_counts.values,
+        textposition='outside',
+        textfont=dict(color='white', size=14, family='Inter')
     ))
     
     fig.update_layout(
         title=dict(
-            text='<b>Stratejik Durum Dağılımı ve Finansal Etki</b><br>'
-                 f'<span style="font-size:14px;color:#94a3b8">Risk Altındaki Ciro: {format_number(risk_ciro)} | '
-                 f'Kilitlenmiş Büyüme: {format_number(kilitlenmis_buyume)}</span>',
+            text='<b>Şehir–Brick Stratejik Uyum Dağılımı</b><br>'
+                 f'<span style="font-size:14px;color:#94a3b8">Risk Altındaki Ciro: {format_number(risk_ciro)} (%{risk_percent:.1f})</span>',
             font=dict(size=22, color='white', family='Inter')
         ),
         xaxis=dict(
-            title='<b>Stratejik Durum</b>',
-            tickangle=0
-        ),
-        yaxis=dict(
-            title='<b>Brick Sayısı</b>',
+            title='<b>Stratejik Uyum Kategorisi</b>',
             gridcolor='rgba(59, 130, 246, 0.1)'
         ),
-        yaxis2=dict(
-            title='<b>Toplam Ciro</b>',
-            overlaying='y',
-            side='right',
-            showgrid=False
+        yaxis=dict(
+            title='<b>Şehir Sayısı</b>',
+            gridcolor='rgba(59, 130, 246, 0.1)'
         ),
-        barmode='group',
         height=500,
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)',
         font=dict(color='#e2e8f0', family='Inter'),
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="right",
-            x=1,
-            bgcolor='rgba(30, 41, 59, 0.8)'
-        )
+        showlegend=False
     )
     
-    return fig
+    return fig, {
+        'total_cities': total_cities,
+        'high_fit': high_fit,
+        'medium_fit': medium_fit,
+        'low_fit': low_fit,
+        'total_ciro': total_ciro,
+        'risk_ciro': risk_ciro,
+        'risk_percent': risk_percent
+    }
 
-
-def create_priority_matrix_chart(alignment_df):
+def create_strategy_bcg_matrix(alignment_df):
     """
-    Öncelik matrisi - McKinsey style
+    Şehir stratejisi vs BCG dağılımı matrisi
     """
     if alignment_df.empty:
         return None
     
     fig = go.Figure()
     
-    # Scatter plot
+    # Bubble chart: Strateji vs Uyum Skoru
     fig.add_trace(go.Scatter(
-        x=alignment_df['PF_Satis'],
-        y=alignment_df['Stratejik_Skor'],
+        x=alignment_df['BCG_Star_%'],
+        y=alignment_df['Stratejik_Uyum_Skoru'],
         mode='markers+text',
         marker=dict(
-            size=alignment_df['Pazar_Payi_%'] * 2,
-            color=alignment_df['Oncelik_Seviyesi'],
-            colorscale='RdYlGn_r',  # Kırmızı->Yeşil (ters)
+            size=alignment_df['Toplam_Ciro'] / alignment_df['Toplam_Ciro'].max() * 50 + 20,
+            color=alignment_df['Stratejik_Uyum_Skoru'],
+            colorscale='RdYlGn',
             showscale=True,
-            colorbar=dict(title="Öncelik<br>Seviyesi"),
+            colorbar=dict(title="Uyum Skoru"),
             line=dict(width=2, color='white')
         ),
-        text=alignment_df['Brick'],
+        text=alignment_df['Şehir'],
         textposition='top center',
         hovertext=[
-            f"<b>{row['Brick']}</b><br>"
-            f"Durum: {row['Stratejik_Durum']}<br>"
-            f"BCG: {row['BCG_Kategori']}<br>"
-            f"Ciro: {format_number(row['PF_Satis'])}<br>"
-            f"Skor: {row['Stratejik_Skor']:.1f}<br>"
-            f"Öncelik: {row['Oncelik_Seviyesi']}"
+            f"<b>{row['Şehir']}</b><br>"
+            f"Strateji: {row['Şehir_Yatırım_Stratejisi']}<br>"
+            f"Uyum Skoru: {row['Stratejik_Uyum_Skoru']}/100<br>"
+            f"Ciro: {format_number(row['Toplam_Ciro'])}<br>"
+            f"Karar: {row['Karar_Önerisi']}"
             for _, row in alignment_df.iterrows()
         ],
         hoverinfo='text'
     ))
     
-    # Quadrant çizgileri
-    median_ciro = alignment_df['PF_Satis'].median()
-    median_skor = alignment_df['Stratejik_Skor'].median()
+    # Referans çizgileri
+    fig.add_hline(
+        y=80,
+        line_dash="dash",
+        line_color=STRATEGIC_FIT_COLORS['Güçlü Uyum'],
+        opacity=0.5,
+        annotation_text="Güçlü Uyum Sınırı"
+    )
     
     fig.add_hline(
-        y=median_skor,
+        y=50,
         line_dash="dash",
-        line_color="rgba(255,255,255,0.5)",
-        annotation_text=f"Ort. Skor: {median_skor:.1f}"
-    )
-    
-    fig.add_vline(
-        x=median_ciro,
-        line_dash="dash",
-        line_color="rgba(255,255,255,0.5)",
-        annotation_text=f"Ort. Ciro: {format_number(median_ciro)}"
-    )
-    
-    # Quadrant etiketleri
-    fig.add_annotation(
-        x=alignment_df['PF_Satis'].max() * 0.9,
-        y=alignment_df['Stratejik_Skor'].max() * 0.9,
-        text="<b>Yüksek Öncelik</b><br>Yüksek Ciro, Düşük Skor",
-        showarrow=False,
-        font=dict(color="white", size=12),
-        bgcolor="rgba(239, 68, 68, 0.3)",
-        bordercolor="rgba(239, 68, 68, 0.5)",
-        borderwidth=1
+        line_color=STRATEGIC_FIT_COLORS['Kısmi Uyum'],
+        opacity=0.5,
+        annotation_text="Kısmi Uyum Sınırı"
     )
     
     fig.update_layout(
         title=dict(
-            text='<b>Öncelik Matrisi - Ciro vs Stratejik Skor</b><br>'
-                 '<span style="font-size:14px;color:#94a3b8">Bubble boyutu: Pazar Payı | Renk: Öncelik Seviyesi</span>',
+            text='<b>Şehir Stratejisi – BCG Star % İlişkisi</b><br>'
+                 '<span style="font-size:14px;color:#94a3b8">Bubble boyutu: Ciro | Renk: Uyum Skoru</span>',
             font=dict(size=22, color='white', family='Inter')
         ),
-        xaxis_title='<b>PF Satış (Ciro)</b>',
-        yaxis_title='<b>Stratejik Hizalanma Skoru</b>',
+        xaxis_title='<b>BCG Star % (Ciro Payı)</b>',
+        yaxis_title='<b>Stratejik Uyum Skoru</b>',
         height=600,
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)',
@@ -3352,7 +3378,7 @@ def main():
                 <span style="opacity: 0.3">|</span>
                 <span>RAKİP ANALİZİ</span>
                 <span style="opacity: 0.3">|</span>
-                <span class="cap-item">EXECUTIVE LEVEL STRATEJİK ANALİZ</span>
+                <span class="cap-item">EXECUTIVE-LEVEL ŞEHİR–BRICK ANALİZİ</span>
             </div>
         </div>
     """, unsafe_allow_html=True)
@@ -3485,7 +3511,7 @@ def main():
         "📌 Rakip Analizi",
         "⭐ BCG & Strateji",
         "🏆 Bölge Karşılaştırması",
-        "🎯 Executive Level - Stratejik Doku Uyumu Analizi",  # İSİM DEĞİŞTİ
+        "📌 Executive-Level Analiz – Şehir Yatırım Stratejisi & Brick BCG Entegrasyonu",  # İSİM DEĞİŞTİ
         "📥 Raporlar"
     ])
     
@@ -4713,80 +4739,87 @@ def main():
                 height=400
             )
     
-    # TAB 8: EXECUTIVE LEVEL STRATEJİK DOKU UYUMU ANALİZİ
+    # TAB 8: 📌 EXECUTIVE-LEVEL ANALİZ – ŞEHİR YATIRIM STRATEJİSİ & BRICK BCG ENTEGRASYONU
     with tab8:
-        st.header("🎯 Executive Level - Stratejik Doku Uyumu Analizi")
+        st.header("📌 Executive-Level Analiz – Şehir Yatırım Stratejisi & Brick BCG Entegrasyonu")
         
         # Giriş açıklaması
         st.markdown("""
-        <div style="background: rgba(15, 23, 41, 0.6); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.2); margin-bottom: 2rem;">
-            <h3 style="color: #ffffff; margin-top: 0; font-size: 1.5rem;">📈 McKinsey-Style Executive Analysis</h3>
+        <div style="background: rgba(15, 23, 41, 0.6); padding: 2rem; border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.2); margin-bottom: 2rem;">
+            <h3 style="color: #ffffff; margin-top: 0; font-size: 1.5rem;">🎯 McKinsey-Style Şehir–Brick Stratejik Uyum Analizi</h3>
             <p style="color: #cbd5e1; font-size: 0.95rem; line-height: 1.6; margin-bottom: 1rem;">
-                <b>Tek bakışta cevap alın:</b> Hangi Brick neden riskte/fırsatta? Hangi şehirlerden kaynaklanıyor? 
-                Ne kadarlık ciro etkileniyor? Nereden başlamak gerekir?
+                <b>❗ Zorunlu Kavramsal Çerçeve:</b><br>
+                <b>ŞEHİR = MAKRO</b> yatırım seviyesi | <b>BRICK = MİKRO</b> operasyonel/icra seviyesi<br>
+                Şehirler için yatırım stratejisi tanımlanır, Brick'ler bu stratejinin uygulama araçlarıdır.
+            </p>
+            <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 1.5rem;">
+                <b>🎯 Analizin Amacı:</b> Şehir bazında tanımlanan yatırım stratejileri ile şehirlerin içindeki Brick'lerin BCG konumlarını 
+                birlikte değerlendirerek sermaye tahsisinin doğru yapılıp yapılmadığını, stratejinin sahada doğru Brick'lerde çalışıp 
+                çalışmadığını, stratejik uyumsuzluklardan doğan risk ve fırsatları içgörüye dönüştürmek.
             </p>
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1rem;">
-                <div style="background: rgba(239, 68, 68, 0.2); padding: 1rem; border-radius: 8px; border-left: 4px solid #EF4444;">
-                    <h4 style="color: #EF4444; margin: 0 0 0.5rem 0; font-size: 1rem;">⚠️ Hizalanma Riski</h4>
-                    <p style="color: #e2e8f0; margin: 0; font-size: 0.85rem;">Strateji ile operasyon uyumsuz</p>
+                <div style="background: rgba(16, 185, 129, 0.2); padding: 1rem; border-radius: 8px; border-left: 4px solid #10B981;">
+                    <h4 style="color: #10B981; margin: 0 0 0.5rem 0; font-size: 1rem;">🟢 Stratejik Uyum</h4>
+                    <p style="color: #e2e8f0; margin: 0; font-size: 0.85rem;">Şehir stratejisi ile Brick portföyü uyumlu</p>
                 </div>
                 <div style="background: rgba(245, 158, 11, 0.2); padding: 1rem; border-radius: 8px; border-left: 4px solid #F59E0B;">
-                    <h4 style="color: #F59E0B; margin: 0 0 0.5rem 0; font-size: 1rem;">⚡ Operasyonel Atalet</h4>
-                    <p style="color: #e2e8f0; margin: 0; font-size: 0.85rem;">Potansiyel kilitlenmiş</p>
+                    <h4 style="color: #F59E0B; margin: 0 0 0.5rem 0; font-size: 1rem;">🟡 Stratejik Sürtünme</h4>
+                    <p style="color: #e2e8f0; margin: 0; font-size: 0.85rem;">Strateji doğru, icra yanlış Brick'lerde</p>
                 </div>
-                <div style="background: rgba(16, 185, 129, 0.2); padding: 1rem; border-radius: 8px; border-left: 4px solid #10B981;">
-                    <h4 style="color: #10B981; margin: 0 0 0.5rem 0; font-size: 1rem;">🚀 Büyütme Fırsatı</h4>
-                    <p style="color: #e2e8f0; margin: 0; font-size: 0.85rem;">Ölçeklendirilebilir başarı</p>
+                <div style="background: rgba(239, 68, 68, 0.2); padding: 1rem; border-radius: 8px; border-left: 4px solid #EF4444;">
+                    <h4 style="color: #EF4444; margin: 0 0 0.5rem 0; font-size: 1rem;">🔴 Stratejik Kopuş</h4>
+                    <p style="color: #e2e8f0; margin: 0; font-size: 0.85rem;">Şehir stratejisi ile Brick portföyü çelişiyor</p>
                 </div>
             </div>
         </div>
         """, unsafe_allow_html=True)
         
         # Analizi çalıştır
-        with st.spinner("Executive level stratejik analiz yapılıyor..."):
-            alignment_results, risk_ciro, kilitlenmis_buyume = analyze_strategic_alignment(df_filtered, selected_product, date_filter)
+        with st.spinner("Şehir–Brick stratejik uyum analizi yapılıyor..."):
+            alignment_results = analyze_city_brick_strategic_alignment(df_filtered, selected_product, date_filter)
         
         if alignment_results.empty:
             st.warning("⚠️ Stratejik analiz için yeterli veri bulunamadı")
         else:
-            # 1️⃣ EXECUTIVE DASHBOARD - FİNANSAL ETKİ
-            st.subheader("📊 Executive Dashboard - Finansal Etki")
+            # 1️⃣ EXECUTIVE DASHBOARD - STRATEJİK DURUM
+            st.subheader("📊 Executive Dashboard - Stratejik Durum")
             
-            # Finansal metrikler
+            # Dashboard metrikleri
             col1, col2, col3, col4 = st.columns(4)
             
-            total_pf = alignment_results['PF_Satis'].sum()
-            risk_yuzde = (risk_ciro / total_pf * 100) if total_pf > 0 else 0
-            buyume_yuzde = (kilitlenmis_buyume / total_pf * 100) if total_pf > 0 else 0
+            total_cities = len(alignment_results)
+            total_ciro = alignment_results['Toplam_Ciro'].sum()
+            high_fit = len(alignment_results[alignment_results['Stratejik_Uyum_Skoru'] >= 80])
+            medium_fit = len(alignment_results[(alignment_results['Stratejik_Uyum_Skoru'] >= 50) & (alignment_results['Stratejik_Uyum_Skoru'] < 80)])
+            low_fit = len(alignment_results[alignment_results['Stratejik_Uyum_Skoru'] < 50])
             
             with col1:
                 st.metric(
-                    "💰 Toplam Ciro",
-                    format_number(total_pf),
-                    f"{len(alignment_results)} Brick"
+                    "🗺️ Toplam Şehir",
+                    str(total_cities),
+                    f"{format_number(total_ciro)} ciro"
                 )
             
             with col2:
                 st.metric(
-                    "⚠️ Risk Altındaki Ciro",
-                    format_number(risk_ciro),
-                    f"%{risk_yuzde:.1f}",
-                    delta_color="inverse"
+                    "🟢 Güçlü Uyum",
+                    f"{high_fit} şehir",
+                    f"%{(high_fit/total_cities*100):.1f}"
                 )
             
             with col3:
                 st.metric(
-                    "🔓 Kilitlenmiş Büyüme",
-                    format_number(kilitlenmis_buyume),
-                    f"%{buyume_yuzde:.1f}"
+                    "🟡 Kısmi Uyum",
+                    f"{medium_fit} şehir",
+                    f"%{(medium_fit/total_cities*100):.1f}"
                 )
             
             with col4:
-                yuksek_oncelik = len(alignment_results[alignment_results['Oncelik_Seviyesi'] <= 2])
                 st.metric(
-                    "🎯 Acil Müdahale",
-                    f"{yuksek_oncelik} Brick",
-                    f"Toplam {len(alignment_results)} içinde"
+                    "🔴 Stratejik Kopuş",
+                    f"{low_fit} şehir",
+                    f"%{(low_fit/total_cities*100):.1f}",
+                    delta_color="inverse"
                 )
             
             st.markdown("---")
@@ -4795,161 +4828,172 @@ def main():
             col_viz1, col_viz2 = st.columns(2)
             
             with col_viz1:
-                st.subheader("📈 Stratejik Durum & Finansal Etki")
-                summary_chart = create_strategic_alignment_summary_chart(alignment_results, risk_ciro, kilitlenmis_buyume)
-                if summary_chart:
-                    st.plotly_chart(summary_chart, use_container_width=True)
+                st.subheader("📈 Stratejik Uyum Dağılımı")
+                dashboard_fig, dashboard_metrics = create_strategic_fit_dashboard(alignment_results)
+                if dashboard_fig:
+                    st.plotly_chart(dashboard_fig, use_container_width=True)
             
             with col_viz2:
-                st.subheader("🎯 Öncelik Matrisi")
-                priority_chart = create_priority_matrix_chart(alignment_results)
-                if priority_chart:
-                    st.plotly_chart(priority_chart, use_container_width=True)
+                st.subheader("🎯 Şehir Stratejisi vs BCG Star %")
+                strategy_bcg_fig = create_strategy_bcg_matrix(alignment_results)
+                if strategy_bcg_fig:
+                    st.plotly_chart(strategy_bcg_fig, use_container_width=True)
             
             st.markdown("---")
             
-            # 3️⃣ KRİTİK BRICK'LER - EXECUTIVE VIEW
-            st.subheader("🚨 Kritik Brick'ler - Executive Özet")
+            # 3️⃣ KRİTİK ŞEHİRLER - EXECUTIVE VIEW
+            st.subheader("🚨 Kritik Şehirler - Executive Özet")
             
-            # McKinsey-Style Slide Logic
-            critical_bricks = alignment_results[alignment_results['Oncelik_Seviyesi'] <= 2]
+            # Kritik şehirleri filtrele (Stratejik Kopuş)
+            critical_cities = alignment_results[alignment_results['Stratejik_Uyum_Skoru'] < 50]
             
-            if not critical_bricks.empty:
-                for idx, (_, row) in enumerate(critical_bricks.iterrows()):
-                    # Slide-style container
+            if not critical_cities.empty:
+                for idx, (_, row) in enumerate(critical_cities.iterrows()):
+                    # Fit skoru için CSS class belirle
+                    fit_class = "fit-low"
+                    
+                    # McKinsey-Style Slide
                     st.markdown(f"""
-                    <div class="executive-card {'critical-card' if row['Oncelik_Seviyesi'] == 1 else 'warning-card'}">
+                    <div class="strategic-fit-card {fit_class}">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                             <h3 style="color: white; margin: 0; font-size: 1.3rem;">
-                                {idx+1}. {row['Brick']} - {row['Stratejik_Durum']}
+                                {idx+1}. {row['Şehir']} - {row['Şehir_Yatırım_Stratejisi']}
                             </h3>
-                            <span style="background: {'rgba(239, 68, 68, 0.3)' if row['Oncelik_Seviyesi'] == 1 else 'rgba(245, 158, 11, 0.3)'}; 
-                                   color: {'#EF4444' if row['Oncelik_Seviyesi'] == 1 else '#F59E0B'}; 
+                            <span style="background: rgba(239, 68, 68, 0.3); 
+                                   color: #EF4444; 
                                    padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.9rem; font-weight: 600;">
-                                Öncelik Seviyesi: {row['Oncelik_Seviyesi']}
+                                Uyum Skoru: {row['Stratejik_Uyum_Skoru']}/100
                             </span>
                         </div>
                         
                         <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1rem;">
                             <div style="background: rgba(37, 99, 235, 0.2); padding: 0.8rem; border-radius: 8px;">
                                 <div style="color: #94a3b8; font-size: 0.85rem;">💰 Ciro</div>
-                                <div style="color: white; font-size: 1.2rem; font-weight: 600;">{format_number(row['PF_Satis'])}</div>
+                                <div style="color: white; font-size: 1.2rem; font-weight: 600;">{format_number(row['Toplam_Ciro'])}</div>
                             </div>
                             <div style="background: rgba(16, 185, 129, 0.2); padding: 0.8rem; border-radius: 8px;">
-                                <div style="color: #94a3b8; font-size: 0.85rem;">📊 Pazar Payı</div>
-                                <div style="color: white; font-size: 1.2rem; font-weight: 600;">{row['Pazar_Payi_%']:.1f}%</div>
+                                <div style="color: #94a3b8; font-size: 0.85rem;">🏢 Brick Sayısı</div>
+                                <div style="color: white; font-size: 1.2rem; font-weight: 600;">{row['Brick_Sayisi']}</div>
                             </div>
                             <div style="background: rgba(139, 92, 246, 0.2); padding: 0.8rem; border-radius: 8px;">
-                                <div style="color: #94a3b8; font-size: 0.85rem;">⭐ BCG</div>
-                                <div style="color: white; font-size: 1.2rem; font-weight: 600;">{row['BCG_Kategori']}</div>
+                                <div style="color: #94a3b8; font-size: 0.85rem;">⭐ BCG Star %</div>
+                                <div style="color: white; font-size: 1.2rem; font-weight: 600;">{row['BCG_Star_%']:.1f}%</div>
                             </div>
                             <div style="background: rgba(14, 165, 233, 0.2); padding: 0.8rem; border-radius: 8px;">
-                                <div style="color: #94a3b8; font-size: 0.85rem;">🎯 Stratejik Skor</div>
-                                <div style="color: white; font-size: 1.2rem; font-weight: 600;">{row['Stratejik_Skor']:.1f}/100</div>
+                                <div style="color: #94a3b8; font-size: 0.85rem;">🐶 BCG Dog %</div>
+                                <div style="color: white; font-size: 1.2rem; font-weight: 600;">{row['BCG_Dog_%']:.1f}%</div>
                             </div>
                         </div>
                         
                         <div style="background: rgba(30, 41, 59, 0.5); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
-                            <div style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.5rem;">🔍 Kök Neden (Şehir Kırılımı)</div>
-                            <div style="color: #e2e8f0; font-size: 0.95rem; line-height: 1.5;">
-                                {row['Sehir_Detay'].replace('\n', '<br>')}
+                            <div style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.5rem;">🎯 Tek Cümlelik Yönetici İçgörüsü</div>
+                            <div style="color: #e2e8f0; font-size: 1rem; line-height: 1.5; font-weight: 500;">
+                                {row['Yönetici_İçgörüsü']}
                             </div>
                         </div>
                     </div>
                     """, unsafe_allow_html=True)
                     
-                    # McKinsey Slide Logic
-                    with st.expander(f"📋 {row['Brick']} - Detaylı Analiz", expanded=False):
+                    # McKinsey Slide Logic - Detaylı Analiz
+                    with st.expander(f"📋 {row['Şehir']} - Detaylı Stratejik Analiz", expanded=False):
                         col_slide1, col_slide2, col_slide3 = st.columns(3)
                         
                         with col_slide1:
-                            st.markdown("**🔍 What is happening?**")
+                            st.markdown("**🔍 Durum Özeti**")
                             st.info(f"""
-                            **Brick Durumu:** {row['Stratejik_Durum']}
-                            **Finansal Etki:** {format_number(row['PF_Satis'])} ciro
-                            **Şehir Sayısı:** {row['Sehir_Sayisi']}
+                            **Şehir Stratejisi:** {row['Şehir_Yatırım_Stratejisi']}
+                            **Toplam Ciro:** {format_number(row['Toplam_Ciro'])}
+                            **Brick Sayısı:** {row['Brick_Sayisi']}
+                            **BCG Dağılımı:**
+                            • Star: {row['BCG_Star_%']:.1f}%
+                            • Cash Cow: {row['BCG_CashCow_%']:.1f}%
+                            • Question Mark: {row['BCG_Question_%']:.1f}%
+                            • Dog: {row['BCG_Dog_%']:.1f}%
                             """)
                         
                         with col_slide2:
-                            st.markdown("**📊 Why is it happening?**")
+                            st.markdown("**📊 Temel Risk / Fırsat**")
                             st.warning(f"""
-                            **Kök Nedenler (Şehir Bazlı):**
+                            **Stratejik Kopuş Noktaları:**
+                            {row['Karar_Gerekçesi']}
                             """)
-                            st.markdown(row['Sehir_Detay'].replace('•', '• ').replace('\n', '<br>'), unsafe_allow_html=True)
                         
                         with col_slide3:
-                            st.markdown("**🎯 So what?**")
-                            st.error(f"""
-                            **Şirket İçin Risk/Fırsat:**
-                            {row['Aciklama']}
-                            """)
+                            st.markdown("**🎯 Net Karar Önerisi**")
+                            decision_color = DECISION_COLORS.get(row['Karar_Önerisi'], "#64748B")
+                            st.markdown(f"""
+                            <div style="background: rgba{tuple(int(decision_color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))}, 0.2); 
+                                     padding: 1rem; border-radius: 8px; border-left: 4px solid {decision_color};">
+                                <div style="color: {decision_color}; font-size: 1.2rem; font-weight: 700; margin-bottom: 0.5rem;">
+                                    {row['Karar_Önerisi']}
+                                </div>
+                                <div style="color: #e2e8f0; font-size: 0.95rem;">
+                                    {row['Karar_Gerekçesi']}
+                                </div>
+                            </div>
+                            """, unsafe_allow_html=True)
                         
-                        st.markdown("**🚀 Now what?**")
-                        st.success(f"""
-                        **Net Aksiyon Önerisi:**
-                        """)
-                        st.markdown(row['Aksiyon_Plani'].replace('**', ''))
-                        
-                        st.markdown("**📋 Ölçülebilir Hedefler (OKR):**")
-                        st.markdown(f"**Objective:** {row['OKR_Objective']}")
-                        for kr in row['OKR_Key_Results']:
-                            st.markdown(f"- {kr}")
+                        st.markdown("**🏢 Brick Detayları**")
+                        st.markdown(row['Detaylı_Brick_Listesi'].replace('•', '• ').replace('\n', '<br>'), unsafe_allow_html=True)
                     
                     st.markdown("---")
             else:
-                st.info("✅ Kritik seviyede Brick bulunamadı.")
+                st.info("✅ Stratejik kopuş yaşayan şehir bulunamadı.")
             
-            # 4️⃣ DETAYLI ANALİZ TABLOSU
-            st.subheader("📋 Tüm Brick'ler - Detaylı Analiz")
+            # 4️⃣ TÜM ŞEHİRLER - DETAYLI ANALİZ TABLOSU
+            st.subheader("📋 Tüm Şehirler - Detaylı Stratejik Analiz")
             
             # Filtreleme
             col_filter1, col_filter2, col_filter3 = st.columns(3)
             
             with col_filter1:
-                filter_status = st.selectbox(
-                    "Stratejik Durum",
-                    ["Tümü"] + sorted(alignment_results['Stratejik_Durum'].unique())
+                filter_strategy = st.selectbox(
+                    "Şehir Stratejisi",
+                    ["Tümü"] + sorted(alignment_results['Şehir_Yatırım_Stratejisi'].unique())
                 )
             
             with col_filter2:
-                filter_bcg = st.selectbox(
-                    "BCG Kategorisi",
-                    ["Tümü"] + sorted(alignment_results['BCG_Kategori'].unique())
+                filter_fit = st.selectbox(
+                    "Uyum Kategorisi",
+                    ["Tümü"] + sorted(alignment_results['Uyum_Kategorisi'].unique())
                 )
             
             with col_filter3:
-                min_ciro = st.slider("Minimum Ciro", 0, int(alignment_results['PF_Satis'].max()), 0)
+                min_ciro = st.slider("Minimum Ciro", 0, int(alignment_results['Toplam_Ciro'].max()), 0, 
+                                   step=int(alignment_results['Toplam_Ciro'].max()/100))
             
             # Filtre uygula
             filtered_results = alignment_results.copy()
             
-            if filter_status != "Tümü":
-                filtered_results = filtered_results[filtered_results['Stratejik_Durum'] == filter_status]
+            if filter_strategy != "Tümü":
+                filtered_results = filtered_results[filtered_results['Şehir_Yatırım_Stratejisi'] == filter_strategy]
             
-            if filter_bcg != "Tümü":
-                filtered_results = filtered_results[filtered_results['BCG_Kategori'] == filter_bcg]
+            if filter_fit != "Tümü":
+                filtered_results = filtered_results[filtered_results['Uyum_Kategorisi'] == filter_fit]
             
-            filtered_results = filtered_results[filtered_results['PF_Satis'] >= min_ciro]
+            filtered_results = filtered_results[filtered_results['Toplam_Ciro'] >= min_ciro]
             
             # Görüntüle
             display_cols = [
-                'Brick', 'BCG_Kategori', 'Stratejik_Durum', 'PF_Satis', 'Pazar_Payi_%',
-                'Stratejik_Skor', 'Oncelik_Seviyesi', 'Sehir_Sayisi'
+                'Şehir', 'Şehir_Yatırım_Stratejisi', 'Stratejik_Uyum_Skoru', 
+                'Uyum_Kategorisi', 'Toplam_Ciro', 'Brick_Sayisi',
+                'BCG_Star_%', 'BCG_Dog_%', 'Karar_Önerisi'
             ]
             
             display_df = filtered_results[display_cols].copy()
             display_df.columns = [
-                'Brick', 'BCG', 'Stratejik Durum', 'PF Satış', 'Pazar Payı %',
-                'Stratejik Skor', 'Öncelik', 'Şehir Sayısı'
+                'Şehir', 'Şehir Stratejisi', 'Uyum Skoru', 
+                'Uyum Kategorisi', 'Toplam Ciro', 'Brick Sayısı',
+                'BCG Star %', 'BCG Dog %', 'Karar Önerisi'
             ]
             
-            display_df = display_df.sort_values(['Öncelik', 'PF Satış'], ascending=[True, False])
+            display_df = display_df.sort_values(['Uyum Skoru', 'Toplam Ciro'], ascending=[True, False])
             display_df.index = range(1, len(display_df) + 1)
             
             styled_display = style_dataframe(
                 display_df,
-                color_column='Stratejik Durum',
-                gradient_columns=['PF Satış', 'Stratejik Skor', 'Pazar Payı %']
+                color_column='Uyum Skoru',
+                gradient_columns=['Toplam Ciro', 'BCG Star %', 'BCG Dog %']
             )
             
             st.dataframe(
@@ -4958,7 +5002,39 @@ def main():
                 height=400
             )
             
-            # 5️⃣ İNDİRME BUTONU
+            # 5️⃣ YATIRIM KOMİTESİ ÖZETİ
+            st.markdown("---")
+            st.subheader("🤝 Yatırım Komitesi İçin Özet")
+            
+            # Karar dağılımı
+            decision_counts = filtered_results['Karar_Önerisi'].value_counts()
+            
+            col_dec1, col_dec2, col_dec3, col_dec4, col_dec5 = st.columns(5)
+            
+            decisions = ["Yatırımı Artır", "Seçici Yatırım Yap", "Yeniden Dengele", "Mevcut Yapıyı Koru", "Yatırımı Azalt / Çekil"]
+            
+            for idx, decision in enumerate(decisions):
+                with [col_dec1, col_dec2, col_dec3, col_dec4, col_dec5][idx]:
+                    count = decision_counts.get(decision, 0)
+                    total_value = filtered_results[filtered_results['Karar_Önerisi'] == decision]['Toplam_Ciro'].sum()
+                    color = DECISION_COLORS.get(decision, "#64748B")
+                    
+                    st.markdown(f"""
+                    <div style="text-align: center; padding: 1rem; border-radius: 8px; background: rgba{tuple(int(color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))}, 0.1); 
+                             border: 1px solid {color};">
+                        <div style="color: {color}; font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem;">
+                            {decision}
+                        </div>
+                        <div style="color: white; font-size: 1.5rem; font-weight: 800; margin-bottom: 0.3rem;">
+                            {count}
+                        </div>
+                        <div style="color: #94a3b8; font-size: 0.9rem;">
+                            {format_number(total_value)} ciro
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+            
+            # 6️⃣ İNDİRME BUTONU
             st.markdown("---")
             col_download1, col_download2, col_download3 = st.columns(3)
             
@@ -4967,7 +5043,7 @@ def main():
                 st.download_button(
                     label="📥 Executive Raporu İndir (CSV)",
                     data=csv,
-                    file_name=f"executive_stratejik_analiz_{selected_product}_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
+                    file_name=f"sehir_brick_stratejik_uyum_analizi_{selected_product}_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
                     mime="text/csv",
                     use_container_width=True
                 )
@@ -4993,7 +5069,7 @@ def main():
                 <li>Rakip Analizi</li>
                 <li>Bölge Karşılaştırmalı Analiz</li>
                 <li>Bölge İçi Detaylı Performans Analizi</li>
-                <li><b>YENİ: 🎯 Executive Level Stratejik Doku Uyumu Analizi</b></li>
+                <li><b>YENİ: 📌 Executive-Level Şehir–Brick Stratejik Uyum Analizi</b></li>
             </ul>
         </div>
         """, unsafe_allow_html=True)
@@ -5012,7 +5088,7 @@ def main():
                     city_data = calculate_city_performance(df_filtered, selected_product, date_filter)
                     comp_data = calculate_competitor_analysis(df_filtered, selected_product, date_filter)
                     region_comparison = calculate_region_comparative_analysis(df_filtered, selected_product, date_filter)
-                    alignment_analysis, risk_ciro, kilitlenmis_buyume = analyze_strategic_alignment(df_filtered, selected_product, date_filter)
+                    alignment_analysis = analyze_city_brick_strategic_alignment(df_filtered, selected_product, date_filter)
                     
                     # ML tahmini
                     if len(monthly_df) >= 12:
@@ -5043,18 +5119,24 @@ def main():
                             region_comparison.to_excel(writer, sheet_name='Bölge Karşılaştırması', index=False)
                         
                         if not alignment_analysis.empty:
-                            alignment_analysis.to_excel(writer, sheet_name='Executive Stratejik Analiz', index=False)
-                            # Finansal etki metrikleri
-                            finansal_etki = pd.DataFrame({
-                                'Metrik': ['Risk Altındaki Ciro', 'Kilitlenmiş Büyüme Fırsatı', 'Toplam Ciro'],
-                                'Değer': [risk_ciro, kilitlenmis_buyume, total_pf],
+                            alignment_analysis.to_excel(writer, sheet_name='Şehir-Brick Stratejik Uyum', index=False)
+                            # Stratejik uyum metrikleri
+                            strategic_metrics = pd.DataFrame({
+                                'Metrik': ['Güçlü Uyum Şehir Sayısı', 'Kısmi Uyum Şehir Sayısı', 'Stratejik Kopuş Şehir Sayısı', 'Toplam Ciro'],
+                                'Değer': [
+                                    len(alignment_analysis[alignment_analysis['Stratejik_Uyum_Skoru'] >= 80]),
+                                    len(alignment_analysis[(alignment_analysis['Stratejik_Uyum_Skoru'] >= 50) & (alignment_analysis['Stratejik_Uyum_Skoru'] < 80)]),
+                                    len(alignment_analysis[alignment_analysis['Stratejik_Uyum_Skoru'] < 50]),
+                                    alignment_analysis['Toplam_Ciro'].sum()
+                                ],
                                 'Yüzde': [
-                                    f"{(risk_ciro/total_pf*100):.1f}%" if total_pf > 0 else "0%",
-                                    f"{(kilitlenmis_buyume/total_pf*100):.1f}%" if total_pf > 0 else "0%",
+                                    f"{(len(alignment_analysis[alignment_analysis['Stratejik_Uyum_Skoru'] >= 80])/len(alignment_analysis)*100):.1f}%",
+                                    f"{(len(alignment_analysis[(alignment_analysis['Stratejik_Uyum_Skoru'] >= 50) & (alignment_analysis['Stratejik_Uyum_Skoru'] < 80)])/len(alignment_analysis)*100):.1f}%",
+                                    f"{(len(alignment_analysis[alignment_analysis['Stratejik_Uyum_Skoru'] < 50])/len(alignment_analysis)*100):.1f}%",
                                     "100%"
                                 ]
                             })
-                            finansal_etki.to_excel(writer, sheet_name='Finansal Etki', index=False)
+                            strategic_metrics.to_excel(writer, sheet_name='Stratejik Metrikler', index=False)
                         
                         if forecast_df is not None and not forecast_df.empty:
                             forecast_df.to_excel(writer, sheet_name='ML Tahminler', index=False)
@@ -5089,4 +5171,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
