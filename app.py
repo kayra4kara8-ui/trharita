@@ -4816,8 +4816,7 @@ def main():
             
 if not critical_bricks.empty:
     for idx, (_, row) in enumerate(critical_bricks.iterrows()):
-        # Slide-style container
-        # HTML içeriği tamamen sola yaslanmalıdır
+        # 1. KART GÖRSELLEŞTİRME (8 boşluk içeriden başlar)
         st.markdown(f"""
 <div class="executive-card {'critical-card' if row['Oncelik_Seviyesi'] == 1 else 'warning-card'}">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
@@ -4858,6 +4857,48 @@ if not critical_bricks.empty:
     </div>
 </div>
 """, unsafe_allow_html=True)
+        
+        # 2. DETAYLI ANALİZ (EXPANDER)
+        # BURASI ÖNEMLİ: 'with' satırı yukarıdaki 'st.markdown' ile AYNI HİZADA (8 boşluk) olmalı
+        with st.expander(f"📋 {row['Brick']} - Detaylı Analiz", expanded=False):
+            col_slide1, col_slide2, col_slide3 = st.columns(3)
+            
+            with col_slide1:
+                st.markdown("**🔍 What is happening?**")
+                st.info(f"""
+                **Brick Durumu:** {row['Stratejik_Durum']}
+                **Finansal Etki:** {format_number(row['PF_Satis'])} ciro
+                **Şehir Sayısı:** {row['Sehir_Sayisi']}
+                """)
+            
+            with col_slide2:
+                st.markdown("**📊 Why is it happening?**")
+                st.warning(f"""
+                **Kök Nedenler (Şehir Bazlı):**
+                """)
+                # Buradaki replace işlemi de önemlidir
+                st.markdown(row['Sehir_Detay'].replace('•', '• ').replace(chr(10), '<br>'), unsafe_allow_html=True)
+            
+            with col_slide3:
+                st.markdown("**🎯 So what?**")
+                st.error(f"""
+                **Şirket İçin Risk/Fırsat:**
+                {row['Aciklama']}
+                """)
+            
+            st.markdown("**🚀 Now what?**")
+            st.success(f"""
+            **Net Aksiyon Önerisi:**
+            """)
+            st.markdown(row['Aksiyon_Plani'].replace('**', ''))
+            
+            st.markdown("**📋 Ölçülebilir Hedefler (OKR):**")
+            st.markdown(f"**Objective:** {row['OKR_Objective']}")
+            for kr in row['OKR_Key_Results']:
+                st.markdown(f"- {kr}")
+        
+        # Ayırıcı çizgi (Döngü içinde, expander dışında)
+        st.markdown("---")
                     
                     # McKinsey Slide Logic
                     with st.expander(f"📋 {row['Brick']} - Detaylı Analiz", expanded=False):
@@ -5090,6 +5131,7 @@ if not critical_bricks.empty:
 
 if __name__ == "__main__":
     main()
+
 
 
 
