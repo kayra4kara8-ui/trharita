@@ -1028,7 +1028,6 @@ def create_strategic_alignment_chart(alignment_df):
     return fig
 
 
-    
 def create_strategic_alignment_score_chart(alignment_df):
     """
     Stratejik Hizalanma Skorları Dağılımı
@@ -5009,6 +5008,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
