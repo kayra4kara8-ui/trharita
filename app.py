@@ -1,4 +1,4 @@
-🎯 GELİŞMİŞ TİCARİ PORTFÖY ANALİZ SİSTEMİ
+"""🎯 GELİŞMİŞ TİCARİ PORTFÖY ANALİZ SİSTEMİ
 Brick Bazlı Performans, ML Tahminleme, Türkiye Haritası ve Rekabet Analizi
 
 GELİŞTİRİLMİŞ ÖZELLİKLER:
@@ -5171,3 +5171,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
