@@ -622,7 +622,7 @@ CITY_NORMALIZE_CLEAN = {
     'TOKAT': 'Tokat',
     'TRABZON': 'Trabzon',
     'TUNCELI': 'Tunceli',
-    'TUNCELİ': 'Tunceli",
+    'TUNCELİ': 'Tunceli',
     'USAK': 'Usak',
     'UŞAK': 'Usak',
     'VAN': 'Van',
@@ -5171,3 +5171,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
