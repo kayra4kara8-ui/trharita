@@ -4814,7 +4814,7 @@ def main():
             # McKinsey-Style Slide Logic
             critical_bricks = alignment_results[alignment_results['Oncelik_Seviyesi'] <= 2]
             
-            if not critical_bricks.empty:
+if not critical_bricks.empty:
     for idx, (_, row) in enumerate(critical_bricks.iterrows()):
         # Slide-style container
         # HTML içeriği tamamen sola yaslanmalıdır
@@ -5090,5 +5090,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
