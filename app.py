@@ -3511,7 +3511,7 @@ def main():
         "📌 Rakip Analizi",
         "⭐ BCG & Strateji",
         "🏆 Bölge Karşılaştırması",
-        "📌 Executive-Level Analiz – Şehir Yatırım Stratejisi & Brick BCG Entegrasyonu",  # İSİM DEĞİŞTİ
+        "🎯 Stratejik Uyum & Kaynak Optimizasyonu",  # İSİM DEĞİŞTİ
         "📥 Raporlar"
     ])
     
@@ -4741,12 +4741,12 @@ def main():
     
     # TAB 8: 📌 EXECUTIVE-LEVEL ANALİZ – ŞEHİR YATIRIM STRATEJİSİ & BRICK BCG ENTEGRASYONU
     with tab8:
-        st.header("📌 Executive-Level Analiz – Şehir Yatırım Stratejisi & Brick BCG Entegrasyonu")
+        st.header("🎯 Stratejik Uyum & Kaynak Optimizasyonu")
         
         # Giriş açıklaması
         st.markdown("""
         <div style="background: rgba(15, 23, 41, 0.6); padding: 2rem; border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.2); margin-bottom: 2rem;">
-            <h3 style="color: #ffffff; margin-top: 0; font-size: 1.5rem;">🎯 McKinsey-Style Şehir–Brick Stratejik Uyum Analizi</h3>
+            <h3 style="color: #ffffff; margin-top: 0; font-size: 1.5rem;">🎯 Şehir–Brick Stratejik Uyum Analizi</h3>
             <p style="color: #cbd5e1; font-size: 0.95rem; line-height: 1.6; margin-bottom: 1rem;">
                 <b>❗ Zorunlu Kavramsal Çerçeve:</b><br>
                 <b>ŞEHİR = MAKRO</b> yatırım seviyesi | <b>BRICK = MİKRO</b> operasyonel/icra seviyesi<br>
@@ -5171,6 +5171,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
