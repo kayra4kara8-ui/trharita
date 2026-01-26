@@ -571,8 +571,8 @@ CITY_NORMALIZE_CLEAN = {
     'KARAMAN': 'Karaman',
     'KARS': 'Kars',
     'KASTAMONU': 'Kastamonu',
-    'KASTAMONU': 'Kastamonu",
-    'KASTAMONU': 'Kastamonu",
+    'KASTAMONU': 'Kastamonu',
+    'KASTAMONU': 'Kastamonu',
     'KAYSERI': 'Kayseri',
     'KIRIKKALE': 'Kinkkale',
     'KIRKLARELI': 'Kirklareli',
@@ -5277,4 +5277,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
