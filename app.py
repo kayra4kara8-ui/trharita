@@ -4949,7 +4949,7 @@ def main():
             with col_filter1:
                 filter_strategy = st.selectbox(
                     "Şehir Stratejisi",
-                    ["Tümü"] + sorted(alignment_results['Şehir_Yatırım_Stratejisi'].unique())
+                    ["Tümü"] + sorted(alignment_results['Şehir_Yatırım_Stratejisi'].dropna().unique())
                 )
             
             with col_filter2:
@@ -5171,6 +5171,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
