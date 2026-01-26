@@ -5131,40 +5131,52 @@ def main():
                 else:
                     risk_opportunity = "🔴 RİSK: Ciddi stratejik kopuş. Acil müdahale veya strateji revizyonu gerekli."
                 
-                st.markdown(f"""
-                <div class="strategic-fit-card fit-{'high' if city_row['Stratejik_Uyum_Skoru'] >= 80 else 'medium' if city_row['Stratejik_Uyum_Skoru'] >= 50 else 'low'}">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                        <h3 style="color: white; margin: 0; font-size: 1.3rem;">
-                            {city_name} - {strategy}
-                        </h3>
-                        <span style="background: rgba(37, 99, 235, 0.3); color: #2563EB; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.9rem; font-weight: 600;">
-                            Uyum Skoru: {city_row['Stratejik_Uyum_Skoru']}/100
-                        </span>
-                    </div>
-                    
-                    <div style="margin-bottom: 1rem;">
-                        <div style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 0.5rem;">🏢 Kararı Etkileyen Brick'ler:</div>
-                        <div style="color: #e2e8f0; font-size: 0.95rem;">
-                            {', '.join([f"{row['Brick']} ({row['BCG_Kategori']})" for _, row in top_bricks.iterrows()])}
-                        </div>
-                    </div>
-                    
-                    <div style="margin-bottom: 1rem;">
-                        <div style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 0.5rem;">📊 Uyum / Çelişki Noktaları:</div>
-                        <div style="color: #e2e8f0; font-size: 0.95rem;">
-                            • {len(high_fit)} brick yüksek uyumda<br>
-                            • {len(low_fit)} brick düşük uyumda
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <div style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 0.5rem;">🎯 Ana Risk veya Fırsat:</div>
-                        <div style="color: #e2e8f0; font-size: 0.95rem; font-weight: 500;">
-                            {risk_opportunity}
-                        </div>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
+                # --- TAB 8 İÇİNDEKİ DÜZELTİLMİŞ DÖNGÜ ---
+for _, city_row in top_cities.iterrows():
+    city_name = city_row['Şehir']
+    city_data = city_brick_mapping[city_brick_mapping['Şehir'] == city_name]
+    
+    if len(city_data) == 0:
+        continue
+
+    # 1. Değişkenleri Dışarıda Hazırla (Hata Buradaydı)
+    score = city_row['Stratejik_Uyum_Skoru']
+    s_class = 'high' if score >= 80 else 'medium' if score >= 50 else 'low'
+    strategy = city_data['Yatırım_Stratejisi'].iloc[0]
+    
+    # Brick isimlerini hazırla
+    top_bricks = city_data.nlargest(3, 'Brick_Ciro_Payı_%')
+    b_names = ", ".join([f"{r['Brick']} ({r['BCG_Kategori']})" for _, r in top_bricks.iterrows()])
+    
+    high_f_count = len(city_data[city_data['Şehir_Stratejisi_×_Brick_BCG_Uyumu'] == '🟢 Yüksek Uyum'])
+    low_f_count = len(city_data[city_data['Şehir_Stratejisi_×_Brick_BCG_Uyumu'] == '🔴 Düşük Uyum'])
+
+    # 2. Markdown'ı f''' ile Temizce Bas
+    st.markdown(f'''
+    <div class="strategic-fit-card fit-{s_class}">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h3 style="color: white; margin: 0; font-size: 1.3rem;">{city_name} - {strategy}</h3>
+            <span style="background: rgba(37, 99, 235, 0.3); color: #2563EB; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.9rem; font-weight: 600;">
+                Uyum Skoru: {score}/100
+            </span>
+        </div>
+        <div style="margin-bottom: 1rem;">
+            <div style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 0.5rem;">🏢 Kararı Etkileyen Brick'ler:</div>
+            <div style="color: #e2e8f0; font-size: 0.95rem;">{b_names}</div>
+        </div>
+        <div style="margin-bottom: 1rem;">
+            <div style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 0.5rem;">📊 Uyum / Çelişki Noktaları:</div>
+            <div style="color: #e2e8f0; font-size: 0.95rem;">
+                • {high_f_count} brick yüksek uyumda<br>
+                • {low_f_count} brick düşük uyumda
+            </div>
+        </div>
+        <div>
+            <div style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 0.5rem;">🎯 Ana Risk veya Fırsat:</div>
+            <div style="color: #e2e8f0; font-size: 0.95rem; font-weight: 500;">{risk_opportunity}</div>
+        </div>
+    </div>
+    ''', unsafe_allow_html=True)
     
     # TAB 9: RAPORLAR
     with tab9:
