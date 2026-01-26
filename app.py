@@ -5131,40 +5131,46 @@ def main():
                 else:
                     risk_opportunity = "🔴 RİSK: Ciddi stratejik kopuş. Acil müdahale veya strateji revizyonu gerekli."
                 
-                st.markdown(f"""
-                <div class="strategic-fit-card fit-{'high' if city_row['Stratejik_Uyum_Skoru'] >= 80 else 'medium' if city_row['Stratejik_Uyum_Skoru'] >= 50 else 'low'}">
+               # 1. Karmaşık mantık işlemlerini Markdown dışına çıkarıyoruz
+                fit_score = city_row['Stratejik_Uyum_Skoru']
+                status_class = 'high' if fit_score >= 80 else 'medium' if fit_score >= 50 else 'low'
+                brick_names = ', '.join([f"{row['Brick']} ({row['BCG_Kategori']})" for _, row in top_bricks.iterrows()])
+
+                # 2. Markdown bloğunu daha temiz bir şekilde yazıyoruz
+                st.markdown(f'''
+                <div class="strategic-fit-card fit-{status_class}">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                         <h3 style="color: white; margin: 0; font-size: 1.3rem;">
                             {city_name} - {strategy}
                         </h3>
-                        <span style="background: rgba(37, 99, 235, 0.3); color: #2563EB; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.9rem; font-weight: 600;">
-                            Uyum Skoru: {city_row['Stratejik_Uyum_Skoru']}/100
-                        </span>
-                    </div>
-                    
-                    <div style="margin-bottom: 1rem;">
-                        <div style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 0.5rem;">🏢 Kararı Etkileyen Brick'ler:</div>
-                        <div style="color: #e2e8f0; font-size: 0.95rem;">
-                            {', '.join([f"{row['Brick']} ({row['BCG_Kategori']})" for _, row in top_bricks.iterrows()])}
-                        </div>
-                    </div>
-                    
-                    <div style="margin-bottom: 1rem;">
-                        <div style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 0.5rem;">📊 Uyum / Çelişki Noktaları:</div>
-                        <div style="color: #e2e8f0; font-size: 0.95rem;">
-                            • {len(high_fit)} brick yüksek uyumda<br>
-                            • {len(low_fit)} brick düşük uyumda
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <div style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 0.5rem;">🎯 Ana Risk veya Fırsat:</div>
-                        <div style="color: #e2e8f0; font-size: 0.95rem; font-weight: 500;">
-                            {risk_opportunity}
-                        </div>
-                    </div>
+                    <span style="background: rgba(37, 99, 235, 0.3); color: #2563EB; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.9rem; font-weight: 600;">
+                        Uyum Skoru: {fit_score}/100
+                    </span>
+                 </div>
+    
+            <div style="margin-bottom: 1rem;">
+                <div style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 0.5rem;">🏢 Kararı Etkileyen Brick'ler:</div>
+                <div style="color: #e2e8f0; font-size: 0.95rem;">
+                    {brick_names}
                 </div>
-                """, unsafe_allow_html=True)
+            </div>
+    
+            <div style="margin-bottom: 1rem;">
+                <div style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 0.5rem;">📊 Uyum / Çelişki Noktaları:</div>
+                <div style="color: #e2e8f0; font-size: 0.95rem;">
+                    • {len(high_fit)} brick yüksek uyumda<br>
+                    • {len(low_fit)} brick düşük uyumda
+                </div>
+            </div>
+        
+            <div>
+                <div style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 0.5rem;">🎯 Ana Risk veya Fırsat:</div>
+                <div style="color: #e2e8f0; font-size: 0.95rem; font-weight: 500;">
+                    {risk_opportunity}
+                </div>
+            </div>
+        </div>
+        ''', unsafe_allow_html=True)
     
     # TAB 9: RAPORLAR
     with tab9:
@@ -5277,5 +5283,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
