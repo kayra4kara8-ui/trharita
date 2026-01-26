@@ -5182,39 +5182,39 @@ def main():
                     
                     # HTML içeriğini oluştur
                     html_content = f'''
-                    <div class="strategic-fit-card {fit_class}">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                            <h3 style="color: white; margin: 0; font-size: 1.3rem;">
-                                {city_name} - {strategy}
-                            </h3>
-                            <span style="background: rgba(37, 99, 235, 0.3); color: #2563EB; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.9rem; font-weight: 600;">
-                                Uyum Skoru: {city_row['Stratejik_Uyum_Skoru']}/100
-                            </span>
-                        </div>
-                        
-                        <div style="margin-bottom: 1rem;">
-                            <div style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 0.5rem;">🏢 Kararı Etkileyen Brick'ler:</div>
-                            <div style="color: #e2e8f0; font-size: 0.95rem;">
-                                {bricks_text}
-                            </div>
-                        </div>
-                        
-                        <div style="margin-bottom: 1rem;">
-                            <div style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 0.5rem;">📊 Uyum / Çelişki Noktaları:</div>
-                            <div style="color: #e2e8f0; font-size: 0.95rem;">
-                                • {len(high_fit)} brick yüksek uyumda<br>
-                                • {len(low_fit)} brick düşük uyumda
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <div style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 0.5rem;">🎯 Ana Risk veya Fırsat:</div>
-                            <div style="color: #e2e8f0; font-size: 0.95rem; font-weight: 500;">
-                                {risk_opportunity}
-                            </div>
-                        </div>
-                    </div>
-                    '''
+<div class="strategic-fit-card {fit_class}">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h3 style="color: white; margin: 0; font-size: 1.3rem;">
+            {city_name} - {strategy}
+        </h3>
+        <span style="background: rgba(37, 99, 235, 0.3); color: #2563EB; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.9rem; font-weight: 600;">
+            Uyum Skoru: {city_row['Stratejik_Uyum_Skoru']}/100
+        </span>
+    </div>
+    
+    <div style="margin-bottom: 1rem;">
+        <div style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 0.5rem;">🏢 Kararı Etkileyen Brick'ler:</div>
+        <div style="color: #e2e8f0; font-size: 0.95rem;">
+            {bricks_text}
+        </div>
+    </div>
+    
+    <div style="margin-bottom: 1rem;">
+        <div style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 0.5rem;">📊 Uyum / Çelişki Noktaları:</div>
+        <div style="color: #e2e8f0; font-size: 0.95rem;">
+            • {len(high_fit)} brick yüksek uyumda<br>
+            • {len(low_fit)} brick düşük uyumda
+        </div>
+    </div>
+    
+    <div>
+        <div style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 0.5rem;">🎯 Ana Risk veya Fırsat:</div>
+        <div style="color: #e2e8f0; font-size: 0.95rem; font-weight: 500;">
+            {risk_opportunity}
+        </div>
+    </div>
+</div>
+'''
                     
                     # HTML'i render et
                     st.markdown(html_content, unsafe_allow_html=True)
@@ -5344,6 +5344,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
