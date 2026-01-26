@@ -5230,6 +5230,7 @@ def main():
             st.info("Lütfen veri yapılarını kontrol edin.")
     
     # TAB 9: RAPORLAR
+    # TAB 9: RAPORLAR
     with tab9:
         st.header("📥 Rapor İndirme")
         
@@ -5283,6 +5284,8 @@ def main():
                         ml_results, best_model_name, forecast_df = None, None, None
                     
                     output = BytesIO()
+                    
+                    # DEĞİŞİKLİK BURADA: context manager kullanımı
                     with pd.ExcelWriter(output, engine='openpyxl') as writer:
                         terr_perf.to_excel(writer, sheet_name='Brick Performans', index=False)
                         monthly_df.to_excel(writer, sheet_name='Zaman Serisi', index=False)
@@ -5324,7 +5327,8 @@ def main():
                             perf_df = pd.DataFrame(perf_data)
                             perf_df.to_excel(writer, sheet_name='ML Performans', index=False)
                         
-                        writer.save()
+                        # writer.save() yerine context manager otomatik olarak kaydeder
+                        # writer.close() gerek yok, with bloğu otomatik olarak kapatır
                     
                     # Download button
                     st.download_button(
@@ -5337,9 +5341,11 @@ def main():
                     
                 except Exception as e:
                     st.error(f"❌ Rapor oluşturulurken hata: {str(e)}")
+                    st.error(f"Hata detayı: {type(e).__name__}")
 
 if __name__ == "__main__":
     main()
+
 
 
 
