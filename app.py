@@ -5101,8 +5101,8 @@ def main():
         
         # TAB 8: 5️⃣ 🤝 Yatırım Komitesi İçin Özet bölümünü şu şekilde düzeltin:
 
-# 5️⃣ 🤝 Yatırım Komitesi İçin Özet
-st.subheader("5️⃣ 🤝 Yatırım Komitesi İçin Özet")
+        # 5️⃣ 🤝 Yatırım Komitesi İçin Özet
+st.markdown("### 5️⃣ 🤝 Yatırım Komitesi İçin Özet")
 
 if 'city_brick_mapping' in locals() and len(city_brick_mapping) > 0 and 'city_fit_df' in locals():
     # İlk 3 şehir için özet
@@ -5134,11 +5134,13 @@ if 'city_brick_mapping' in locals() and len(city_brick_mapping) > 0 and 'city_fi
             risk_opportunity = "🔴 RİSK: Ciddi stratejik kopuş. Acil müdahale veya strateji revizyonu gerekli."
         
         # Brick'leri formatla
-        brick_items = [f"{row['Brick']} ({row['BCG_Kategori']})" for _, row in top_bricks.iterrows()]
+        brick_items = []
+        for _, row in top_bricks.iterrows():
+            brick_items.append(f"{row['Brick']} ({row['BCG_Kategori']})")
+        
         bricks_text = ', '.join(brick_items)
         
         # Sınıf belirle
-        fit_class = ""
         if city_row['Stratejik_Uyum_Skoru'] >= 80:
             fit_class = "fit-high"
         elif city_row['Stratejik_Uyum_Skoru'] >= 50:
@@ -5146,7 +5148,7 @@ if 'city_brick_mapping' in locals() and len(city_brick_mapping) > 0 and 'city_fi
         else:
             fit_class = "fit-low"
         
-        # HTML'i ayrı ayrı değişkenlerle oluştur
+        # HTML içeriğini oluştur
         html_content = f"""
         <div class="strategic-fit-card {fit_class}">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
@@ -5296,5 +5298,6 @@ if 'city_brick_mapping' in locals() and len(city_brick_mapping) > 0 and 'city_fi
 
 if __name__ == "__main__":
     main()
+
 
 
