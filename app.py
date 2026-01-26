@@ -4740,6 +4740,7 @@ def main():
             )
     
     # TAB 8: 📌 EXECUTIVE-LEVEL ANALİZ – ŞEHİR YATIRIM STRATEJİSİ & BRICK BCG ENTEGRASYONU
+    # TAB 8: 📌 EXECUTIVE-LEVEL ANALİZ – ŞEHİR YATIRIM STRATEJİSİ & BRICK BCG ENTEGRASYONU
     with tab8:
         st.header("🏙️ Şehir–Brick Stratejik Analizi")
         
@@ -5099,10 +5100,8 @@ def main():
         
         st.markdown("---")
         
-        # TAB 8: 5️⃣ 🤝 Yatırım Komitesi İçin Özet bölümünü
-
-        # TAB 8: 5️⃣ 🤝 Yatırım Komitesi İçin Özet
-        st.markdown("### 5️⃣ 🤝 Yatırım Komitesi İçin Özet")
+        # 5️⃣ Yatırım Komitesi İçin Özet
+        st.subheader("5️⃣ 🤝 Yatırım Komitesi İçin Özet")
         
         # CSS stilleri ekleyelim
         st.markdown("""
@@ -5226,7 +5225,7 @@ def main():
                 debug_info = f"""
                 **Debug Bilgisi:**
                 - 'city_brick_mapping' in locals(): {'city_brick_mapping' in locals()}
-                - 'city_fit_df' in locals(): {'city_fit_df' in locals()}
+                - 'city_fit_df' in locals(): {'city_fit_df' in locals() if 'city_fit_df' in locals() else False}
                 """
                 st.info(debug_info)
                 
@@ -5345,6 +5344,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
