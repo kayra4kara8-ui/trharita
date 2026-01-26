@@ -580,7 +580,7 @@ CITY_NORMALIZE_CLEAN = {
     'KIRSEHIR': 'Kirsehir',
     'KIRŞEHİR': 'Kirsehir',
     'KILIS': 'Kilis',
-    'KİLIS': 'Kilis',
+    'KİLİS': 'Kilis',
     'KOCAELI': 'Kocaeli',
     'KONYA': 'Konya',
     'KUTAHYA': 'Kutahya',
@@ -5082,7 +5082,6 @@ def main():
                     bar_color = "#EF4444"
                     bar_class = "score-low"
                 
-                # HTML İÇERİĞİNİ RENDER ETMEK İÇİN st.markdown KULLAN
                 st.markdown(f"""
                 <div style="margin-bottom: 1.5rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
@@ -5100,73 +5099,91 @@ def main():
         
         st.markdown("---")
         
-        # 5️⃣ 🤝 Yatırım Komitesi İçin Özet
-        st.subheader("5️⃣ 🤝 Yatırım Komitesi İçin Özet")
+        # TAB 8: 5️⃣ 🤝 Yatırım Komitesi İçin Özet bölümünü şu şekilde düzeltin:
+
+# 5️⃣ 🤝 Yatırım Komitesi İçin Özet
+st.subheader("5️⃣ 🤝 Yatırım Komitesi İçin Özet")
+
+if 'city_brick_mapping' in locals() and len(city_brick_mapping) > 0 and 'city_fit_df' in locals():
+    # İlk 3 şehir için özet
+    top_cities = city_fit_df.head(3)
+    
+    for _, city_row in top_cities.iterrows():
+        city_name = city_row['Şehir']
+        city_data = city_brick_mapping[city_brick_mapping['Şehir'] == city_name]
         
-        if 'city_brick_mapping' in locals() and len(city_brick_mapping) > 0 and 'city_fit_df' in locals():
-            # İlk 3 şehir için özet
-            top_cities = city_fit_df.head(3)
+        if len(city_data) == 0:
+            continue
+        
+        # Şehir stratejisi
+        strategy = city_data['Yatırım_Stratejisi'].iloc[0]
+        
+        # En önemli brick'ler (ciro payı en yüksek 3 brick)
+        top_bricks = city_data.nlargest(3, 'Brick_Ciro_Payı_%')
+        
+        # Uyum/çelişki noktaları
+        high_fit = city_data[city_data['Şehir_Stratejisi_×_Brick_BCG_Uyumu'] == '🟢 Yüksek Uyum']
+        low_fit = city_data[city_data['Şehir_Stratejisi_×_Brick_BCG_Uyumu'] == '🔴 Düşük Uyum']
+        
+        # Ana risk veya fırsat
+        if city_row['Stratejik_Uyum_Skoru'] >= 80:
+            risk_opportunity = "🟢 FIRSAT: Şehir stratejisi ile brick portföyü mükemmel uyumda. Yatırım artırılabilir."
+        elif city_row['Stratejik_Uyum_Skoru'] >= 50:
+            risk_opportunity = "🟡 NÖTR: Kısmi uyum var. Seçici yatırım ve optimizasyon gerekiyor."
+        else:
+            risk_opportunity = "🔴 RİSK: Ciddi stratejik kopuş. Acil müdahale veya strateji revizyonu gerekli."
+        
+        # Brick'leri formatla
+        brick_items = [f"{row['Brick']} ({row['BCG_Kategori']})" for _, row in top_bricks.iterrows()]
+        bricks_text = ', '.join(brick_items)
+        
+        # Sınıf belirle
+        fit_class = ""
+        if city_row['Stratejik_Uyum_Skoru'] >= 80:
+            fit_class = "fit-high"
+        elif city_row['Stratejik_Uyum_Skoru'] >= 50:
+            fit_class = "fit-medium"
+        else:
+            fit_class = "fit-low"
+        
+        # HTML'i ayrı ayrı değişkenlerle oluştur
+        html_content = f"""
+        <div class="strategic-fit-card {fit_class}">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="color: white; margin: 0; font-size: 1.3rem;">
+                    {city_name} - {strategy}
+                </h3>
+                <span style="background: rgba(37, 99, 235, 0.3); color: #2563EB; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.9rem; font-weight: 600;">
+                    Uyum Skoru: {city_row['Stratejik_Uyum_Skoru']}/100
+                </span>
+            </div>
             
-            for _, city_row in top_cities.iterrows():
-                city_name = city_row['Şehir']
-                city_data = city_brick_mapping[city_brick_mapping['Şehir'] == city_name]
-                
-                if len(city_data) == 0:
-                    continue
-                
-                # Şehir stratejisi
-                strategy = city_data['Yatırım_Stratejisi'].iloc[0]
-                
-                # En önemli brick'ler (ciro payı en yüksek 3 brick)
-                top_bricks = city_data.nlargest(3, 'Brick_Ciro_Payı_%')
-                
-                # Uyum/çelişki noktaları
-                high_fit = city_data[city_data['Şehir_Stratejisi_×_Brick_BCG_Uyumu'] == '🟢 Yüksek Uyum']
-                low_fit = city_data[city_data['Şehir_Stratejisi_×_Brick_BCG_Uyumu'] == '🔴 Düşük Uyum']
-                
-                # Ana risk veya fırsat
-                if city_row['Stratejik_Uyum_Skoru'] >= 80:
-                    risk_opportunity = "🟢 FIRSAT: Şehir stratejisi ile brick portföyü mükemmel uyumda. Yatırım artırılabilir."
-                elif city_row['Stratejik_Uyum_Skoru'] >= 50:
-                    risk_opportunity = "🟡 NÖTR: Kısmi uyum var. Seçici yatırım ve optimizasyon gerekiyor."
-                else:
-                    risk_opportunity = "🔴 RİSK: Ciddi stratejik kopuş. Acil müdahale veya strateji revizyonu gerekli."
-                
-                # HTML İÇERİĞİNİ RENDER ETMEK İÇİN st.markdown KULLAN
-                st.markdown(f"""
-                <div class="strategic-fit-card fit-{'high' if city_row['Stratejik_Uyum_Skoru'] >= 80 else 'medium' if city_row['Stratejik_Uyum_Skoru'] >= 50 else 'low'}">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                        <h3 style="color: white; margin: 0; font-size: 1.3rem;">
-                            {city_name} - {strategy}
-                        </h3>
-                        <span style="background: rgba(37, 99, 235, 0.3); color: #2563EB; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.9rem; font-weight: 600;">
-                            Uyum Skoru: {city_row['Stratejik_Uyum_Skoru']}/100
-                        </span>
-                    </div>
-                    
-                    <div style="margin-bottom: 1rem;">
-                        <div style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 0.5rem;">🏢 Kararı Etkileyen Brick'ler:</div>
-                        <div style="color: #e2e8f0; font-size: 0.95rem;">
-                            {', '.join([f"{row['Brick']} ({row['BCG_Kategori']})" for _, row in top_bricks.iterrows()])}
-                        </div>
-                    </div>
-                    
-                    <div style="margin-bottom: 1rem;">
-                        <div style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 0.5rem;">📊 Uyum / Çelişki Noktaları:</div>
-                        <div style="color: #e2e8f0; font-size: 0.95rem;">
-                            • {len(high_fit)} brick yüksek uyumda<br>
-                            • {len(low_fit)} brick düşük uyumda
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <div style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 0.5rem;">🎯 Ana Risk veya Fırsat:</div>
-                        <div style="color: #e2e8f0; font-size: 0.95rem; font-weight: 500;">
-                            {risk_opportunity}
-                        </div>
-                    </div>
+            <div style="margin-bottom: 1rem;">
+                <div style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 0.5rem;">🏢 Kararı Etkileyen Brick'ler:</div>
+                <div style="color: #e2e8f0; font-size: 0.95rem;">
+                    {bricks_text}
                 </div>
-                """, unsafe_allow_html=True)
+            </div>
+            
+            <div style="margin-bottom: 1rem;">
+                <div style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 0.5rem;">📊 Uyum / Çelişki Noktaları:</div>
+                <div style="color: #e2e8f0; font-size: 0.95rem;">
+                    • {len(high_fit)} brick yüksek uyumda<br>
+                    • {len(low_fit)} brick düşük uyumda
+                </div>
+            </div>
+            
+            <div>
+                <div style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 0.5rem;">🎯 Ana Risk veya Fırsat:</div>
+                <div style="color: #e2e8f0; font-size: 0.95rem; font-weight: 500;">
+                    {risk_opportunity}
+                </div>
+            </div>
+        </div>
+        """
+        
+        # HTML'i render et
+        st.markdown(html_content, unsafe_allow_html=True)
     
     # TAB 9: RAPORLAR
     with tab9:
@@ -5279,3 +5296,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
