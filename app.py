@@ -5101,8 +5101,43 @@ def main():
         
         # TAB 8: 5️⃣ 🤝 Yatırım Komitesi İçin Özet bölümünü şu şekilde düzeltin:
 
+        # TAB 8: 5️⃣ 🤝 Yatırım Komitesi İçin Özet bölümünü şu şekilde düzeltin:
+
+        st.markdown("---")
+        
         # 5️⃣ 🤝 Yatırım Komitesi İçin Özet
         st.markdown("### 5️⃣ 🤝 Yatırım Komitesi İçin Özet")
+        
+        # CSS stilleri ekleyelim
+        st.markdown("""
+        <style>
+        .strategic-fit-card {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-left: 5px solid #2563EB;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.3s ease;
+        }
+        
+        .strategic-fit-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .fit-high {
+            border-left-color: #10b981 !important;
+        }
+        
+        .fit-medium {
+            border-left-color: #f59e0b !important;
+        }
+        
+        .fit-low {
+            border-left-color: #ef4444 !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
         
         if 'city_brick_mapping' in locals() and len(city_brick_mapping) > 0 and 'city_fit_df' in locals():
             # İlk 3 şehir için özet
@@ -5186,6 +5221,8 @@ def main():
                 
                 # HTML'i render et
                 st.markdown(html_content, unsafe_allow_html=True)
+        else:
+            st.warning("Yatırım Komitesi özeti için gerekli veriler yüklenmedi. Lütfen önce önceki adımları tamamlayın.")
     
     # TAB 9: RAPORLAR
     with tab9:
@@ -5298,6 +5335,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
