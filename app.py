@@ -580,7 +580,7 @@ CITY_NORMALIZE_CLEAN = {
     'KIRSEHIR': 'Kirsehir',
     'KIRŞEHİR': 'Kirsehir',
     'KILIS': 'Kilis',
-    'KİLİS': 'Kilis',
+    'KİLIS': 'Kilis',
     'KOCAELI': 'Kocaeli',
     'KONYA': 'Konya',
     'KUTAHYA': 'Kutahya',
@@ -5082,6 +5082,7 @@ def main():
                     bar_color = "#EF4444"
                     bar_class = "score-low"
                 
+                # HTML İÇERİĞİNİ RENDER ETMEK İÇİN st.markdown KULLAN
                 st.markdown(f"""
                 <div style="margin-bottom: 1.5rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
@@ -5131,6 +5132,7 @@ def main():
                 else:
                     risk_opportunity = "🔴 RİSK: Ciddi stratejik kopuş. Acil müdahale veya strateji revizyonu gerekli."
                 
+                # HTML İÇERİĞİNİ RENDER ETMEK İÇİN st.markdown KULLAN
                 st.markdown(f"""
                 <div class="strategic-fit-card fit-{'high' if city_row['Stratejik_Uyum_Skoru'] >= 80 else 'medium' if city_row['Stratejik_Uyum_Skoru'] >= 50 else 'low'}">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
@@ -5277,5 +5279,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
