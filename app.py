@@ -5100,7 +5100,7 @@ def main():
         st.markdown("---")
         
         # 5️⃣ Yatırım Komitesi İçin Özet
-        st.subheader("5️⃣ 🤝 Yatırım Komitesi İçin Özet")
+        st.subheader("5️⃣ Yatırım Komitesi İçin Özet")
         
         # CSS stilleri ekleyelim
         st.markdown("""
@@ -5345,6 +5345,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
